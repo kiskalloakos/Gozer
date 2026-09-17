@@ -1,6 +1,6 @@
 # Gozer
 
-![alt text](https://file%2B.vscode-resource.vscode-cdn.net/Users/kiskalloakos/Downloads/RPG/Assets/Art/Characters/rogue_final_firing_right.png?version%3D1789652066501)
+![alt text]([https://file%2B.vscode-resource.vscode-cdn.net/Users/kiskalloakos/Downloads/RPG/Assets/Art/Characters/rogue_final_firing_right.png?version%3D1789652066501](https://github.com/kiskalloakos/Gozer/blob/23a52168db14b5f2a621099bbdd8eab184dd768d/rogue_final_standing.png))
 
 ## One-sentence pitch
 
