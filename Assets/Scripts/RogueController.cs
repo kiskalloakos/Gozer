@@ -4,21 +4,29 @@ using UnityEngine;
 public class RogueController : MonoBehaviour
 {
     public SpriteRenderer visual;
+    public Animator stanceAnimator;
     public Sprite standing, firing;
     public float speed = 4f;
+    [Range(0f, 1f)] public float firingMoveSpeedMultiplier = .45f;
     private Rigidbody2D body;
     private Vector2 move;
     private bool left;
     public float shotFrameSeconds = .055f;
+    public float heldShotFrameSeconds = .13f;
     public Sprite[] shotFrames;
     private float shotClock = -1;
-    private bool shotLeft, emitted;
+    private bool shotLeft;
+    private int lastFiredStep = -1;
+    private bool releaseRequested;
+    private int finishAfterStep = -1;
     public int ShotsFired { get; private set; }
     private Sprite boltSprite;
     void Awake()
     {
         body = GetComponent<Rigidbody2D>();
-        shotFrames = Slice("Shoot", 3, 2, 210f, new float[] { .46f,.46f,.42f,.46f,.46f,.42f });
+        if (!stanceAnimator && visual) stanceAnimator = visual.GetComponent<Animator>();
+        // Hand-authored simplified firing sheet: stance, raise, aim, fire.
+        shotFrames = Slice("ShootSimplified", 4, 1, 42f, new float[] { .5f, .5f, .5f, .5f }, .5f);
         var texture = new Texture2D(8, 2); texture.filterMode = FilterMode.Point;
         var colors = new Color[16]; for (int i = 0; i < colors.Length; i++) colors[i] = new Color(1f,.65f,.1f);
         texture.SetPixels(colors); texture.Apply();
@@ -44,39 +52,76 @@ public class RogueController : MonoBehaviour
             if (camera)
             {
                 // Compare in screen space: aim follows the mouse, not movement.
-                float playerScreenX = camera.WorldToScreenPoint(transform.position).x;
-                left = Input.mousePosition.x < playerScreenX;
+                float pointerWorldX = camera.ScreenToWorldPoint(Input.mousePosition).x;
+                left = pointerWorldX < transform.position.x;
             }
             shotClock = 0;
+            if (stanceAnimator) stanceAnimator.enabled = false;
             shotLeft = left;
-            emitted = false;
+            lastFiredStep = -1;
+            releaseRequested = false;
+            finishAfterStep = -1;
         }
         if (shotClock >= 0)
         {
+            // A tap still completes a whole shot. Releasing only asks us to stop
+            // after the next muzzle-flash frame has finished.
+            if (!Input.GetMouseButton(0)) releaseRequested = true;
+
             shotClock += Time.deltaTime;
-            int frame = Mathf.FloorToInt(shotClock / shotFrameSeconds);
-            if (frame >= 3 && !emitted) { Fire(); emitted = true; }
+            int frame;
+            int sustainedStep = -1;
+            if (shotClock < shotFrameSeconds * 2)
+            {
+                // First click: stance, then raise the arm.
+                frame = Mathf.FloorToInt(shotClock / shotFrameSeconds);
+            }
+            else
+            {
+                // Held fire: repeat the aim and muzzle-flash frames.
+                sustainedStep = Mathf.FloorToInt((shotClock - shotFrameSeconds * 2) / heldShotFrameSeconds);
+                frame = 2 + sustainedStep % 2;
+                if (frame == 3 && sustainedStep != lastFiredStep)
+                {
+                    Fire();
+                    lastFiredStep = sustainedStep;
+                    if (releaseRequested) finishAfterStep = sustainedStep;
+                }
+            }
             visual.sprite = shotFrames.Length > 0 ? shotFrames[Mathf.Min(frame, shotFrames.Length-1)] : firing;
             visual.flipX = shotLeft;
-            if (shotClock >= shotFrameSeconds * 6) shotClock = -1;
+            if (finishAfterStep >= 0 && sustainedStep > finishAfterStep) EndShooting();
         }
         else
         {
-            // Until a hand-authored run exists, movement deliberately keeps the standing pose.
-            visual.sprite = shotFrames.Length > 0 ? shotFrames[0] : standing;
+            // The Animator owns the five-frame breathing stance while not shooting.
             visual.flipX = left;
         }
         visual.sortingOrder = Mathf.RoundToInt(-transform.position.y * 100);
     }
-    void FixedUpdate() { body.MovePosition(body.position + move * speed * (shotClock >= 0 ? 0 : 1) * Time.fixedDeltaTime); }
+    void FixedUpdate()
+    {
+        float moveSpeed = speed * (shotClock >= 0 ? firingMoveSpeedMultiplier : 1f);
+        body.MovePosition(body.position + move * moveSpeed * Time.fixedDeltaTime);
+    }
     void Fire()
     {
         ShotsFired++;
         float direction = shotLeft ? -1 : 1;
-        var origin = transform.position + new Vector3(direction * 1.06f, 1.82f, 0);
+        // The re-saved firing art has a lower weapon: start at its actual muzzle.
+        var origin = transform.position + new Vector3(direction * 1.28f, .55f, 0);
         var bolt = new GameObject("Energy bolt"); bolt.transform.position = origin;
         var sr = bolt.AddComponent<SpriteRenderer>(); sr.sprite = boltSprite; sr.sortingOrder = visual.sortingOrder + 1;
         bolt.AddComponent<RogueProjectile>().Initialize(new Vector2(direction * 14,0), GetComponent<Collider2D>());
+    }
+    void EndShooting()
+    {
+        shotClock = -1;
+        if (stanceAnimator)
+        {
+            stanceAnimator.enabled = true;
+            stanceAnimator.Play("Rogue_Stance", 0, 0f);
+        }
     }
 
 }

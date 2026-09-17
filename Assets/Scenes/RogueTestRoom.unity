@@ -6762,10 +6762,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RogueController
   visual: {fileID: 973997157}
+  stanceAnimator: {fileID: 973997158}
   standing: {fileID: 21300000, guid: 9cd203aa9b1a645b0a0433a66b24c9bd, type: 3}
   firing: {fileID: 21300000, guid: 4a0bd144938644be09f2c8385d5f49e6, type: 3}
   speed: 8
+  firingMoveSpeedMultiplier: 0.45
   shotFrameSeconds: 0.055
+  heldShotFrameSeconds: 0.13
   shotFrames: []
 --- !u!61 &475634370
 BoxCollider2D:
@@ -14248,6 +14251,7 @@ GameObject:
   m_Component:
   - component: {fileID: 973997156}
   - component: {fileID: 973997157}
+  - component: {fileID: 973997158}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -14330,6 +14334,28 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!95 &973997158
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 973997155}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: d7b30174921424193b6f26b548642bfc, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &977043744
 GameObject:
   m_ObjectHideFlags: 0
