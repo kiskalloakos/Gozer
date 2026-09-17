@@ -1,0 +1,61 @@
+{
+  "canvas": [
+    512,
+    512
+  ],
+  "sheet_cell": [
+    512,
+    512
+  ],
+  "sheet_layout": {
+    "columns": 6,
+    "rows": 2,
+    "row_0": "right",
+    "row_1": "left"
+  },
+  "frames": [
+    {
+      "index": 0,
+      "name": "standing",
+      "right": "frames/right_00_standing.png",
+      "left": "frames/left_00_standing.png"
+    },
+    {
+      "index": 1,
+      "name": "draw",
+      "right": "frames/right_01_draw.png",
+      "left": "frames/left_01_draw.png"
+    },
+    {
+      "index": 2,
+      "name": "aim",
+      "right": "frames/right_02_aim.png",
+      "left": "frames/left_02_aim.png"
+    },
+    {
+      "index": 3,
+      "name": "fire",
+      "right": "frames/right_03_fire.png",
+      "left": "frames/left_03_fire.png"
+    },
+    {
+      "index": 4,
+      "name": "recoil",
+      "right": "frames/right_04_recoil.png",
+      "left": "frames/left_04_recoil.png"
+    },
+    {
+      "index": 5,
+      "name": "lower",
+      "right": "frames/right_05_lower.png",
+      "left": "frames/left_05_lower.png"
+    }
+  ],
+  "unity": {
+    "pixels_per_unit": 210,
+    "filter": "Point",
+    "compression": "None",
+    "mipmaps": false
+  },
+  "note": "Left frames are exact horizontal mirrors. Unity may instead mirror the right frames with SpriteRenderer.flipX."
+}

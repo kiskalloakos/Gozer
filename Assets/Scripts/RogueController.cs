@@ -4,37 +4,34 @@ using UnityEngine;
 public class RogueController : MonoBehaviour
 {
     public SpriteRenderer visual;
-    public Sprite standing, running, firing;
+    public Sprite standing, firing;
     public float speed = 4f;
     private Rigidbody2D body;
     private Vector2 move;
     private bool left;
-    public float runFramesPerSecond = 12f;
     public float shotFrameSeconds = .055f;
-    public Sprite[] runFrames, shotFrames;
-    private float runClock, shotClock = -1;
+    public Sprite[] shotFrames;
+    private float shotClock = -1;
     private bool shotLeft, emitted;
     public int ShotsFired { get; private set; }
-    public int CurrentRunFrame { get; private set; }
     private Sprite boltSprite;
     void Awake()
     {
         body = GetComponent<Rigidbody2D>();
-        runFrames = Slice("Run", 4, 2, 185f, new float[] { .60f,.56f,.52f,.56f,.55f,.51f,.52f,.54f });
         shotFrames = Slice("Shoot", 3, 2, 210f, new float[] { .46f,.46f,.42f,.46f,.46f,.42f });
         var texture = new Texture2D(8, 2); texture.filterMode = FilterMode.Point;
         var colors = new Color[16]; for (int i = 0; i < colors.Length; i++) colors[i] = new Color(1f,.65f,.1f);
         texture.SetPixels(colors); texture.Apply();
         boltSprite = Sprite.Create(texture, new Rect(0,0,8,2), new Vector2(.5f,.5f), 24);
     }
-    Sprite[] Slice(string name, int columns, int rows, float ppu, float[] anchors)
+    Sprite[] Slice(string name, int columns, int rows, float ppu, float[] anchors, float groundPivot = .025f)
     {
         var texture = Resources.Load<Texture2D>("RogueAnimation/" + name);
         if (!texture) { Debug.LogError("Missing animation sheet: " + name); return new Sprite[0]; }
         int w = texture.width / columns, h = texture.height / rows;
         var frames = new Sprite[columns * rows];
         for (int i = 0; i < frames.Length; i++)
-            frames[i] = Sprite.Create(texture, new Rect((i % columns)*w, texture.height-(i/columns+1)*h,w,h), new Vector2(anchors[i], .025f), ppu, 0, SpriteMeshType.FullRect);
+            frames[i] = Sprite.Create(texture, new Rect((i % columns)*w, texture.height-(i/columns+1)*h,w,h), new Vector2(anchors[i], groundPivot), ppu, 0, SpriteMeshType.FullRect);
         return frames;
     }
     void Update()
@@ -65,9 +62,8 @@ public class RogueController : MonoBehaviour
         }
         else
         {
-            if (move.sqrMagnitude > 0) runClock += Time.deltaTime * runFramesPerSecond; else runClock = 0;
-            CurrentRunFrame = runFrames.Length > 0 ? (int)runClock % runFrames.Length : 0;
-            visual.sprite = move.sqrMagnitude > 0 && runFrames.Length > 0 ? runFrames[CurrentRunFrame] : shotFrames.Length > 0 ? shotFrames[0] : standing;
+            // Until a hand-authored run exists, movement deliberately keeps the standing pose.
+            visual.sprite = shotFrames.Length > 0 ? shotFrames[0] : standing;
             visual.flipX = left;
         }
         visual.sortingOrder = Mathf.RoundToInt(-transform.position.y * 100);
@@ -82,3 +78,5 @@ public class RogueController : MonoBehaviour
         var sr = bolt.AddComponent<SpriteRenderer>(); sr.sprite = boltSprite; sr.sortingOrder = visual.sortingOrder + 1;
         bolt.AddComponent<RogueProjectile>().Initialize(new Vector2(direction * 14,0), GetComponent<Collider2D>());
     }
+
+}

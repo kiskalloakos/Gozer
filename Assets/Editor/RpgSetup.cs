@@ -13,8 +13,8 @@ public static class RpgSetup
         var settings = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset")[0]);
         var input = settings.FindProperty("activeInputHandler");
         if (input != null) { input.intValue = 0; settings.ApplyModifiedProperties(); }
-        var names = new[] { "rogue_final_standing", "rogue_final_running_right", "rogue_final_firing_right" };
-        var sprites = new Sprite[3];
+        var names = new[] { "rogue_final_standing", "rogue_final_firing_right" };
+        var sprites = new Sprite[2];
         for (int i = 0; i < names.Length; i++)
         {
             var path = "Assets/Art/Characters/" + names[i] + ".png";
@@ -66,7 +66,7 @@ public static class RpgSetup
         var art = new GameObject("Visual"); art.transform.parent = player.transform;
         var renderer = art.AddComponent<SpriteRenderer>(); renderer.sprite = sprites[0];
         var controller = player.AddComponent<RogueController>(); controller.visual = renderer;
-        controller.standing = sprites[0]; controller.running = sprites[1]; controller.firing = sprites[2];
+        controller.standing = sprites[0]; controller.firing = sprites[1];
         var cameraGo = new GameObject("Main Camera"); cameraGo.tag = "MainCamera";
         var camera = cameraGo.AddComponent<Camera>(); camera.orthographic = true; camera.orthographicSize = 5;
         camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(.04f,.02f,.08f);

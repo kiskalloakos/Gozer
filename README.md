@@ -1,10 +1,16 @@
-# Nightshift — Game Direction
+# Gozer
+
+![alt text](https://file%2B.vscode-resource.vscode-cdn.net/Users/kiskalloakos/Downloads/RPG/Assets/Art/Characters/rogue_final_firing_right.png?version%3D1789652066501)
 
 ## One-sentence pitch
 
-A nostalgic top-down pixel-art survival RPG where you build a life in a warm, persistent town, then risk each night outside its lights on tense loot-and-extract expeditions—alone or with friends.
+A nostalgic top-down pixel-art survival RPG where you build a life in a warm, persistent town, then risk each night outside its lights on tense loot-and-extract expeditions.
+
+Why is the city on lockdown? Why does Gozer only go out alone (or coop)? How did Gozer become a hero? 
 
 ## The player fantasy
+
+You are the "town Gozer". Which locally simply means a kind of hero. Everyone knows you in town, you are looked up to and feared. Also frequently asked for favors.
 
 Return home carrying a rare, hard-won find after a frightening run. Use it to make the town safer, stranger, and more alive; then decide how much further to push your luck tomorrow night.
 
@@ -35,15 +41,12 @@ Prepare in town
 
 ## Setting and tone
 
-An isolated town survives at the edge of a wilderness that becomes unnatural after dark. The wilderness could be an overgrown industrial exclusion zone, a cursed forest, or a collapsed underground world; choose one early and commit to it.
+An isolated town survives at the edge of a wilderness that becomes unnatural after dark... Every direction you "go out" to from the city is different.; the wilderness, outside of town, is an overgrown industrial exclusion zone // a cursed forest // a collapsed underground world. It is full of literal montsers, town people who became part of the wilderness and animals.
 
-The important tonal rule: town life is genuinely comforting, not sarcastically cozy. The darkness outside earns its tension because players care about returning.
+The important tonal rule: town life is genuinely comforting and cozy. Outside the city is dark and scary.
 
 ## Single-player implementation
 
-The full core loop is designed for one player from the beginning.
-
-- **No required AI party:** do not create AI companions for the first version. A solid lone-explorer loop is more valuable than unreliable helpers.
 - **Solo-scaled encounters:** reduce enemy count and simultaneous threats, but retain dangerous enemy behaviors, sound cues, and decision-making.
 - **Risk comes from pressure, not numbers:** limited healing, limited inventory, darkness, distance from extraction, and escalating night danger make a solo run tense.
 - **Active extraction:** extraction is a physical destination such as a lift, gate, train platform, or radio beacon. Triggering it may take time or make noise.
@@ -57,13 +60,12 @@ Co-op is optional drop-in play using the same places, systems, and rules as solo
 | System | Single-player | Co-op |
 | --- | --- | --- |
 | Combat | Fewer concurrent threats; enemies remain dangerous | More mixed threats and chances to divide attention |
-| Loot | All loot belongs to the player | Prefer individually-instanced basic loot; share major discoveries |
+| Loot | All loot belongs to the player | Trading is available between co-op players. |
 | Objectives | One player can complete every objective | Optional tasks reward splitting up or coordinating |
 | Downed state | Injury, escape item, or costly retreat | Teammates can revive or carry a downed player |
 | Extraction | Player chooses when to leave | Each player can leave with their haul, or the group chooses a shared extraction rule |
 | Town | Personal persistent town | Join the host's town; visitors contribute resources and retain personal character progression |
 
-Avoid forced betrayal roles. They are interesting only in multiplayer and undermine the solo experience.
 
 ## Shared tension system: contamination
 
@@ -73,7 +75,7 @@ The wilderness contains valuable **cursed / contaminated** items. Bringing them 
 - In co-op, the same choice becomes a real group discussion.
 - The result is visible: sick crops, power failures, strange visitors, altered town defenses, or new story branches.
 
-This is the game's signature rule: **every expedition can change home.**
+This is the game's signature rule: **every expedition can change home.** Consequences are real.
 
 ## Reference palette
 
@@ -91,37 +93,7 @@ Combat should be simple to learn and rich in feedback.
 - Top-down, direct aiming.
 - Small, distinct weapon roster: for example revolver, shotgun, rifle, improvised melee tool.
 - Every weapon needs a readable rhythm, recoil, sound profile, and ideal range.
-- Enemies should be identified by behavior as much as appearance: stalker, swarmer, noise-reactive hunter, armored guardian.
-- Sound is gameplay: gunshots, broken glass, alarms, and extraction machinery can attract danger.
+- Enemies should be identified by behavior as much as appearance.
+- Sound is a mechanic you need to look out for: gunshots, broken glass, alarms, and extraction machinery can attract danger.
 
-## Vertical slice: build this first
-
-Do not start with an open world, full multiplayer, farming, or a large RPG story.
-
-Build one playable 10–15 minute loop:
-
-1. A small town hub with a workbench, storage, and three upgradeable buildings.
-2. One compact, replayable expedition zone.
-3. One player character, movement, aiming, and two satisfying weapons: revolver and shotgun.
-4. Three resource tiers: common, valuable, and contaminated.
-5. Two regular enemies plus one escalation enemy.
-6. One physical extraction point with a short, dangerous activation window.
-7. One permanent reward: a building upgrade, tool, or new route.
-
-The proof-of-fun question is simple: **after a successful run, does the player immediately want to go back out for one more?**
-
-## Scope guardrails
-
-- Start 2D pixel art, not realistic 3D or an open world.
-- Make solo feel excellent before networking.
-- One biome and one town beat five shallow biomes.
-- Prefer emergent stories from systems over hundreds of scripted quests.
-- Ship a small demo around the central loop before adding broad crafting, romance, vehicles, or competitive modes.
-
-## Near-term design decisions
-
-1. Choose the wilderness theme: cursed forest, industrial exclusion zone, or underground ruins.
-2. Define the extraction method and why it is dangerous.
-3. Write the first five town upgrades and what each visibly changes.
-4. Build movement, aiming, one enemy, one gun, and extraction before making pixel-art content at scale.
-5. Playtest the vertical slice solo. Add co-op only when the solo loop is enjoyable without it.
+The ones outside want to get inside. Kill you. You "stayed inside", you are "one of them". You should be outside with them, free and wild (they think).
