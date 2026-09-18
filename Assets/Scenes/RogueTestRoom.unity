@@ -335,6 +335,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FollowCamera
   target: {fileID: 475634368}
+  assetsPixelsPerUnit: 16
+  referenceResolutionY: 180
+  snapToPixelGrid: 0
 --- !u!81 &26210201
 AudioListener:
   m_ObjectHideFlags: 0
@@ -378,7 +381,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 5.625
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -3227,6 +3230,7 @@ GameObject:
   - component: {fileID: 263718192}
   - component: {fileID: 263718194}
   - component: {fileID: 263718193}
+  - component: {fileID: 263718195}
   m_Layer: 0
   m_Name: Crate B
   m_TagString: Untagged
@@ -3355,6 +3359,21 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!114 &263718195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 263718191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c3288f7693ed4a91b835102696d21d9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ScenePortal
+  destinationScene: TownHub
+  prompt: '[E]  Extract to town'
+  activationRadius: 2.2
 --- !u!1 &264435695
 GameObject:
   m_ObjectHideFlags: 0
@@ -14331,7 +14350,7 @@ SpriteRenderer:
   m_Size: {x: 2.508, y: 2.508}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
 --- !u!95 &973997158

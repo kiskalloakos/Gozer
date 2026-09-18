@@ -13,6 +13,8 @@ public static class RpgSetup
         var settings = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset")[0]);
         var input = settings.FindProperty("activeInputHandler");
         if (input != null) { input.intValue = 0; settings.ApplyModifiedProperties(); }
+        // Temporary combat-prototype art. These 128 px sources predate the
+        // shipping 16 PPU pipeline and are not a scale reference for new art.
         var names = new[] { "rogue_final_standing", "rogue_final_firing_right" };
         var sprites = new Sprite[2];
         for (int i = 0; i < names.Length; i++)
@@ -59,7 +61,10 @@ public static class RpgSetup
         Wall("West wall", new Vector2(-10.5f,0), new Vector2(1,15), tile, room.transform);
         Wall("East wall", new Vector2(10.5f,0), new Vector2(1,15), tile, room.transform);
         Wall("Crate A", new Vector2(-3,2), new Vector2(2,1), tile, room.transform);
-        Wall("Crate B", new Vector2(4,-2), new Vector2(2,2), tile, room.transform);
+        var extractionCrate = Wall("Crate B", new Vector2(4,-2), new Vector2(2,2), tile, room.transform);
+        var extractionPortal = extractionCrate.AddComponent<ScenePortal>();
+        extractionPortal.destinationScene = "TownHub";
+        extractionPortal.prompt = "[E]  Extract to town";
         var player = new GameObject("Player");
         var body = player.AddComponent<Rigidbody2D>(); body.gravityScale = 0; body.freezeRotation = true; body.interpolation = RigidbodyInterpolation2D.Interpolate;
         var col = player.AddComponent<BoxCollider2D>(); col.size = new Vector2(.55f,.35f); col.offset = new Vector2(0,.18f);
@@ -68,10 +73,14 @@ public static class RpgSetup
         var controller = player.AddComponent<RogueController>(); controller.visual = renderer;
         controller.standing = sprites[0]; controller.firing = sprites[1];
         var cameraGo = new GameObject("Main Camera"); cameraGo.tag = "MainCamera";
-        var camera = cameraGo.AddComponent<Camera>(); camera.orthographic = true; camera.orthographicSize = 5;
+        var camera = cameraGo.AddComponent<Camera>(); camera.orthographic = true; camera.orthographicSize = PixelArtStandard.OrthographicSize;
         camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(.04f,.02f,.08f);
         cameraGo.transform.position = new Vector3(0,0,-10); cameraGo.AddComponent<AudioListener>();
-        cameraGo.AddComponent<FollowCamera>().target = player.transform;
+        var follow = cameraGo.AddComponent<FollowCamera>();
+        follow.target = player.transform;
+        follow.assetsPixelsPerUnit = PixelArtStandard.PixelsPerUnit;
+        follow.referenceResolutionY = PixelArtStandard.ReferenceHeight;
+        follow.snapToPixelGrid = false;
         EditorSceneManager.SaveScene(scene, "Assets/Scenes/RogueTestRoom.unity");
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene("Assets/Scenes/RogueTestRoom.unity", true) };
         Selection.activeGameObject = player;
@@ -79,10 +88,11 @@ public static class RpgSetup
         AssetDatabase.SaveAssets();
         Debug.Log("RPG_SETUP_SUCCESS");
     }
-    static void Wall(string name, Vector2 pos, Vector2 size, Sprite sprite, Transform parent)
+    static GameObject Wall(string name, Vector2 pos, Vector2 size, Sprite sprite, Transform parent)
     {
         var go = new GameObject(name); go.transform.parent = parent; go.transform.position = pos; go.transform.localScale = size;
         var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = sprite; sr.color = new Color(.42f,.1f,.55f); sr.sortingOrder = -5000;
         go.AddComponent<BoxCollider2D>();
+        return go;
     }
 }

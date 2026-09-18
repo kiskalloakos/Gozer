@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/TownHub.unity
+    guid: 7994537bcea304431844a21966f7b248
+  - enabled: 1
     path: Assets/Scenes/RogueTestRoom.unity
     guid: 302e10dc811d8452592fccb0a2ce78e4
   m_configObjects: {}
