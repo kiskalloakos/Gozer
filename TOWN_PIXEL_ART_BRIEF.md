@@ -1,39 +1,53 @@
 # Town hub pixel-art brief
 
-This brief applies the project-wide [pixel-art and camera standard](PIXEL_ART_STANDARD.md) to the town. The canonical rules are: orthographic three-quarter top-down view, 16 PPU, 16 x 16 px tiles, Point filtering, bottom-center world pivots, upper-left lighting, and default Transform scale `(1, 1, 1)`.
+The current Unity scene uses colored placeholder shapes. Replace them with the sprites below without changing the gameplay code.
 
-## Current required town assets
+## Shared rules
 
-| Asset | Exact canvas | Content |
-| --- | ---: | --- |
-| Ground tile sheet | 128 x 128 px | 8 x 8 sheet of 16 px tiles: grass variations, packed dirt variations, stone paving, and path edges/corners. |
-| Player home | 96 x 80 px | Warm cottage, down-facing front door, roof, chimney, and two lit windows. |
-| Storage | 80 x 64 px | Reinforced shed/warehouse, broad door, crate motif, and small lamp. |
-| Workbench | 48 x 32 px | Freestanding bench with tools, vice, and warm lantern glow. |
-| Watchtower L1-L3 | 80 x 96 px each | L1 rough lookout; L2 roof, bell, and stronger supports; L3 beacon and orange town banner. |
-| Infirmary L1-L3 | 96 x 80 px each | L1 modest clinic; L2 extension and herb rack; L3 lit treatment wing and original medical sign. |
-| Greenhouse L1-L3 | 96 x 80 px each | L1 small shelter; L2 second bay and barrel; L3 reinforced glowing greenhouse and healthy crops. |
-| Expedition gate | 96 x 48 px | One closed frame. The outside-facing side is darker and less welcoming. No opening animation. |
-| Player walk cycle | 16 x 32 px per frame | Four directions, four frames each, ordered down/right/up/left from top to bottom. |
+- View: top-down three-quarter view, matching the current character.
+- Grid: 32 x 32 px tiles; import environment art at 32 pixels per Unity unit.
+- Palette: warm greens, timber browns, cream stone, amber lamps; town must feel safe and inviting.
+- Files: transparent PNG, no smoothing, no shadows cut off at the canvas edge.
+- Pivot for buildings and props: bottom-center.
+- Light direction: upper-left.
+- Keep doors at least 32 px wide and all important silhouettes readable at 1x scale.
 
-Upgradeable building levels must retain the same canvas, bottom-center pivot, baseline, and entrance position. Doors should be approximately 16 px wide and 24-32 px tall. Building colliders cover only their lower footprint, allowing the player to walk visually close to the facade.
+## First delivery — required to replace every placeholder
 
-The town fence is currently removed from scope. Do not re-add or import a fence sheet until its placement and tile set receive a new brief.
+1. **Ground tile sheet** — 256 x 256 px
+   - 32 px tiles for grass (3 variations), packed dirt (3), stone town-square paving (3), and path edges/corners.
+2. **Player home** — 192 x 160 px
+   - Warm cottage, front door facing down, roof, chimney, two lit windows.
+3. **Storage building** — 160 x 128 px
+   - Reinforced shed/warehouse with a broad door, stacked crate motif, and a small lamp.
+4. **Workbench** — 96 x 64 px
+   - Separate freestanding bench with tools, vice, and a warm lantern glow.
+5. **Watchtower, levels 1–3** — three 160 x 192 px transparent PNGs
+   - L1: rough timber lookout; L2: roof, bell, stronger supports; L3: tall beacon and orange town banner.
+6. **Infirmary, levels 1–3** — three 192 x 160 px transparent PNGs
+   - L1: modest clinic; L2: extension and herb rack; L3: lit treatment wing and recognizable medical sign (no modern red-cross trademark).
+7. **Greenhouse, levels 1–3** — three 192 x 160 px transparent PNGs
+   - L1: small glass/cloth growing shelter; L2: second bay and water barrel; L3: reinforced glowing greenhouse with healthy crops.
+8. **Town fence set** — 32 px tiles
+   - Horizontal, vertical, four corners, end caps, damaged variant, and fence shadow.
+9. **Expedition gate** — 192 x 96 px
+   - Closed and open frames; make the outside-facing side darker and less welcoming.
+10. **No-armor starter look**
+11. **Walking animation all around 360**
 
-## Next atmosphere delivery
+Next:
 
-- Small props: normally 16 x 16 px; use 16 x 32 px for tall props and clean 16 px multiples for larger objects.
-- Suggested set: crate, barrel, sack, wood pile, signpost, well, bench, flower box, weeds, and three rocks.
-- Lamp post: 16 x 32 px, with unlit and lit versions on matching canvases.
-- Chimney smoke: six 16 x 24 px frames on identical canvases.
-- Window glow: four subtle frames, matching the window's exact canvas.
-- Interaction icon: 16 x 16 px.
-- Upgrade sparkle: six to eight frames on a 32 x 32 px canvas.
+12. Props around the town, and visually and functionally finishing the town.
 
-## Delivery rules
+## Second delivery — atmosphere and readability
 
-- Export transparent PNGs with lowercase snake_case names such as `town_home.png` and `watchtower_l2.png`.
-- Draw without anti-aliasing and inspect every sprite at native 1x size.
-- Keep shadows inside the canvas and use the common upper-left light direction.
-- Do not enlarge art to make it appear bigger in Unity; choose the approved source canvas and import at 16 PPU.
-- Check every delivery against the acceptance checklist in [PIXEL_ART_STANDARD.md](PIXEL_ART_STANDARD.md).
+- 32 x 32 px props: crate, barrel, sack, wood pile, signpost, well, bench, flower box, weeds, three rocks.
+- Lamp post: 32 x 64 px, unlit and lit versions.
+- Chimney-smoke animation: 6 frames, each 32 x 48 px.
+- Window-glow animation: 4 frames, subtle flicker.
+- Interaction icon: 16 x 16 px, hand or small speech marker.
+- Upgrade sparkle: 6–8 frames on a 64 x 64 px canvas.
+
+## Naming
+
+Use lowercase snake case, for example `town_home.png`, `watchtower_l2.png`, and `ground_tiles.png`. Keep each upgrade level on the same canvas size so Unity can swap sprites without the building jumping.
