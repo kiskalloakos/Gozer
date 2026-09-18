@@ -1,25 +1,10 @@
 fileFormatVersion: 2
-guid: bc624111f788b40039f41e0d7a6b2c57
+guid: f898ba7ca086b405abe3bddd790bbc7c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4672357251595259418
-    second: town_trees_0
-  - first:
-      213: 248744884476525935
-    second: town_trees_1
-  - first:
-      213: -145174518528424524
-    second: town_trees_2
-  - first:
-      213: 3553297767529352876
-    second: town_tree_0_0
-  - first:
-      213: 1847049209700247515
-    second: town_tree_1_0
-  - first:
-      213: 1479642419599023970
-    second: town_tree_2_0
+      213: -8339012395278246668
+    second: town_tree_slim_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -61,11 +46,11 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
-  alignment: 0
-  spritePivot: {x: 0.5, y: 0.5}
+  alignment: 9
+  spritePivot: {x: 0.5, y: 0}
   spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
@@ -128,67 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: town_tree_0_0
+      name: town_tree_slim_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 64
-        height: 80
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: cae86ce4e79df4130800000000000000
-      internalID: 3553297767529352876
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: town_tree_1_0
-      rect:
-        serializedVersion: 2
-        x: 64
-        y: 0
-        width: 64
-        height: 80
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: bd769da587902a910800000000000000
-      internalID: 1847049209700247515
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: town_tree_2_0
-      rect:
-        serializedVersion: 2
-        x: 128
-        y: 0
-        width: 64
-        height: 80
-      alignment: 9
-      pivot: {x: 0.5, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 26f9ccee0feb88410800000000000000
-      internalID: 1479642419599023970
+      spriteID: 4fc5cd19860e54c80800000000000000
+      internalID: -8339012395278246668
       vertices: []
       indices: 
       edges: []
@@ -197,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -207,12 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      town_tree_0_0: 3553297767529352876
-      town_tree_1_0: 1847049209700247515
-      town_tree_2_0: 1479642419599023970
-      town_trees_0: -4672357251595259418
-      town_trees_1: 248744884476525935
-      town_trees_2: -145174518528424524
+      town_tree_slim_0: -8339012395278246668
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

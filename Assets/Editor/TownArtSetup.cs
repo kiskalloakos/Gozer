@@ -141,7 +141,22 @@ public static class TownArtSetup
         ConfigureBuildingHitbox("WATCHTOWER", 3.8f, -2.4f, .9f);
         ConfigureBuildingHitbox("INFIRMARY", 5.1f, -1.9f, .75f);
         ConfigureBuildingHitbox("GREENHOUSE", 5.2f, -2.05f, .75f);
+        ConfigureOcclusionFaders();
         ApplyCameraSettings();
+    }
+
+    static void ConfigureOcclusionFaders()
+    {
+        foreach (string objectName in new[] { "PLAYER HOME", "STORAGE", "WATCHTOWER", "INFIRMARY", "GREENHOUSE" })
+        {
+            var root = GameObject.Find(objectName);
+            if (!root) continue;
+            var fader = root.GetComponent<TownOcclusionFader>();
+            if (!fader) fader = root.AddComponent<TownOcclusionFader>();
+            fader.occludedAlpha = .5f;
+            fader.fadeSpeed = 4f;
+            EditorUtility.SetDirty(fader);
+        }
     }
 
     static void ApplyGroundTilemap()
