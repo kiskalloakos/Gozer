@@ -18,6 +18,7 @@ public class TownPlayerController : MonoBehaviour
     private Rigidbody2D body;
     private Vector2 movement;
     private float animationClock;
+    private bool wasMoving;
 
     void Awake() => body = GetComponent<Rigidbody2D>();
 
@@ -30,21 +31,32 @@ public class TownPlayerController : MonoBehaviour
             {
                 // Horizontal input owns the animation on diagonals. W+D therefore
                 // moves northeast while displaying the right-facing walk cycle.
-                if (movement.x > 0f) CurrentFacing = FacingDirection.Right;
-                else if (movement.x < 0f) CurrentFacing = FacingDirection.Left;
-                else if (movement.y > 0f) CurrentFacing = FacingDirection.Up;
-                else CurrentFacing = FacingDirection.Down;
+                FacingDirection nextFacing;
+                if (movement.x > 0f) nextFacing = FacingDirection.Right;
+                else if (movement.x < 0f) nextFacing = FacingDirection.Left;
+                else if (movement.y > 0f) nextFacing = FacingDirection.Up;
+                else nextFacing = FacingDirection.Down;
 
-                animationClock += Time.deltaTime;
+                bool changedDirection = nextFacing != CurrentFacing;
+                CurrentFacing = nextFacing;
                 var frames = FramesFor(CurrentFacing);
                 if (frames != null && frames.Length > 0)
+                {
+                    if (!wasMoving || changedDirection)
+                        animationClock = FirstWalkingFrameIndex(CurrentFacing) / walkFramesPerSecond;
+                    else
+                        animationClock += Time.deltaTime;
                     visual.sprite = frames[Mathf.FloorToInt(animationClock * walkFramesPerSecond) % frames.Length];
+                }
+                wasMoving = true;
             }
             else
             {
+                wasMoving = false;
                 animationClock = 0f;
                 var frames = FramesFor(CurrentFacing);
-                if (frames != null && frames.Length > 0) visual.sprite = frames[0];
+                if (frames != null && frames.Length > 0)
+                    visual.sprite = frames[Mathf.Min(IdleFrameIndex(CurrentFacing), frames.Length - 1)];
             }
             visual.flipX = false;
             visual.sortingOrder = Mathf.RoundToInt(-transform.position.y * 100);
@@ -62,5 +74,19 @@ public class TownPlayerController : MonoBehaviour
             case FacingDirection.Left: return walkLeft;
             default: return walkDown;
         }
+    }
+
+    static int IdleFrameIndex(FacingDirection direction)
+    {
+        // The left-facing row alternates walk/idle/walk/idle, unlike the
+        // other rows whose first frame is their standing pose.
+        return direction == FacingDirection.Left ? 1 : 0;
+    }
+
+    static int FirstWalkingFrameIndex(FacingDirection direction)
+    {
+        // A tap may last less than one animation interval. Start on a frame that
+        // differs from the idle pose so every direction still shows one step.
+        return direction == FacingDirection.Left ? 0 : 1;
     }
 }

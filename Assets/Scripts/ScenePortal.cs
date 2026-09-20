@@ -1,48 +1,67 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class ScenePortal : MonoBehaviour
 {
     public string destinationScene;
-    public string prompt = "[E] Travel";
-    public float activationRadius = 2.2f;
+    public string destinationSpawnId;
+    public string prompt = "Click to travel";
 
-    private Transform player;
-    private bool playerNearby;
+    private bool hovered;
+    private bool interactionPending;
 
-    void Update()
+    public void Interact()
     {
-        if (!player) FindPlayer();
-        playerNearby = player && Vector2.Distance(player.position, transform.position) <= activationRadius;
-
-        if (playerNearby && Input.GetKeyDown(KeyCode.E))
-            SceneManager.LoadScene(destinationScene);
+        if (destinationScene == "ExpeditionField" && TownHubController.Instance &&
+            !TownHubController.Instance.CanBeginExpedition()) return;
+        SceneTravel.Load(destinationScene, destinationSpawnId);
     }
 
-    private void FindPlayer()
+    public bool IsPointerOverArt(Vector2 pointer)
     {
-        var townPlayer = FindAnyObjectByType<TownPlayerController>();
-        if (townPlayer) { player = townPlayer.transform; return; }
-
-        var rogue = FindAnyObjectByType<RogueController>();
-        if (rogue) player = rogue.transform;
+        foreach (var renderer in GetComponentsInChildren<SpriteRenderer>())
+        {
+            if (!renderer.enabled || !renderer.sprite) continue;
+            var bounds = renderer.bounds;
+            if (pointer.x >= bounds.min.x && pointer.x <= bounds.max.x &&
+                pointer.y >= bounds.min.y && pointer.y <= bounds.max.y)
+                return true;
+        }
+        return false;
     }
 
     void OnGUI()
     {
-        if (!playerNearby) return;
+        // Town scenes route all hover/click handling through the town cursor
+        // controller so buildings and portals cannot overwrite each other's prompt.
+        if (TownHubController.Instance || HomeInteriorController.Instance) return;
 
-        var style = new GUIStyle(GUI.skin.label)
+        var currentEvent = Event.current;
+        var camera = Camera.main;
+        if (currentEvent == null || !camera) return;
+
+        Vector2 screenPointer = new Vector2(currentEvent.mousePosition.x, Screen.height - currentEvent.mousePosition.y);
+        hovered = IsPointerOverArt(camera.ScreenToWorldPoint(screenPointer));
+        CursorClickFeedback.SetInteractiveHover(hovered);
+        if (hovered && currentEvent.type == EventType.MouseDown && currentEvent.button == 0)
         {
-            alignment = TextAnchor.MiddleCenter,
-            fontSize = 16,
-            fontStyle = FontStyle.Bold
-        };
-        var oldColor = GUI.color;
-        GUI.color = new Color(.08f, .055f, .04f, .94f);
-        GUI.Box(new Rect(Screen.width / 2f - 245, Screen.height - 82, 490, 48), GUIContent.none);
-        GUI.color = new Color(1f, .88f, .52f);
-        GUI.Label(new Rect(Screen.width / 2f - 235, Screen.height - 76, 470, 36), prompt, style);
-        GUI.color = oldColor;
+            if (!interactionPending)
+            {
+                CursorClickFeedback.Pulse();
+                StartCoroutine(InteractAfterCursorFeedback());
+            }
+        }
+    }
+
+    void OnDisable()
+    {
+        CursorClickFeedback.SetInteractiveHover(false);
+    }
+
+    private System.Collections.IEnumerator InteractAfterCursorFeedback()
+    {
+        interactionPending = true;
+        yield return new WaitForSecondsRealtime(CursorClickFeedback.InteractionDelaySeconds);
+        Interact();
+        interactionPending = false;
     }
 }

@@ -7,22 +7,49 @@ public class TownInteractable : MonoBehaviour
     public FacilityType facility;
     public string displayName;
 
-    public virtual string Prompt => $"[E]  Use {displayName}";
+    public virtual string Prompt => facility == FacilityType.Home
+        ? $"Click to enter {displayName}"
+        : $"Click to use {displayName}";
 
     public virtual void Interact()
     {
-        if (!TownHubController.Instance) return;
         switch (facility)
         {
             case FacilityType.Home:
-                TownHubController.Instance.ShowNotice("Home — rested, safe, and ready for the next expedition.");
+                SceneTravel.Load("HomeInterior");
                 break;
             case FacilityType.Workbench:
-                TownHubController.Instance.ShowNotice("Workbench — weapon crafting and repairs will live here.");
+                PurchaseReinforcedMelee();
                 break;
             case FacilityType.Storage:
-                TownHubController.Instance.ShowNotice($"Storage — {TownHubController.Instance.Supplies} town supplies are available.");
+                if (TownHubController.Instance)
+                    TownHubController.Instance.ShowNotice($"Storage — {TownHubController.Instance.Supplies} town supplies are available.");
                 break;
         }
+    }
+
+    static void PurchaseReinforcedMelee()
+    {
+        var result = PlayerProgression.PurchaseReinforcedMelee(out int remainingSupplies);
+        switch (result)
+        {
+            case PlayerProgression.PurchaseResult.Purchased:
+                ShowNotice($"Reinforced melee weapon installed — damage increased to {PlayerProgression.ReinforcedMeleeDamage}. {remainingSupplies} supplies remain.", 5f);
+                break;
+            case PlayerProgression.PurchaseResult.NotEnoughSupplies:
+                ShowNotice($"Reinforced melee weapon costs {PlayerProgression.ReinforcedMeleeCost} supplies. You currently have {remainingSupplies}.", 5f);
+                break;
+            case PlayerProgression.PurchaseResult.AlreadyOwned:
+                ShowNotice("Reinforced melee weapon already installed — damage is permanently increased to 2.", 4.5f);
+                break;
+        }
+    }
+
+    static void ShowNotice(string message, float seconds = 3.5f)
+    {
+        if (TownHubController.Instance)
+            TownHubController.Instance.ShowNotice(message, seconds);
+        else if (HomeInteriorController.Instance)
+            HomeInteriorController.Instance.ShowNotice(message, seconds);
     }
 }

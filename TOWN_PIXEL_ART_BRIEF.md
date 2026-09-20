@@ -38,6 +38,7 @@ The current Unity scene uses colored placeholder shapes. Replace them with the s
 Next:
 
 12. Props around the town, and visually and functionally finishing the town.
+13. Characters for each building
 
 ## Second delivery — atmosphere and readability
 

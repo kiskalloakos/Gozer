@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/TownHub.unity
     guid: 7994537bcea304431844a21966f7b248
   - enabled: 1
-    path: Assets/Scenes/RogueTestRoom.unity
-    guid: 302e10dc811d8452592fccb0a2ce78e4
+    path: Assets/Scenes/HomeInterior.unity
+    guid: 332ccb219539c44fa9d6f6ec6758d4c6
+  - enabled: 1
+    path: Assets/Scenes/ExpeditionField.unity
+    guid: 92b69dcbcb44745758f98e7ded5e4706
   m_configObjects: {}

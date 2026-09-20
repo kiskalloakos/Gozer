@@ -6,23 +6,21 @@ using UnityEngine;
 public static class ScenePortalSetup
 {
     const string TownPath = "Assets/Scenes/TownHub.unity";
-    const string TestRoomPath = "Assets/Scenes/RogueTestRoom.unity";
+    const string HomeInteriorPath = "Assets/Scenes/HomeInterior.unity";
+    const string ExpeditionPath = "Assets/Scenes/ExpeditionField.unity";
 
-    [MenuItem("RPG/Connect Town And Test Room")]
+    [MenuItem("RPG/Connect Town And Expedition")]
     public static void Connect()
     {
         var town = EditorSceneManager.OpenScene(TownPath, OpenSceneMode.Single);
-        ConfigurePortal("Expedition gate", "RogueTestRoom", "[E]  Enter the expedition test room");
+        ConfigurePortal("Town Exit Wall", "ExpeditionField", "Click to begin an expedition");
         EditorSceneManager.SaveScene(town);
-
-        var testRoom = EditorSceneManager.OpenScene(TestRoomPath, OpenSceneMode.Single);
-        ConfigurePortal("Crate B", "TownHub", "[E]  Extract to town");
-        EditorSceneManager.SaveScene(testRoom);
 
         EditorBuildSettings.scenes = new[]
         {
             new EditorBuildSettingsScene(TownPath, true),
-            new EditorBuildSettingsScene(TestRoomPath, true)
+            new EditorBuildSettingsScene(HomeInteriorPath, true),
+            new EditorBuildSettingsScene(ExpeditionPath, true)
         };
 
         EditorSceneManager.OpenScene(TownPath, OpenSceneMode.Single);

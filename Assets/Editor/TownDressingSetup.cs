@@ -93,17 +93,14 @@ public static class TownDressingSetup
         var pathRoot = NewGroup("Natural Paths", root);
         var cells = new Dictionary<Vector2Int, PathKind>();
 
-        // One readable north-south spine connects storage to the expedition
-        // gate. Short branches meet each building at its actual door rather
+        // One readable north-south spine leads out to the expedition gate.
+        // Short branches meet each remaining building at its actual door rather
         // than extending a full road grid across the town.
-        var storageDoor = EntranceCell("STORAGE", -1.75f);
         var gate = GameObject.Find("Expedition gate");
         int gateY = gate ? Mathf.CeilToInt(gate.transform.position.y) : -8;
-        AddVertical(cells, 0, gateY, storageDoor.y);
+        AddVertical(cells, 0, gateY, 1);
 
         ConnectEntrance(cells, EntranceCell("PLAYER HOME", -2.15f), 1);
-        ConnectEntrance(cells, EntranceCell("WATCHTOWER", -2.4f), 1);
-        ConnectEntrance(cells, EntranceCell("GREENHOUSE", -2.05f), -3);
         ConnectEntrance(cells, EntranceCell("INFIRMARY", -1.9f), -3);
 
         var centerSprites = Enumerable.Range(0, 4).Select(column => Sprite(PathsPath, $"town_path_{column}_0")).ToArray();
@@ -217,11 +214,7 @@ public static class TownDressingSetup
         var prototype = new Dictionary<string, Vector2>
         {
             { "PLAYER HOME", new Vector2(-9.5f, 6.7f) },
-            { "STORAGE", new Vector2(0, 7.1f) },
-            { "WORKBENCH", new Vector2(-4.3f, -3.4f) },
-            { "WATCHTOWER", new Vector2(9.7f, 6.3f) },
-            { "INFIRMARY", new Vector2(10.2f, -.8f) },
-            { "GREENHOUSE", new Vector2(-10.2f, -5.1f) }
+            { "INFIRMARY", new Vector2(10.2f, -.8f) }
         };
 
         // If any building has already been deliberately moved, preserve the
@@ -235,11 +228,7 @@ public static class TownDressingSetup
         var compact = new Dictionary<string, Vector2>
         {
             { "PLAYER HOME", new Vector2(-6.2f, 3.8f) },
-            { "STORAGE", new Vector2(0, 4.25f) },
-            { "WORKBENCH", new Vector2(-2.2f, -.8f) },
-            { "WATCHTOWER", new Vector2(6.2f, 3.9f) },
             { "INFIRMARY", new Vector2(6.1f, -2.6f) },
-            { "GREENHOUSE", new Vector2(-6.2f, -2.9f) },
             { "Player", new Vector2(0, -1f) },
             { "Expedition gate", new Vector2(0, -8.8f) }
         };

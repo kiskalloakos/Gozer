@@ -9,14 +9,22 @@ public class TownUpgradeBuilding : TownInteractable
     public GameObject[] tierVisuals;
     public SpriteRenderer levelRenderer;
     public Sprite[] levelSprites;
+    [Min(0)] public int treatmentCost = 3;
 
     public int Level { get; private set; }
-    private string LevelKey => $"Town.Building.{buildingId}.Level";
+    private string LevelKey => ProgressKey(buildingId);
     private int UpgradeCost => baseCost + (Level - 1) * 3;
+    private bool IsInfirmary => buildingId == "infirmary";
 
-    public override string Prompt => Level >= maxLevel
-        ? $"[E]  Inspect {displayName} — level {Level} (MAX)"
-        : $"[E]  Upgrade {displayName} — level {Level} → {Level + 1} ({UpgradeCost} supplies)";
+    public static string ProgressKey(string id) => $"Town.Building.{id}.Level";
+
+    public override string Prompt => IsInfirmary
+        ? TownHubController.Instance && TownHubController.Instance.NeedsTreatment
+            ? $"Click for treatment — restore 5 hearts ({treatmentCost} supplies)"
+            : "Click to visit the infirmary — you are healthy"
+        : Level >= maxLevel
+            ? $"Click to inspect {displayName} — level {Level} (MAX)"
+            : $"Click to upgrade {displayName} — level {Level} → {Level + 1} ({UpgradeCost} supplies)";
 
     void Awake()
     {
@@ -28,6 +36,12 @@ public class TownUpgradeBuilding : TownInteractable
     {
         var hub = TownHubController.Instance;
         if (!hub) return;
+
+        if (IsInfirmary)
+        {
+            hub.TreatPlayer(treatmentCost);
+            return;
+        }
 
         if (Level >= maxLevel)
         {

@@ -99,7 +99,7 @@ All dimensions below are exact source-pixel canvas sizes at 16 PPU. Transparent 
 | Asset | Pixel canvas | Tile/world footprint of canvas | Ratio |
 | --- | ---: | ---: | ---: |
 | Ground tile | 16 x 16 | 1 x 1 | 1:1 |
-| Player home | 96 x 80 | 6 x 5 | 6:5 |
+| Player home | 128 x 112 | 8 x 7 | 8:7 |
 | Storage | 80 x 64 | 5 x 4 | 5:4 |
 | Workbench | 48 x 32 | 3 x 2 | 3:2 |
 | Watchtower L1-L3 | 80 x 96 each | 5 x 6 | 5:6 |

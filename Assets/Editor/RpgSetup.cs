@@ -64,7 +64,7 @@ public static class RpgSetup
         var extractionCrate = Wall("Crate B", new Vector2(4,-2), new Vector2(2,2), tile, room.transform);
         var extractionPortal = extractionCrate.AddComponent<ScenePortal>();
         extractionPortal.destinationScene = "TownHub";
-        extractionPortal.prompt = "[E]  Extract to town";
+        extractionPortal.prompt = "Click to extract to town";
         var player = new GameObject("Player");
         var body = player.AddComponent<Rigidbody2D>(); body.gravityScale = 0; body.freezeRotation = true; body.interpolation = RigidbodyInterpolation2D.Interpolate;
         var col = player.AddComponent<BoxCollider2D>(); col.size = new Vector2(.55f,.35f); col.offset = new Vector2(0,.18f);
@@ -82,7 +82,12 @@ public static class RpgSetup
         follow.referenceResolutionY = PixelArtStandard.ReferenceHeight;
         follow.snapToPixelGrid = false;
         EditorSceneManager.SaveScene(scene, "Assets/Scenes/RogueTestRoom.unity");
-        EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene("Assets/Scenes/RogueTestRoom.unity", true) };
+        EditorBuildSettings.scenes = new[]
+        {
+            new EditorBuildSettingsScene("Assets/Scenes/TownHub.unity", true),
+            new EditorBuildSettingsScene("Assets/Scenes/HomeInterior.unity", true),
+            new EditorBuildSettingsScene("Assets/Scenes/RogueTestRoom.unity", true)
+        };
         Selection.activeGameObject = player;
         if (SceneView.lastActiveSceneView) { SceneView.lastActiveSceneView.in2DMode = true; SceneView.lastActiveSceneView.FrameSelected(); }
         AssetDatabase.SaveAssets();

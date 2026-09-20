@@ -18,29 +18,10 @@ public static class TownArtSetup
     const string TownScenePath = "Assets/Scenes/TownHub.unity";
     const string TileFolder = "Assets/Art/Environment/Tiles";
 
-    [MenuItem("RPG/Import And Apply Town Art")]
+    [System.Obsolete("Town scene rebuilding is permanently disabled to protect the hand-authored TownHub layout.")]
     public static void ImportAndApply()
     {
-        AssetDatabase.Refresh();
-        ConfigureGroundSheet();
-        ConfigureSingleSprite(HomePath);
-        ConfigureSingleSprite(StoragePath);
-        ConfigureSingleSprite(WorkbenchPath);
-        ConfigureSingleSprite(GateClosedPath);
-        // Keep the unused alternate frame consistent with the project standard;
-        // ScenePortal intentionally does not animate or reference it.
-        ConfigureSingleSprite(GateOpenPath);
-        foreach (string building in new[] { "watchtower", "infirmary", "greenhouse" })
-            for (int level = 1; level <= 3; level++)
-                ConfigureSingleSprite($"{BuildingFolder}/{building}_l{level}.png");
-        TownDressingSetup.ConfigureAssets();
-        CreateTileAssets();
-
-        var scene = EditorSceneManager.OpenScene(TownScenePath, OpenSceneMode.Single);
-        ApplyToOpenTownScene();
-        EditorSceneManager.SaveScene(scene);
-        AssetDatabase.SaveAssets();
-        Debug.Log("RPG_TOWN_ART_SUCCESS");
+        Debug.LogError("Town art rebuilding is permanently disabled. Edit TownHub directly without regenerating its layout.");
     }
 
     static void ConfigureGroundSheet()
@@ -126,28 +107,12 @@ public static class TownArtSetup
 
     public static void ApplyToOpenTownScene()
     {
-        ApplyGroundTilemap();
-        ApplyHomeArt();
-        ApplyFacilityArt("STORAGE", StoragePath, -1.75f, "Storage Art");
-        ApplyFacilityArt("WORKBENCH", WorkbenchPath, -.75f, "Workbench Art");
-        ApplyUpgradeableBuildingArt("WATCHTOWER", "watchtower", -2.4f);
-        ApplyUpgradeableBuildingArt("INFIRMARY", "infirmary", -1.9f);
-        ApplyUpgradeableBuildingArt("GREENHOUSE", "greenhouse", -2.05f);
-        RemoveFenceArtAndColliders();
-        ApplyGateArt();
-        TownDressingSetup.ApplyToOpenTownScene();
-        ConfigureBuildingHitbox("PLAYER HOME", 5.2f, -2.15f, .75f);
-        ConfigureBuildingHitbox("STORAGE", 4.5f, -1.75f, .75f);
-        ConfigureBuildingHitbox("WATCHTOWER", 3.8f, -2.4f, .9f);
-        ConfigureBuildingHitbox("INFIRMARY", 5.1f, -1.9f, .75f);
-        ConfigureBuildingHitbox("GREENHOUSE", 5.2f, -2.05f, .75f);
-        ConfigureOcclusionFaders();
-        ApplyCameraSettings();
+        Debug.LogError("Town art rebuilding is permanently disabled. Edit TownHub directly without regenerating its layout.");
     }
 
     static void ConfigureOcclusionFaders()
     {
-        foreach (string objectName in new[] { "PLAYER HOME", "STORAGE", "WATCHTOWER", "INFIRMARY", "GREENHOUSE" })
+        foreach (string objectName in new[] { "PLAYER HOME", "INFIRMARY" })
         {
             var root = GameObject.Find(objectName);
             if (!root) continue;
