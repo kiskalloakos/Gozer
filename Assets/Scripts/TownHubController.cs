@@ -1,8 +1,9 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class TownHubController : MonoBehaviour
 {
-    public const int DefaultStartingSupplies = 18;
+    public const int DefaultStartingGold = 18;
     static readonly string[] RetiredBuildingNames =
     {
         "STORAGE",
@@ -10,15 +11,17 @@ public class TownHubController : MonoBehaviour
         "GREENHOUSE"
     };
 
-    public const string SuppliesKey = "Town.Supplies";
-    public const string PendingSecuredSuppliesKey = "Town.PendingSecuredSupplies";
+    // Keep the original PlayerPrefs values so existing saves migrate to Gold without losing currency.
+    public const string GoldKey = "Town.Supplies";
+    public const string PendingSecuredGoldKey = "Town.PendingSecuredSupplies";
     public static TownHubController Instance { get; private set; }
 
-    [SerializeField] private int startingSupplies = DefaultStartingSupplies;
+    [FormerlySerializedAs("startingSupplies")]
+    [SerializeField] private int startingGold = DefaultStartingGold;
     private string notice = "Welcome home, Gozer.";
     private float noticeUntil;
 
-    public int Supplies { get; private set; }
+    public int Gold { get; private set; }
     public bool IsInjured { get; private set; }
     public int HealthUnits { get; private set; }
     public bool NeedsTreatment => IsInjured || HealthUnits < ExpeditionPlayerHealth.DefaultMaxHealthUnits;
@@ -27,9 +30,9 @@ public class TownHubController : MonoBehaviour
     {
         Instance = this;
         RemoveRetiredBuildings();
-        if (!PlayerPrefs.HasKey(SuppliesKey))
-            PlayerPrefs.SetInt(SuppliesKey, startingSupplies);
-        Supplies = PlayerPrefs.GetInt(SuppliesKey, startingSupplies);
+        if (!PlayerPrefs.HasKey(GoldKey))
+            PlayerPrefs.SetInt(GoldKey, startingGold);
+        Gold = PlayerPrefs.GetInt(GoldKey, startingGold);
         IsInjured = PlayerPrefs.GetInt(ExpeditionPlayerHealth.InjuryKey, 0) == 1;
         if (!PlayerPrefs.HasKey(ExpeditionPlayerHealth.HealthKey))
             PlayerPrefs.SetInt(ExpeditionPlayerHealth.HealthKey,
@@ -37,11 +40,16 @@ public class TownHubController : MonoBehaviour
         HealthUnits = Mathf.Clamp(
             PlayerPrefs.GetInt(ExpeditionPlayerHealth.HealthKey, ExpeditionPlayerHealth.DefaultMaxHealthUnits),
             0, ExpeditionPlayerHealth.DefaultMaxHealthUnits);
-        int securedSupplies = PlayerPrefs.GetInt(PendingSecuredSuppliesKey, 0);
-        PlayerPrefs.DeleteKey(PendingSecuredSuppliesKey);
+        int securedGold = PlayerPrefs.GetInt(PendingSecuredGoldKey, 0);
+        PlayerPrefs.DeleteKey(PendingSecuredGoldKey);
         PlayerPrefs.Save();
-        ShowNotice(securedSupplies > 0
-            ? $"Extraction successful — {securedSupplies} supplies secured."
+        bool threatIncreased = ExpeditionRunProgression.TryConsumePendingThreatIncrease(out int threatLevel);
+        ShowNotice(threatIncreased
+            ? securedGold > 0
+                ? $"Extraction successful — {securedGold} Gold secured. Next threat level: {threatLevel}."
+                : $"Extraction successful. Next threat level: {threatLevel}."
+            : securedGold > 0
+                ? $"Extraction successful — {securedGold} Gold secured."
             : IsInjured
                 ? "You made it home injured. Visit the infirmary for treatment."
                 : "Welcome home, Gozer. The town is safe for now.");
@@ -56,22 +64,35 @@ public class TownHubController : MonoBehaviour
         }
     }
 
-    public bool SpendSupplies(int amount)
+    public bool SpendGold(int amount)
     {
-        if (Supplies < amount) return false;
-        Supplies -= amount;
-        PlayerPrefs.SetInt(SuppliesKey, Supplies);
-        PlayerPrefs.Save();
+        if (!TrySpendGold(amount, out int remainingGold)) return false;
+        Gold = remainingGold;
         return true;
     }
 
-    public static void AddSecuredSupplies(int amount)
+    public static bool TrySpendGold(int amount, out int remainingGold)
+    {
+        remainingGold = GetGoldBalance();
+        if (amount < 0 || remainingGold < amount) return false;
+
+        remainingGold -= amount;
+        PlayerPrefs.SetInt(GoldKey, remainingGold);
+        PlayerPrefs.Save();
+        if (Instance) Instance.Gold = remainingGold;
+        return true;
+    }
+
+    public static int GetGoldBalance()
+        => PlayerPrefs.GetInt(GoldKey, DefaultStartingGold);
+
+    public static void AddSecuredGold(int amount)
     {
         if (amount <= 0) return;
-        int supplies = PlayerPrefs.GetInt(SuppliesKey, DefaultStartingSupplies);
-        PlayerPrefs.SetInt(SuppliesKey, supplies + amount);
-        PlayerPrefs.SetInt(PendingSecuredSuppliesKey,
-            PlayerPrefs.GetInt(PendingSecuredSuppliesKey, 0) + amount);
+        int gold = GetGoldBalance();
+        PlayerPrefs.SetInt(GoldKey, gold + amount);
+        PlayerPrefs.SetInt(PendingSecuredGoldKey,
+            PlayerPrefs.GetInt(PendingSecuredGoldKey, 0) + amount);
         PlayerPrefs.Save();
     }
 
@@ -83,9 +104,9 @@ public class TownHubController : MonoBehaviour
             return;
         }
 
-        if (!SpendSupplies(cost))
+        if (!SpendGold(cost))
         {
-            ShowNotice($"Not enough supplies. Treatment costs {cost}.");
+            ShowNotice($"Not enough Gold. Treatment costs {cost} Gold.");
             return;
         }
 

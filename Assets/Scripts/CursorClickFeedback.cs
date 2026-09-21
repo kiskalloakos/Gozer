@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Swaps to the pressed hand cursor while the primary mouse button is held.
@@ -58,6 +59,13 @@ public sealed class CursorClickFeedback : MonoBehaviour
             Debug.LogWarning($"Pressed cursor not found at Resources/{PressedCursorResource}.");
         if (!hoverCursor)
             Debug.LogWarning($"Hover cursor not found at Resources/{HoverCursorResource}.");
+
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDestroy()
+    {
+        if (instance == this) SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     private void Update()
@@ -111,11 +119,19 @@ public sealed class CursorClickFeedback : MonoBehaviour
 
     private void SetHovering(bool hovering)
     {
-        hovering = hovering && hoverCursor != null;
+        hovering = hovering && hoverCursor != null && HoverCursorAllowed();
         if (showingInteractiveHover == hovering) return;
         showingInteractiveHover = hovering;
         ApplyCursor();
     }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "ExpeditionField") SetHovering(false);
+    }
+
+    private static bool HoverCursorAllowed()
+        => SceneManager.GetActiveScene().name != "ExpeditionField";
 
     private void ApplyCursor()
     {

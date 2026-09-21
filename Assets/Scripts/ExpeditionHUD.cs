@@ -3,13 +3,37 @@ using UnityEngine.SceneManagement;
 
 public class ExpeditionHUD : MonoBehaviour
 {
-    public ExpeditionPlayerHealth health;
-    [Range(1, 10)] public int inventorySlots = 6;
+    public const int QuickbarSlotCount = 4;
+    // IMGUI coordinates are already screen pixels, so keep a small, consistent safe margin.
+    const float QuickbarBottomMargin = 10f;
+    const float HeartsToQuickbarGap = 10f;
+    const float QuickbarRightOffset = 10f;
+    const float QuickbarArtworkTop = 13f;
+    const float QuickbarArtworkBottom = 37f;
+    const float GoldCountBounceDuration = .38f;
+    static readonly float[] QuickbarSourceColumnCenters = { 29f, 47f, 64f, 81f };
+    static readonly string[] GoldCountGlyphs =
+    {
+        "111101101101111", // 0
+        "010110010010111", // 1
+        "111001111100111", // 2
+        "111001111001111", // 3
+        "101101111001001", // 4
+        "111100111001111", // 5
+        "111100111101111", // 6
+        "111001001001001", // 7
+        "111101111101111", // 8
+        "111101111001111"  // 9
+    };
 
+    static Texture2D quickbarArt;
+
+    public ExpeditionPlayerHealth health;
     public int CarriedLoot { get; private set; }
 
     string statusMessage = "";
     float statusUntil;
+    float goldCountBounceStartedAt = float.NegativeInfinity;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void InstallForCurrentAndFutureScenes()
@@ -29,27 +53,35 @@ public class ExpeditionHUD : MonoBehaviour
     {
         if (!health) health = GetComponent<ExpeditionPlayerHealth>();
         if (!health) health = FindAnyObjectByType<ExpeditionPlayerHealth>();
+        if (!GetComponent<PlayerInventoryUI>()) gameObject.AddComponent<PlayerInventoryUI>();
     }
 
     public void AddLoot(int amount)
     {
         if (amount <= 0) return;
         CarriedLoot += amount;
-        statusMessage = $"+{amount} expedition supplies";
+        statusMessage = $"+{amount} Gold";
         statusUntil = Time.time + 1.4f;
+        goldCountBounceStartedAt = Time.unscaledTime;
     }
 
     public int SecureLoot()
     {
         int secured = CarriedLoot;
         CarriedLoot = 0;
-        if (secured > 0) TownHubController.AddSecuredSupplies(secured);
+        if (secured > 0) TownHubController.AddSecuredGold(secured);
         return secured;
     }
 
-    public void LoseLoot()
+    public void LoseLoot() => CarriedLoot = 0;
+
+    public void GetPlayerInventoryGold(out int amount, out int slot)
     {
-        CarriedLoot = 0;
+        int securedGold = TownHubController.GetGoldBalance();
+        bool storedInPlayerInventory =
+            GoldInventoryLocation.CurrentContainer == GoldInventoryLocation.Container.PlayerInventory;
+        amount = storedInPlayerInventory ? securedGold + CarriedLoot : CarriedLoot;
+        slot = storedInPlayerInventory ? GoldInventoryLocation.CurrentSlot : 0;
     }
 
     void OnGUI()
@@ -57,76 +89,174 @@ public class ExpeditionHUD : MonoBehaviour
         int maxHearts = health ? health.maxHearts : ExpeditionPlayerHealth.DefaultMaxHearts;
         int healthUnits = health
             ? health.CurrentHealth
-            : Mathf.Clamp(
-                PlayerPrefs.GetInt(ExpeditionPlayerHealth.HealthKey, ExpeditionPlayerHealth.DefaultMaxHealthUnits),
-                0, ExpeditionPlayerHealth.DefaultMaxHealthUnits);
+            : Mathf.Clamp(PlayerPrefs.GetInt(ExpeditionPlayerHealth.HealthKey,
+                ExpeditionPlayerHealth.DefaultMaxHealthUnits), 0, ExpeditionPlayerHealth.DefaultMaxHealthUnits);
 
-        const float slotSize = 50f;
-        const float gap = 7f;
-        float inventoryWidth = inventorySlots * slotSize + (inventorySlots - 1) * gap;
-        float panelWidth = inventoryWidth + 34f;
-        float panelX = (Screen.width - panelWidth) * .5f;
-        float panelY = Screen.height - 92f;
+        GetPlayerInventoryGold(out int displayedGold, out int displayedSlot);
+        float bounceProgress = Mathf.Clamp01((Time.unscaledTime - goldCountBounceStartedAt) /
+            GoldCountBounceDuration);
+        float countBounce = Time.unscaledTime - goldCountBounceStartedAt < GoldCountBounceDuration
+            ? Mathf.Sin(bounceProgress * Mathf.PI)
+            : 0f;
+        DrawQuickbar(displayedGold, displayedSlot, countBounce);
 
-        var oldColor = GUI.color;
-        GUI.color = new Color(.035f, .04f, .055f, .94f);
-        GUI.DrawTexture(new Rect(panelX, panelY, panelWidth, 78f), Texture2D.whiteTexture);
-
-        var label = new GUIStyle(GUI.skin.label)
-        {
-            alignment = TextAnchor.MiddleCenter,
-            fontSize = 11,
-            fontStyle = FontStyle.Bold,
-            normal = { textColor = new Color(.78f, .82f, .88f) }
-        };
-        GUI.color = Color.white;
-        GUI.Label(new Rect(panelX, panelY + 2f, panelWidth, 18f), "INVENTORY", label);
-
-        int securedSupplies = PlayerPrefs.GetInt(
-            TownHubController.SuppliesKey,
-            TownHubController.DefaultStartingSupplies);
-        int displayedSupplies = securedSupplies + CarriedLoot;
-
-        float slotsX = panelX + 17f;
-        for (int i = 0; i < inventorySlots; i++)
-        {
-            var rect = new Rect(slotsX + i * (slotSize + gap), panelY + 21f, slotSize, slotSize);
-            bool filled = i == 0 && displayedSupplies > 0;
-            GUI.color = filled ? new Color(.95f, .67f, .22f, 1f) : new Color(.28f, .32f, .39f, 1f);
-            GUI.DrawTexture(rect, Texture2D.whiteTexture);
-            GUI.color = filled ? new Color(.31f, .2f, .06f, 1f) : new Color(.07f, .08f, .11f, 1f);
-            GUI.DrawTexture(
-                new Rect(rect.x + 3f, rect.y + 3f, rect.width - 6f, rect.height - 6f),
-                Texture2D.whiteTexture);
-            GUI.color = Color.white;
-            GUI.Label(new Rect(rect.x + 4f, rect.y + 2f, 14f, 16f), (i + 1).ToString(), label);
-            if (filled)
-            {
-                var lootStyle = new GUIStyle(label) { fontSize = 22 };
-                lootStyle.normal.textColor = new Color(1f, .76f, .24f);
-                GUI.Label(new Rect(rect.x + 2f, rect.y + 10f, 28f, 32f), "◆", lootStyle);
-
-                var stackStyle = new GUIStyle(label)
-                {
-                    alignment = TextAnchor.LowerRight,
-                    fontSize = 12,
-                    fontStyle = FontStyle.Bold
-                };
-                stackStyle.normal.textColor = Color.white;
-                GUI.Label(new Rect(rect.x + 17f, rect.y + 23f, 29f, 21f), $"×{displayedSupplies}", stackStyle);
-            }
-        }
-
-        float heartsWidth = maxHearts * 30f;
-        float heartsX = (Screen.width - heartsWidth) * .5f;
-        float heartsY = panelY - 38f;
+        Rect quickbar = GetQuickbarRect();
+        float heartsWidth = HealthHeartGUI.GetWidth(maxHearts);
+        float heartsX = quickbar.center.x - heartsWidth * .5f;
+        float heartsY = quickbar.y + QuickbarArtworkTop * GetPixelScale()
+            - HealthHeartGUI.HeartHeight - HeartsToQuickbarGap;
         HealthHeartGUI.Draw(healthUnits, maxHearts, heartsX, heartsY);
 
         if (Time.time < statusUntil)
         {
-            GUI.color = new Color(1f, .78f, .28f);
-            GUI.Label(new Rect(Screen.width * .5f - 150f, heartsY - 30f, 300f, 24f), statusMessage, label);
+            var oldColor = GUI.color;
+            var noticeStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.UpperCenter,
+                fontSize = 14,
+                fontStyle = FontStyle.Normal,
+                wordWrap = true,
+                normal = { textColor = new Color(.92f, .9f, .82f, .78f) }
+            };
+            GUI.color = Color.white;
+            GUI.Label(new Rect(Screen.width / 2f - 280f, 10f, 560f, 42f),
+                statusMessage, noticeStyle);
+            GUI.color = oldColor;
+        }
+    }
+
+    public static Rect GetQuickbarRect()
+    {
+        Texture2D art = GetQuickbarArt();
+        float scale = GetPixelScale();
+        float width = art ? art.width * scale : 110f * scale;
+        float height = art ? art.height * scale : 50f * scale;
+        // Position from the opaque artwork bounds. The source PNG has transparent
+        // padding above and below the four visible slots.
+        float y = Screen.height - Screen.safeArea.yMin
+            - QuickbarArtworkBottom * scale - QuickbarBottomMargin;
+        return new Rect(Mathf.Round((Screen.width - width) * .5f + QuickbarRightOffset * scale),
+            Mathf.Round(y), width, height);
+    }
+
+    public static Rect GetQuickbarSlotRect(int slot)
+    {
+        Rect panel = GetQuickbarRect();
+        float scale = panel.width / 110f;
+        // bottom_inventory.png has hand-drawn, non-uniform column spacing.
+        // Use each visual cell center rather than applying a shared pitch.
+        const float sourceGridY = 16f;
+        const float sourceCellSize = 17f;
+        float cellSize = sourceCellSize * scale;
+        return new Rect(panel.x + QuickbarSourceColumnCenters[slot] * scale - cellSize * .5f,
+            panel.y + sourceGridY * scale, sourceCellSize * scale, sourceCellSize * scale);
+    }
+
+    public static void DrawQuickbar(int goldAmount, int goldSlot, float countBounce = 0f)
+    {
+        var oldColor = GUI.color;
+        Rect panel = GetQuickbarRect();
+        Texture2D art = GetQuickbarArt();
+        GUI.color = Color.white;
+        GUI.DrawTexture(panel, art ? art : Texture2D.whiteTexture, ScaleMode.StretchToFill, true);
+        if (goldAmount > 0 && goldSlot >= 0 && goldSlot < QuickbarSlotCount)
+        {
+            // Match the full inventory exactly: draw within the cell's inset content box,
+            // rather than using the raw quickbar cell bounds.
+            Rect slot = GetQuickbarSlotRect(goldSlot);
+            float inset = Mathf.Max(2f, panel.width / 110f);
+            Rect content = new Rect(slot.x + inset, slot.y + inset,
+                slot.width - inset * 2f, slot.height - inset * 2f);
+            DrawGoldStack(content, goldAmount, content.width / 50f, countBounce);
         }
         GUI.color = oldColor;
+    }
+
+    public static void DrawGoldStack(Rect rect, int amount, float contentScale = 1f,
+        float countBounce = 0f)
+    {
+        var oldColor = GUI.color;
+        GUI.color = Color.white;
+        GoldVisualAssets assets = GoldVisualAssets.Load();
+        Sprite inventoryGold = assets ? assets.inventorySprite : null;
+        if (inventoryGold)
+        {
+            Rect spriteRect = inventoryGold.rect;
+            Texture2D texture = inventoryGold.texture;
+            float availableSize = Mathf.Min(rect.width, rect.height);
+            float sourceSize = Mathf.Max(spriteRect.width, spriteRect.height);
+            // At normal game resolutions, use an integer texture scale so the icon stays
+            // crisp. Leaving a little breathing room also makes its visual center clear.
+            float textureScale = availableSize >= sourceSize
+                ? Mathf.Max(1f, Mathf.Floor(availableSize / sourceSize))
+                : availableSize / sourceSize;
+            float tokenWidth = spriteRect.width * textureScale;
+            float tokenHeight = spriteRect.height * textureScale;
+            Rect tokenRect = new Rect(
+                Mathf.Round(rect.center.x - tokenWidth * .5f),
+                Mathf.Round(rect.center.y - tokenHeight * .5f),
+                tokenWidth, tokenHeight);
+            var textureCoords = new Rect(spriteRect.x / texture.width, spriteRect.y / texture.height,
+                spriteRect.width / texture.width, spriteRect.height / texture.height);
+            GUI.DrawTextureWithTexCoords(tokenRect, texture, textureCoords, true);
+        }
+
+        DrawGoldCount(rect, amount, countBounce);
+        GUI.color = oldColor;
+    }
+
+    static void DrawGoldCount(Rect rect, int amount, float bounce)
+    {
+        string count = Mathf.Max(0, amount).ToString();
+        float pixel = Mathf.Max(1f, Mathf.Floor(rect.height / 13f));
+        float glyphWidth = 3f * pixel;
+        float countWidth = count.Length * glyphWidth + (count.Length - 1) * pixel;
+        Rect badge = new Rect(
+            Mathf.Round(rect.xMax - countWidth - pixel * 2f),
+            Mathf.Round(rect.yMax - pixel * 7f - pixel * 2f * bounce),
+            countWidth + pixel * 2f,
+            pixel * 7f);
+
+        GUI.color = new Color(.12f, .055f, .025f, .94f);
+        GUI.DrawTexture(badge, Texture2D.whiteTexture);
+
+        float startX = badge.x + pixel;
+        float startY = badge.y + pixel;
+        GUI.color = new Color(1f, .94f, .68f);
+        for (int digitIndex = 0; digitIndex < count.Length; digitIndex++)
+        {
+            string glyph = GoldCountGlyphs[count[digitIndex] - '0'];
+            float glyphX = startX + digitIndex * (glyphWidth + pixel);
+            for (int row = 0; row < 5; row++)
+            {
+                for (int column = 0; column < 3; column++)
+                {
+                    if (glyph[row * 3 + column] != '1') continue;
+                    GUI.DrawTexture(new Rect(glyphX + column * pixel, startY + row * pixel,
+                        pixel, pixel), Texture2D.whiteTexture);
+                }
+            }
+        }
+    }
+
+    public static GUIStyle CreateLabelStyle(int fontSize)
+    {
+        return new GUIStyle(GUI.skin.label)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            fontSize = fontSize,
+            fontStyle = FontStyle.Bold,
+            normal = { textColor = new Color(.78f, .82f, .88f) }
+        };
+    }
+
+    public static float GetPixelScale() => Mathf.Max(1f, Mathf.Floor(Mathf.Min(
+        Screen.width / (float)PixelArtStandard.ReferenceWidth,
+        Screen.height / (float)PixelArtStandard.ReferenceHeight)));
+
+    static Texture2D GetQuickbarArt()
+    {
+        if (!quickbarArt) quickbarArt = Resources.Load<Texture2D>("UI/bottom_inventory");
+        return quickbarArt;
     }
 }

@@ -8,6 +8,12 @@ public class TownPlayerInteractor : MonoBehaviour
 
     void OnGUI()
     {
+        if (HomeStorageChest.IsModalOpen || PlayerInventoryUI.IsOpen)
+        {
+            CursorClickFeedback.SetInteractiveHover(false);
+            return;
+        }
+
         var currentEvent = Event.current;
         if (currentEvent == null) return;
 
@@ -22,6 +28,8 @@ public class TownPlayerInteractor : MonoBehaviour
 
         if (currentEvent.type != EventType.MouseDown || currentEvent.button != 0) return;
         if (interactionPending || (!hovered && !hoveredPortal)) return;
+        if (hovered && !InteractionProximity.IsWithinRange(transform, hovered)) return;
+        if (hoveredPortal && !InteractionProximity.IsWithinRange(transform, hoveredPortal)) return;
 
         CursorClickFeedback.Pulse();
         StartCoroutine(InteractAfterCursorFeedback(hovered, hoveredPortal));
@@ -39,9 +47,9 @@ public class TownPlayerInteractor : MonoBehaviour
         interactionPending = true;
         yield return new WaitForSecondsRealtime(CursorClickFeedback.InteractionDelaySeconds);
 
-        if (interactable)
+        if (interactable && InteractionProximity.IsWithinRange(transform, interactable))
             interactable.Interact();
-        else if (portal)
+        else if (portal && InteractionProximity.IsWithinRange(transform, portal))
             portal.Interact();
 
         interactionPending = false;

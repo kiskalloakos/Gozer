@@ -23,21 +23,21 @@ public class TownInteractable : MonoBehaviour
                 break;
             case FacilityType.Storage:
                 if (TownHubController.Instance)
-                    TownHubController.Instance.ShowNotice($"Storage — {TownHubController.Instance.Supplies} town supplies are available.");
+                    TownHubController.Instance.ShowNotice($"Storage — {TownHubController.Instance.Gold} Gold is available.");
                 break;
         }
     }
 
     static void PurchaseReinforcedMelee()
     {
-        var result = PlayerProgression.PurchaseReinforcedMelee(out int remainingSupplies);
+        var result = PlayerProgression.PurchaseReinforcedMelee(out int remainingGold);
         switch (result)
         {
             case PlayerProgression.PurchaseResult.Purchased:
-                ShowNotice($"Reinforced melee weapon installed — damage increased to {PlayerProgression.ReinforcedMeleeDamage}. {remainingSupplies} supplies remain.", 5f);
+                ShowNotice($"Reinforced melee weapon installed — damage increased to {PlayerProgression.ReinforcedMeleeDamage}. {remainingGold} Gold remains.", 5f);
                 break;
-            case PlayerProgression.PurchaseResult.NotEnoughSupplies:
-                ShowNotice($"Reinforced melee weapon costs {PlayerProgression.ReinforcedMeleeCost} supplies. You currently have {remainingSupplies}.", 5f);
+            case PlayerProgression.PurchaseResult.NotEnoughGold:
+                ShowNotice($"Reinforced melee weapon costs {PlayerProgression.ReinforcedMeleeCost} Gold. You currently have {remainingGold}.", 5f);
                 break;
             case PlayerProgression.PurchaseResult.AlreadyOwned:
                 ShowNotice("Reinforced melee weapon already installed — damage is permanently increased to 2.", 4.5f);

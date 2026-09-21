@@ -43,6 +43,8 @@ public class ExtractionZone : MonoBehaviour
         travelStarted = true;
         var inventory = FindAnyObjectByType<ExpeditionHUD>();
         if (inventory) inventory.SecureLoot();
+        if (PlayerProgression.MeleeLevel >= 2)
+            ExpeditionRunProgression.RecordSuccessfulProceduralRun();
         SceneTravel.Load(destinationScene, destinationSpawnId);
     }
 

@@ -36,6 +36,12 @@ public static class ExpeditionDifficultyDirector
 
         if (PlayerProgression.MeleeLevel < 2) return;
 
+        int completedRuns = ExpeditionRunProgression.CompletedRuns;
+        ExpeditionFieldOfView.Install(
+            loadingPlayer ? loadingPlayer.transform : null,
+            completedRuns,
+            true);
+
         var enemies = Object.FindObjectsByType<WildernessEnemy>();
         if (enemies.Length == 0) return;
         foreach (var enemy in enemies)
@@ -45,7 +51,8 @@ public static class ExpeditionDifficultyDirector
         var player = Object.FindAnyObjectByType<ExpeditionPlayerHealth>();
         var extraction = Object.FindAnyObjectByType<ExtractionZone>();
 
-        for (int i = 0; i < LevelTwoExtraEnemies; i++)
+        int extraEnemyCount = LevelTwoExtraEnemies + ExpeditionRunProgression.RegularEnemyBonus;
+        for (int i = 0; i < extraEnemyCount; i++)
         {
             Vector2 position = ExpeditionArenaGenerator.FindOpenPosition(player ? player.transform : null,
                 extraction ? extraction.transform : null);
@@ -56,6 +63,9 @@ public static class ExpeditionDifficultyDirector
                 template.transform.parent);
             reinforcement.name = $"{ReinforcementPrefix} {i + 1}";
         }
+
+        foreach (var enemy in Object.FindObjectsByType<WildernessEnemy>())
+            enemy.ApplyRunDifficulty(completedRuns);
     }
 
     public static void SpawnExtractionReinforcements()
@@ -67,7 +77,9 @@ public static class ExpeditionDifficultyDirector
         var enemies = Object.FindObjectsByType<WildernessEnemy>();
         if (enemies.Length == 0) return;
 
-        int count = PlayerProgression.MeleeLevel >= 2 ? 2 : 1;
+        int count = PlayerProgression.MeleeLevel >= 2
+            ? 2 + ExpeditionRunProgression.ExtractionReinforcementBonus
+            : 1;
         var template = enemies[0];
         var player = Object.FindAnyObjectByType<ExpeditionPlayerHealth>();
         var extraction = Object.FindAnyObjectByType<ExtractionZone>();

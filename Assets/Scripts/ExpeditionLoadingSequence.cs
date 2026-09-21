@@ -15,8 +15,10 @@ public sealed class ExpeditionLoadingSequence : MonoBehaviour
     float elapsed;
     float previousTimeScale;
     int expeditionSeed;
+    int threatLevel;
     TownPlayerController playerMovement;
     ExpeditionPlayerCombat playerCombat;
+    ExpeditionFieldOfView fieldOfView;
     bool movementWasEnabled;
     bool combatWasEnabled;
     bool running;
@@ -38,6 +40,7 @@ public sealed class ExpeditionLoadingSequence : MonoBehaviour
         player = target;
         elapsed = 0f;
         expeditionSeed = seed;
+        threatLevel = seed == 0 ? 0 : ExpeditionRunProgression.ThreatLevel;
         running = true;
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;
@@ -56,12 +59,17 @@ public sealed class ExpeditionLoadingSequence : MonoBehaviour
         }
 
         float aspect = Mathf.Max(.1f, viewCamera.aspect);
-        overviewSize = Mathf.Max(halfHeight + 1.5f, (halfWidth + 1.5f) / aspect);
+        overviewSize = CalculateOverviewSize(halfWidth, halfHeight, aspect);
         overviewPosition = new Vector3(0f, 0f, -10f);
         viewCamera.transform.position = overviewPosition;
         viewCamera.orthographicSize = overviewSize;
         Debug.Log($"Expedition loading reveal started for seed {seed}.");
         StartCoroutine(Run());
+    }
+
+    public static float CalculateOverviewSize(int halfWidth, int halfHeight, float aspect)
+    {
+        return Mathf.Max(halfHeight + 1.5f, (halfWidth + 1.5f) / Mathf.Max(.1f, aspect));
     }
 
     IEnumerator Run()
@@ -71,6 +79,8 @@ public sealed class ExpeditionLoadingSequence : MonoBehaviour
             elapsed += Time.unscaledDeltaTime;
             float zoomAmount = EaseIntoArrival(
                 Mathf.InverseLerp(RevealStart, MinimumDuration, elapsed));
+            if (!fieldOfView) fieldOfView = GetComponent<ExpeditionFieldOfView>();
+            if (fieldOfView) fieldOfView.SetRevealProgress(zoomAmount);
             Vector3 targetPosition = new Vector3(player.position.x, player.position.y, -10f);
             viewCamera.transform.position = Vector3.Lerp(overviewPosition, targetPosition, zoomAmount);
             viewCamera.orthographicSize = Mathf.Lerp(overviewSize, TargetCameraSize, zoomAmount);
@@ -79,6 +89,7 @@ public sealed class ExpeditionLoadingSequence : MonoBehaviour
 
         viewCamera.transform.position = new Vector3(player.position.x, player.position.y, -10f);
         viewCamera.orthographicSize = TargetCameraSize;
+        if (fieldOfView) fieldOfView.SetRevealProgress(1f);
         if (followCamera) followCamera.enabled = true;
         RestorePlayerControls();
         Time.timeScale = previousTimeScale;
@@ -88,6 +99,7 @@ public sealed class ExpeditionLoadingSequence : MonoBehaviour
     void OnDisable()
     {
         if (!running) return;
+        if (fieldOfView) fieldOfView.SetRevealProgress(1f);
         RestorePlayerControls();
         Time.timeScale = previousTimeScale;
         running = false;
@@ -132,9 +144,10 @@ public sealed class ExpeditionLoadingSequence : MonoBehaviour
             normal = { textColor = Color.white }
         };
         float width = 150f;
-        float height = 38f;
+        float height = threatLevel > 0 ? 54f : 38f;
         string seedLabel = expeditionSeed == 0 ? "FIXED FIELD" : $"SEED {expeditionSeed}";
+        string threatLabel = threatLevel > 0 ? $"\nTHREAT {threatLevel}" : "";
         GUI.Box(new Rect(Screen.width - width - 22f, Screen.height - height - 20f, width, height),
-            $"LOADING{dots}\n{seedLabel}", style);
+            $"LOADING{dots}\n{seedLabel}{threatLabel}", style);
     }
 }

@@ -7,8 +7,6 @@ using Debug = UnityEngine.Debug;
 public static class ExpeditionGenerationStressTest
 {
     const int SeedCount = 100;
-    static readonly Vector2 PlayerSpawn = new Vector2(0f, -18f);
-
     [MenuItem("RPG/Tests/Run 100 Expedition Seeds")]
     public static void RunFromMenu()
     {
@@ -57,9 +55,9 @@ public static class ExpeditionGenerationStressTest
             int finalSeed = firstSeed + SeedCount - 1;
             for (int seed = firstSeed; seed <= finalSeed; seed++)
             {
-                if (!ExpeditionLayoutPlanner.TryCreateValid(seed, PlayerSpawn, out var plan))
+                if (!ExpeditionLayoutPlanner.TryCreateValid(seed, out var plan))
                     throw new InvalidOperationException($"Seed {seed} failed to produce a connected layout.");
-                if (!ExpeditionLayoutPlanner.TryCreateValid(seed, PlayerSpawn, out var replay))
+                if (!ExpeditionLayoutPlanner.TryCreateValid(seed, out var replay))
                     throw new InvalidOperationException($"Seed {seed} failed to produce a replay layout.");
                 if (!ExpeditionLayoutPlanner.IsConnected(plan,
                         ExpeditionLayoutPlanner.DefaultHalfWidth,
@@ -69,12 +67,19 @@ public static class ExpeditionGenerationStressTest
                         ExpeditionLayoutPlanner.DefaultHalfWidth,
                         ExpeditionLayoutPlanner.DefaultHalfHeight))
                     throw new InvalidOperationException($"Seed {seed} placed extraction outside the arena.");
-                if (Vector2.Distance(PlayerSpawn, plan.ExtractionPosition) < 42f)
+                if (!ExpeditionLayoutPlanner.IsInsideArena(plan.PlayerPosition,
+                        ExpeditionLayoutPlanner.DefaultHalfWidth,
+                        ExpeditionLayoutPlanner.DefaultHalfHeight))
+                    throw new InvalidOperationException($"Seed {seed} placed the player outside the arena.");
+                if (Vector2.Distance(plan.PlayerPosition, plan.ExtractionPosition)
+                    < ExpeditionLayoutPlanner.ExtractionMinimumDistance)
                     throw new InvalidOperationException($"Seed {seed} placed extraction too close to spawn.");
                 if (plan.TreePositions.Count != ExpeditionLayoutPlanner.DefaultTreeCount)
                     throw new InvalidOperationException($"Seed {seed} produced {plan.TreePositions.Count} trees instead of {ExpeditionLayoutPlanner.DefaultTreeCount}.");
                 if (plan.GrovePositions.Count < 8 || plan.GrovePositions.Count > 14)
                     throw new InvalidOperationException($"Seed {seed} produced an invalid {plan.GrovePositions.Count}-tree extraction grove.");
+                if (plan.BoundaryForestPositions.Count == 0)
+                    throw new InvalidOperationException($"Seed {seed} produced no boundary forest.");
                 AssertReproducible(seed, plan, replay);
                 foreach (Vector2 tree in plan.TreePositions)
                 {
@@ -82,7 +87,7 @@ public static class ExpeditionGenerationStressTest
                             ExpeditionLayoutPlanner.DefaultHalfWidth,
                             ExpeditionLayoutPlanner.DefaultHalfHeight))
                         throw new InvalidOperationException($"Seed {seed} placed a tree outside the arena.");
-                    if (Vector2.Distance(tree, PlayerSpawn) < 7f)
+                    if (Vector2.Distance(tree, plan.PlayerPosition) < 7f)
                         throw new InvalidOperationException($"Seed {seed} placed a tree inside the spawn clearing.");
                 }
                 foreach (Vector2 tree in plan.GrovePositions)
@@ -90,6 +95,11 @@ public static class ExpeditionGenerationStressTest
                             ExpeditionLayoutPlanner.DefaultHalfWidth,
                             ExpeditionLayoutPlanner.DefaultHalfHeight))
                         throw new InvalidOperationException($"Seed {seed} placed grove scenery outside the arena.");
+                foreach (Vector2 tree in plan.BoundaryForestPositions)
+                    if (ExpeditionLayoutPlanner.IsInsideArena(tree,
+                            ExpeditionLayoutPlanner.DefaultHalfWidth,
+                            ExpeditionLayoutPlanner.DefaultHalfHeight))
+                        throw new InvalidOperationException($"Seed {seed} placed boundary scenery inside the playable arena.");
                 AssertNoSceneryOverlaps(seed, plan);
             }
 
@@ -109,9 +119,11 @@ public static class ExpeditionGenerationStressTest
     static void AssertReproducible(int seed, ExpeditionLayoutPlan first, ExpeditionLayoutPlan replay)
     {
         if (first.Attempt != replay.Attempt || first.LayoutSeed != replay.LayoutSeed
+            || first.PlayerPosition != replay.PlayerPosition
             || first.ExtractionPosition != replay.ExtractionPosition
             || first.TreePositions.Count != replay.TreePositions.Count
-            || first.GrovePositions.Count != replay.GrovePositions.Count)
+            || first.GrovePositions.Count != replay.GrovePositions.Count
+            || first.BoundaryForestPositions.Count != replay.BoundaryForestPositions.Count)
             throw new InvalidOperationException($"Seed {seed} did not reproduce its layout metadata.");
 
         for (int i = 0; i < first.TreePositions.Count; i++)
@@ -120,6 +132,9 @@ public static class ExpeditionGenerationStressTest
         for (int i = 0; i < first.GrovePositions.Count; i++)
             if (first.GrovePositions[i] != replay.GrovePositions[i])
                 throw new InvalidOperationException($"Seed {seed} changed grove tree {i} during replay.");
+        for (int i = 0; i < first.BoundaryForestPositions.Count; i++)
+            if (first.BoundaryForestPositions[i] != replay.BoundaryForestPositions[i])
+                throw new InvalidOperationException($"Seed {seed} changed boundary tree {i} during replay.");
     }
 
     static void AssertNoSceneryOverlaps(int seed, ExpeditionLayoutPlan plan)
@@ -128,6 +143,7 @@ public static class ExpeditionGenerationStressTest
         float minimumSquared = minimumSpacing * minimumSpacing;
         var allScenery = new System.Collections.Generic.List<Vector2>(plan.TreePositions);
         allScenery.AddRange(plan.GrovePositions);
+        allScenery.AddRange(plan.BoundaryForestPositions);
         for (int i = 0; i < allScenery.Count; i++)
         for (int j = i + 1; j < allScenery.Count; j++)
             if ((allScenery[i] - allScenery[j]).sqrMagnitude < minimumSquared)

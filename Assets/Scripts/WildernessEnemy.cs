@@ -27,6 +27,7 @@ public class WildernessEnemy : MonoBehaviour
     float hitFlashUntil;
     int currentHealth;
     Color baseColor = new Color(.48f, .16f, .22f);
+    bool runDifficultyApplied;
 
     void Awake()
     {
@@ -166,6 +167,21 @@ public class WildernessEnemy : MonoBehaviour
         if (!body) body = GetComponent<Rigidbody2D>();
         body.position = position;
         home = position;
+    }
+
+    public void ApplyRunDifficulty(int completedRuns)
+    {
+        if (runDifficultyApplied || completedRuns <= 0) return;
+        runDifficultyApplied = true;
+
+        float difficultyGrowth = 1f - Mathf.Exp(-completedRuns * .08f);
+        float speedMultiplier = 1f + .5f * difficultyGrowth;
+        wanderSpeed *= speedMultiplier;
+        pursuitSpeed *= speedMultiplier;
+        detectionRadius += 4f * difficultyGrowth;
+        attackWindupSeconds *= .6f + .4f * Mathf.Exp(-completedRuns * .06f);
+        maxHealth += completedRuns / 4;
+        currentHealth = maxHealth;
     }
 
     public static void AlertAllFromExtraction()

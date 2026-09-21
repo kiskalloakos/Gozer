@@ -13,22 +13,27 @@ public sealed class ExpeditionLayoutPlan
     public List<Vector2> RoutePoints { get; } = new List<Vector2>();
     public List<Vector2> TreePositions { get; } = new List<Vector2>();
     public List<Vector2> GrovePositions { get; } = new List<Vector2>();
+    public List<Vector2> BoundaryForestPositions { get; } = new List<Vector2>();
 }
 
 public static class ExpeditionLayoutPlanner
 {
-    public const int DefaultHalfWidth = 46;
-    public const int DefaultHalfHeight = 34;
-    public const int DefaultTreeCount = 170;
+    public const int DefaultHalfWidth = 60;
+    public const int DefaultHalfHeight = 45;
+    public const int DefaultTreeCount = 294;
     public const int MaximumGenerationAttempts = 20;
+    public const float ExtractionMinimumDistance = 56f;
 
     const float ArenaInset = 3f;
-    const float ExtractionMinimumDistance = 42f;
+    const float PlayerSpawnInset = 9f;
     const float ExtractionGroveRadius = 3.35f;
     const float RouteClearance = 1.65f;
     const float TreeCollisionRadius = .38f;
     const float PlayerCollisionRadius = .34f;
     const float ValidationCellSize = .5f;
+    const float BoundaryForestOffset = 1.25f;
+    const float BoundaryForestSpacing = 2.25f;
+    const float BoundaryForestJitter = .3f;
 
     public static bool TryCreateValid(
         int requestedSeed,
@@ -37,11 +42,29 @@ public static class ExpeditionLayoutPlanner
         int halfWidth = DefaultHalfWidth,
         int halfHeight = DefaultHalfHeight,
         int treeCount = DefaultTreeCount)
+        => TryCreateValid(requestedSeed, (Vector2?)playerPosition, out plan, halfWidth, halfHeight, treeCount);
+
+    public static bool TryCreateValid(
+        int requestedSeed,
+        out ExpeditionLayoutPlan plan,
+        int halfWidth = DefaultHalfWidth,
+        int halfHeight = DefaultHalfHeight,
+        int treeCount = DefaultTreeCount)
+        => TryCreateValid(requestedSeed, null, out plan, halfWidth, halfHeight, treeCount);
+
+    static bool TryCreateValid(
+        int requestedSeed,
+        Vector2? fixedPlayerPosition,
+        out ExpeditionLayoutPlan plan,
+        int halfWidth,
+        int halfHeight,
+        int treeCount)
     {
         for (int attempt = 0; attempt < MaximumGenerationAttempts; attempt++)
         {
             int layoutSeed = SeedForAttempt(requestedSeed, attempt);
-            var candidate = Create(layoutSeed, requestedSeed, attempt, playerPosition, halfWidth, halfHeight, treeCount);
+            var candidate = Create(layoutSeed, requestedSeed, attempt, fixedPlayerPosition,
+                halfWidth, halfHeight, treeCount);
             if (!IsConnected(candidate, halfWidth, halfHeight)) continue;
             plan = candidate;
             return true;
@@ -102,12 +125,14 @@ public static class ExpeditionLayoutPlanner
         int layoutSeed,
         int requestedSeed,
         int attempt,
-        Vector2 playerPosition,
+        Vector2? fixedPlayerPosition,
         int halfWidth,
         int halfHeight,
         int treeCount)
     {
         var random = new Random(layoutSeed);
+        Vector2 playerPosition = fixedPlayerPosition
+            ?? ChoosePlayerPosition(random, halfWidth, halfHeight);
         var plan = new ExpeditionLayoutPlan
         {
             RequestedSeed = requestedSeed,
@@ -120,7 +145,44 @@ public static class ExpeditionLayoutPlanner
         BuildRoute(plan, random, halfWidth, halfHeight);
         BuildTrees(plan, random, halfWidth, halfHeight, treeCount);
         BuildExtractionGrove(plan, halfWidth, halfHeight);
+        BuildBoundaryForest(plan, random, halfWidth, halfHeight);
         return plan;
+    }
+
+    static void BuildBoundaryForest(
+        ExpeditionLayoutPlan plan,
+        Random random,
+        int halfWidth,
+        int halfHeight)
+    {
+        int horizontalCount = Mathf.CeilToInt(halfWidth * 2f / BoundaryForestSpacing) + 1;
+        for (int i = 0; i < horizontalCount; i++)
+        {
+            float x = Mathf.Lerp(-halfWidth, halfWidth, i / (float)(horizontalCount - 1));
+            float jitter = Range(random, -BoundaryForestJitter, BoundaryForestJitter);
+            plan.BoundaryForestPositions.Add(new Vector2(
+                x + jitter, halfHeight + BoundaryForestOffset));
+            plan.BoundaryForestPositions.Add(new Vector2(
+                x - jitter, -halfHeight - BoundaryForestOffset));
+        }
+
+        int verticalCount = Mathf.CeilToInt(halfHeight * 2f / BoundaryForestSpacing) + 1;
+        for (int i = 1; i < verticalCount - 1; i++)
+        {
+            float y = Mathf.Lerp(-halfHeight, halfHeight, i / (float)(verticalCount - 1));
+            float jitter = Range(random, -BoundaryForestJitter, BoundaryForestJitter);
+            plan.BoundaryForestPositions.Add(new Vector2(
+                halfWidth + BoundaryForestOffset, y + jitter));
+            plan.BoundaryForestPositions.Add(new Vector2(
+                -halfWidth - BoundaryForestOffset, y - jitter));
+        }
+    }
+
+    static Vector2 ChoosePlayerPosition(Random random, int halfWidth, int halfHeight)
+    {
+        // The seed determines the entry point as well as the rest of the layout.
+        // Keeping it away from the boundary leaves room for a safe spawn clearing.
+        return RandomPoint(random, halfWidth, halfHeight, PlayerSpawnInset);
     }
 
     static void BuildRoute(ExpeditionLayoutPlan plan, Random random, int halfWidth, int halfHeight)
@@ -197,7 +259,16 @@ public static class ExpeditionLayoutPlanner
             }
             if (Vector2.Distance(candidate, playerPosition) >= ExtractionMinimumDistance) return candidate;
         }
-        return new Vector2(maxX, maxY);
+        var corners = new[]
+        {
+            new Vector2(minX, minY), new Vector2(minX, maxY),
+            new Vector2(maxX, minY), new Vector2(maxX, maxY)
+        };
+        Vector2 farthest = corners[0];
+        for (int i = 1; i < corners.Length; i++)
+            if ((corners[i] - playerPosition).sqrMagnitude > (farthest - playerPosition).sqrMagnitude)
+                farthest = corners[i];
+        return farthest;
     }
 
     static IEnumerable<Vector2> AllObstacles(ExpeditionLayoutPlan plan)

@@ -12,9 +12,10 @@ public static class ExpeditionArenaGenerator
     const string GenerationMarker = "Generated Melee Level 2 Arena";
     const int BaseHalfWidth = 32;
     const int BaseHalfHeight = 24;
-    const int LevelTwoHalfWidth = 46;
-    const int LevelTwoHalfHeight = 34;
+    const int LevelTwoHalfWidth = ExpeditionLayoutPlanner.DefaultHalfWidth;
+    const int LevelTwoHalfHeight = ExpeditionLayoutPlanner.DefaultHalfHeight;
     const int LevelTwoTreeCount = ExpeditionLayoutPlanner.DefaultTreeCount;
+    const float VisualGroundMargin = 4f;
 
     static int halfWidth = BaseHalfWidth;
     static int halfHeight = BaseHalfHeight;
@@ -46,26 +47,47 @@ public static class ExpeditionArenaGenerator
         halfHeight = LevelTwoHalfHeight;
         if (GameObject.Find(GenerationMarker)) return;
 
+        var generationTimer = System.Diagnostics.Stopwatch.StartNew();
         new GameObject(GenerationMarker);
         var player = Object.FindAnyObjectByType<ExpeditionPlayerHealth>();
         var extraction = Object.FindAnyObjectByType<ExtractionZone>();
-        Vector2 playerPosition = player ? player.transform.position : new Vector2(0f, -18f);
         CurrentSeed = ExpeditionSeedManager.BeginRun();
-        if (!ExpeditionLayoutPlanner.TryCreateValid(CurrentSeed, playerPosition, out var layout,
+        if (!ExpeditionLayoutPlanner.TryCreateValid(CurrentSeed, out var layout,
                 halfWidth, halfHeight, LevelTwoTreeCount))
             throw new InvalidOperationException(
                 $"Expedition seed {CurrentSeed} failed after {ExpeditionLayoutPlanner.MaximumGenerationAttempts} attempts.");
         CurrentLayoutAttempt = layout.Attempt;
         random = new Random(layout.LayoutSeed);
+        long layoutMilliseconds = generationTimer.ElapsedMilliseconds;
         Debug.Log($"Expedition layout ready: seed={CurrentSeed}, attempt={CurrentLayoutAttempt}, " +
-            $"layoutSeed={layout.LayoutSeed}, trees={layout.TreePositions.Count}, grove={layout.GrovePositions.Count}.");
+            $"layoutSeed={layout.LayoutSeed}, spawn={layout.PlayerPosition}, " +
+            $"extraction={layout.ExtractionPosition}, trees={layout.TreePositions.Count}, " +
+            $"grove={layout.GrovePositions.Count}, " +
+            $"boundaryForest={layout.BoundaryForestPositions.Count}.");
 
+        var stageTimer = System.Diagnostics.Stopwatch.StartNew();
         RebuildGround();
+        stageTimer.Stop();
+        long groundMilliseconds = stageTimer.ElapsedMilliseconds;
         ResizeBoundary();
+        if (player)
+        {
+            player.transform.position = layout.PlayerPosition;
+            var body = player.GetComponent<Rigidbody2D>();
+            if (body) body.position = layout.PlayerPosition;
+        }
         if (extraction) extraction.transform.position = layout.ExtractionPosition;
-        RebuildForest(layout);
+        stageTimer.Restart();
+        RebuildForest(layout, out int reusedTrees, out int createdTrees);
+        stageTimer.Stop();
+        long forestMilliseconds = stageTimer.ElapsedMilliseconds;
         Physics2D.SyncTransforms();
-        RedistributeEnemies(playerPosition, layout.ExtractionPosition);
+        RedistributeEnemies(layout.PlayerPosition, layout.ExtractionPosition);
+        generationTimer.Stop();
+        Debug.Log($"Expedition construction profile: total={generationTimer.ElapsedMilliseconds} ms, " +
+            $"layout={layoutMilliseconds} ms, groundBatch={groundMilliseconds} ms, " +
+            $"forestPool={forestMilliseconds} ms, treesReused={reusedTrees}, " +
+            $"treesCreated={createdTrees}.");
     }
 
     public static Vector2 FindOpenPosition(Transform player, Transform extraction, Camera outsideCamera = null)
@@ -114,16 +136,30 @@ public static class ExpeditionArenaGenerator
         if (tileChoices.Count == 0) return;
         tileChoices.Sort((left, right) => string.CompareOrdinal(left.name, right.name));
 
-        tilemap.ClearAllTiles();
-        for (int x = -halfWidth; x < halfWidth; x++)
-        for (int y = -halfHeight; y < halfHeight; y++)
+        float aspect = Camera.main ? Mathf.Max(.1f, Camera.main.aspect) : 16f / 9f;
+        float overviewSize = ExpeditionLoadingSequence.CalculateOverviewSize(
+            halfWidth, halfHeight, aspect);
+        int visualHalfWidth = Mathf.CeilToInt(
+            Mathf.Max(halfWidth, overviewSize * aspect) + VisualGroundMargin);
+        int visualHalfHeight = Mathf.CeilToInt(
+            Mathf.Max(halfHeight, overviewSize) + VisualGroundMargin);
+        int width = visualHalfWidth * 2;
+        int height = visualHalfHeight * 2;
+        var bounds = new BoundsInt(
+            -visualHalfWidth, -visualHalfHeight, 0, width, height, 1);
+        var tiles = new TileBase[width * height];
+        for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++)
         {
             // Keep the dominant grass tile common while allowing every expedition
             // to receive a visibly different ground pattern.
             int roll = random.Next(5);
             int tileIndex = roll < 3 ? 0 : Math.Min(roll - 2, tileChoices.Count - 1);
-            tilemap.SetTile(new Vector3Int(x, y, 0), tileChoices[tileIndex]);
+            tiles[x + y * width] = tileChoices[tileIndex];
         }
+
+        tilemap.ClearAllTiles();
+        tilemap.SetTilesBlock(bounds, tiles);
     }
 
     static void ResizeBoundary()
@@ -147,33 +183,51 @@ public static class ExpeditionArenaGenerator
         if (collider) collider.size = size;
     }
 
-    static void RebuildForest(ExpeditionLayoutPlan layout)
+    static void RebuildForest(ExpeditionLayoutPlan layout, out int reusedCount, out int createdCount)
     {
+        reusedCount = 0;
+        createdCount = 0;
         var rootObject = GameObject.Find("Trees");
         if (!rootObject || rootObject.transform.childCount == 0) return;
 
         Transform root = rootObject.transform;
-        var template = root.GetChild(0).gameObject;
-        for (int i = 0; i < layout.TreePositions.Count; i++)
-            CreateTreeClone(template, root, layout.TreePositions[i], $"Generated Tree {i + 1}");
-        for (int i = 0; i < layout.GrovePositions.Count; i++)
-            CreateTreeClone(template, root, layout.GrovePositions[i], $"Generated Extraction Grove {i + 1}");
+        var pool = new List<GameObject>(root.childCount);
+        for (int i = 0; i < root.childCount; i++)
+            pool.Add(root.GetChild(i).gameObject);
 
-        for (int i = root.childCount - 1; i >= 0; i--)
+        GameObject template = pool[0];
+        int requiredCount = layout.TreePositions.Count
+            + layout.GrovePositions.Count
+            + layout.BoundaryForestPositions.Count;
+        while (pool.Count < requiredCount)
         {
-            var child = root.GetChild(i).gameObject;
-            if (child == template || child.name.StartsWith("Generated ")) continue;
-            child.SetActive(false);
-            Object.Destroy(child);
+            pool.Add(Object.Instantiate(template, root));
+            createdCount++;
         }
-        template.SetActive(false);
-        Object.Destroy(template);
+
+        int poolIndex = 0;
+        for (int i = 0; i < layout.TreePositions.Count; i++, poolIndex++)
+            ConfigureTree(pool[poolIndex], layout.TreePositions[i], $"Generated Tree {i + 1}");
+        for (int i = 0; i < layout.GrovePositions.Count; i++, poolIndex++)
+            ConfigureTree(pool[poolIndex], layout.GrovePositions[i], $"Generated Extraction Grove {i + 1}");
+        for (int i = 0; i < layout.BoundaryForestPositions.Count; i++, poolIndex++)
+            ConfigureTree(pool[poolIndex], layout.BoundaryForestPositions[i],
+                $"Generated Boundary Forest {i + 1}");
+        reusedCount = requiredCount - createdCount;
+
+        // Keep surplus instances inactive so a later rebuild can reuse the same pool.
+        for (int i = requiredCount; i < pool.Count; i++)
+        {
+            pool[i].name = $"Pooled Tree {i + 1}";
+            pool[i].SetActive(false);
+        }
     }
 
-    static void CreateTreeClone(GameObject template, Transform parent, Vector2 position, string name)
+    static void ConfigureTree(GameObject tree, Vector2 position, string name)
     {
-        var tree = Object.Instantiate(template, position, Quaternion.identity, parent);
         tree.name = name;
+        tree.transform.SetPositionAndRotation(position, Quaternion.identity);
+        tree.SetActive(true);
         var renderer = tree.GetComponent<SpriteRenderer>();
         if (renderer) renderer.sortingOrder = Mathf.RoundToInt(-position.y * 100f);
     }

@@ -20,11 +20,11 @@ public class TownUpgradeBuilding : TownInteractable
 
     public override string Prompt => IsInfirmary
         ? TownHubController.Instance && TownHubController.Instance.NeedsTreatment
-            ? $"Click for treatment — restore 5 hearts ({treatmentCost} supplies)"
+            ? $"Click for treatment — restore 5 hearts ({treatmentCost} Gold)"
             : "Click to visit the infirmary — you are healthy"
         : Level >= maxLevel
             ? $"Click to inspect {displayName} — level {Level} (MAX)"
-            : $"Click to upgrade {displayName} — level {Level} → {Level + 1} ({UpgradeCost} supplies)";
+            : $"Click to upgrade {displayName} — level {Level} → {Level + 1} ({UpgradeCost} Gold)";
 
     void Awake()
     {
@@ -49,9 +49,9 @@ public class TownUpgradeBuilding : TownInteractable
             return;
         }
 
-        if (!hub.SpendSupplies(UpgradeCost))
+        if (!hub.SpendGold(UpgradeCost))
         {
-            hub.ShowNotice($"Not enough supplies. {displayName} needs {UpgradeCost}.");
+            hub.ShowNotice($"Not enough Gold. {displayName} needs {UpgradeCost} Gold.");
             return;
         }
 

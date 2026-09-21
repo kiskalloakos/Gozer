@@ -13,11 +13,15 @@ public static class TownProgressReset
 
     static void ResetTownProgress(bool logResult)
     {
-        PlayerPrefs.DeleteKey(TownHubController.SuppliesKey);
-        PlayerPrefs.DeleteKey(TownHubController.PendingSecuredSuppliesKey);
+        PlayerPrefs.DeleteKey(TownHubController.GoldKey);
+        PlayerPrefs.DeleteKey(TownHubController.PendingSecuredGoldKey);
+        PlayerPrefs.DeleteKey(GoldInventoryLocation.ContainerKey);
+        PlayerPrefs.DeleteKey(GoldInventoryLocation.SlotKey);
         PlayerPrefs.DeleteKey(ExpeditionPlayerHealth.InjuryKey);
         PlayerPrefs.DeleteKey(ExpeditionPlayerHealth.HealthKey);
         PlayerPrefs.DeleteKey(PlayerProgression.ReinforcedMeleeKey);
+        PlayerPrefs.DeleteKey(ExpeditionRunProgression.CompletedRunsKey);
+        PlayerPrefs.DeleteKey(ExpeditionRunProgression.PendingThreatIncreaseKey);
         foreach (var buildingId in UpgradeBuildingIds)
             PlayerPrefs.DeleteKey(TownUpgradeBuilding.ProgressKey(buildingId));
 

@@ -10,6 +10,10 @@ public static class HomeInteriorSetup
     const string TownScenePath = "Assets/Scenes/TownHub.unity";
     const string ArtFolder = "Assets/Art/Environment/PixelInterior";
     const string GeneratedFolder = ArtFolder + "/Generated";
+    const string ChestArtPath = "Assets/Art/Environment/chest.png";
+    const string InventoryArtPath = "Assets/Art/Environment/inventory.png";
+    const string RuntimeInventoryArtPath = "Assets/Resources/UI/inventory.png";
+    const string RuntimeBottomInventoryArtPath = "Assets/Resources/UI/bottom_inventory.png";
     static Sprite square;
 
     [MenuItem("RPG/Create or Maintain Home Interior")]
@@ -21,6 +25,8 @@ public static class HomeInteriorSetup
         CreateFurnitureCrops();
         AssetDatabase.Refresh();
         ConfigureGeneratedSprites();
+        ConfigureChestFeatureAssets();
+        ConfigureRuntimeInventoryArt();
 
         RemoveTownWorkbench();
         if (File.Exists(ScenePath))
@@ -74,6 +80,8 @@ public static class HomeInteriorSetup
         workbenchInteractable.facility = TownInteractable.FacilityType.Workbench;
         workbenchInteractable.displayName = "WORKBENCH";
 
+        EnsureStorageChest(scene);
+
         var exit = new GameObject("Front Door");
         exit.transform.position = new Vector3(0, -3.55f, 0);
         var doorArt = Art("Door Art", "door.png", Vector2.zero, 355, false, exit.transform);
@@ -123,6 +131,40 @@ public static class HomeInteriorSetup
         Debug.Log("RPG_HOME_INTERIOR_SUCCESS");
     }
 
+    [MenuItem("RPG/Apply Player Home Storage Chest")]
+    public static void ApplyStorageChestFeature()
+    {
+        ConfigureChestFeatureAssets();
+        ConfigureRuntimeInventoryArt();
+        var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+        EnsureStorageChest(scene);
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        AssetDatabase.SaveAssets();
+        Debug.Log("RPG_HOME_STORAGE_CHEST_SUCCESS");
+    }
+
+    [MenuItem("RPG/Tests/Validate Home Storage Chest")]
+    public static void ValidateStorageChestFeature()
+    {
+        var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+        var chestObject = FindSceneObject(scene, "STORAGE CHEST");
+        if (!chestObject) throw new System.Exception("Player Home storage chest is missing.");
+
+        var chest = chestObject.GetComponent<HomeStorageChest>();
+        if (!chest) throw new System.Exception("Storage chest interaction is missing.");
+        if (!chest.chestRenderer || chest.openFrames == null || chest.openFrames.Length != 4)
+            throw new System.Exception("Storage chest must have a renderer and four animation frames.");
+        if (!chest.inventoryPopup)
+            throw new System.Exception("Storage chest inventory popup is missing.");
+        if (!chestObject.GetComponent<BoxCollider2D>())
+            throw new System.Exception("Storage chest proximity collider is missing.");
+        if (chestObject.transform.position.x <= -7.2f)
+            throw new System.Exception("Storage chest is not positioned beside the workbench.");
+
+        Debug.Log("RPG_HOME_STORAGE_CHEST_VALIDATION_SUCCESS");
+    }
+
     static void MaintainExistingScene()
     {
         var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
@@ -143,6 +185,9 @@ public static class HomeInteriorSetup
             interactable.displayName = "WORKBENCH";
             EditorUtility.SetDirty(interactable);
         }
+
+        ConfigureChestFeatureAssets();
+        EnsureStorageChest(scene);
 
         var exit = FindSceneObject(scene, "Front Door");
         if (exit)
@@ -244,6 +289,84 @@ public static class HomeInteriorSetup
             importer.wrapMode = TextureWrapMode.Clamp;
             importer.SaveAndReimport();
         }
+    }
+
+    static void ConfigureChestFeatureAssets()
+    {
+        ConfigurePixelTexture(ChestArtPath, true);
+        ConfigurePixelTexture(InventoryArtPath, false);
+    }
+
+    static void ConfigureRuntimeInventoryArt()
+    {
+        ConfigurePixelTexture(RuntimeInventoryArtPath, false);
+        ConfigurePixelTexture(RuntimeBottomInventoryArtPath, false);
+    }
+
+    static void ConfigurePixelTexture(string assetPath, bool spriteSheet)
+    {
+        AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+        var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+        if (!importer) return;
+
+        importer.textureType = TextureImporterType.Sprite;
+        importer.spriteImportMode = spriteSheet ? SpriteImportMode.Multiple : SpriteImportMode.Single;
+        importer.spritePixelsPerUnit = PixelArtStandard.PixelsPerUnit;
+        importer.filterMode = FilterMode.Point;
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
+        importer.mipmapEnabled = false;
+        importer.alphaIsTransparency = true;
+        importer.wrapMode = TextureWrapMode.Clamp;
+        importer.SaveAndReimport();
+    }
+
+    static void EnsureStorageChest(UnityEngine.SceneManagement.Scene scene)
+    {
+        var chestObject = FindSceneObject(scene, "STORAGE CHEST") ?? new GameObject("STORAGE CHEST");
+        chestObject.transform.position = new Vector3(-5.15f, -2.35f, 0f);
+
+        SpriteRenderer renderer;
+        try
+        {
+            renderer = chestObject.GetComponent<SpriteRenderer>();
+            if (!renderer) renderer = chestObject.AddComponent<SpriteRenderer>();
+        }
+        catch (System.Exception exception)
+        {
+            throw new System.Exception("Storage chest setup failed while adding its SpriteRenderer.", exception);
+        }
+
+        var frames = AssetDatabase.LoadAllAssetsAtPath(ChestArtPath)
+            .OfType<Sprite>()
+            .OrderBy(sprite => sprite.name)
+            .ToArray();
+        try
+        {
+            if (frames.Length > 0) renderer.sprite = frames[0];
+            renderer.sortingOrder = 236;
+        }
+        catch (System.Exception exception)
+        {
+            throw new System.Exception("Storage chest setup failed while assigning its animation art.", exception);
+        }
+
+        var collider = chestObject.GetComponent<BoxCollider2D>();
+        if (!collider) collider = chestObject.AddComponent<BoxCollider2D>();
+        collider.size = new Vector2(1.1f, .55f);
+        collider.offset = new Vector2(0f, .28f);
+
+        var chest = chestObject.GetComponent<HomeStorageChest>();
+        if (!chest) chest = chestObject.AddComponent<HomeStorageChest>();
+        chest.displayName = "STORAGE CHEST";
+        chest.chestRenderer = renderer;
+        chest.openFrames = frames;
+        chest.inventoryPopup = AssetDatabase.LoadAssetAtPath<Texture2D>(InventoryArtPath);
+        chest.secondsPerFrame = .1f;
+        chest.backdropOpacity = .72f;
+
+        EditorUtility.SetDirty(renderer);
+        EditorUtility.SetDirty(collider);
+        EditorUtility.SetDirty(chest);
     }
 
     static GameObject Art(string name, string file, Vector2 position, int order, bool collider = false, Transform parent = null)

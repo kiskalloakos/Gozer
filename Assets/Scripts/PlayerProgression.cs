@@ -10,7 +10,7 @@ public static class PlayerProgression
     public enum PurchaseResult
     {
         Purchased,
-        NotEnoughSupplies,
+        NotEnoughGold,
         AlreadyOwned
     }
 
@@ -21,17 +21,14 @@ public static class PlayerProgression
         ? ReinforcedMeleeDamage
         : BaseMeleeDamage;
 
-    public static PurchaseResult PurchaseReinforcedMelee(out int remainingSupplies)
+    public static PurchaseResult PurchaseReinforcedMelee(out int remainingGold)
     {
-        remainingSupplies = PlayerPrefs.GetInt(
-            TownHubController.SuppliesKey,
-            TownHubController.DefaultStartingSupplies);
+        remainingGold = TownHubController.GetGoldBalance();
 
         if (HasReinforcedMelee) return PurchaseResult.AlreadyOwned;
-        if (remainingSupplies < ReinforcedMeleeCost) return PurchaseResult.NotEnoughSupplies;
+        if (!TownHubController.TrySpendGold(ReinforcedMeleeCost, out remainingGold))
+            return PurchaseResult.NotEnoughGold;
 
-        remainingSupplies -= ReinforcedMeleeCost;
-        PlayerPrefs.SetInt(TownHubController.SuppliesKey, remainingSupplies);
         PlayerPrefs.SetInt(ReinforcedMeleeKey, 1);
         PlayerPrefs.Save();
         return PurchaseResult.Purchased;
