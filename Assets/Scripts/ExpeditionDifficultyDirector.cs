@@ -25,7 +25,16 @@ public static class ExpeditionDifficultyDirector
     static void AddLevelTwoEnemies(Scene scene)
     {
         ExpeditionArenaGenerator.GenerateForCurrentProgression(scene);
-        if (scene.name != ExpeditionScene || PlayerProgression.MeleeLevel < 2) return;
+        if (scene.name != ExpeditionScene) return;
+
+        var loadingPlayer = Object.FindAnyObjectByType<ExpeditionPlayerHealth>();
+        ExpeditionLoadingSequence.Begin(
+            loadingPlayer ? loadingPlayer.transform : null,
+            ExpeditionArenaGenerator.CurrentHalfWidth,
+            ExpeditionArenaGenerator.CurrentHalfHeight,
+            ExpeditionArenaGenerator.CurrentSeed);
+
+        if (PlayerProgression.MeleeLevel < 2) return;
 
         var enemies = Object.FindObjectsByType<WildernessEnemy>();
         if (enemies.Length == 0) return;

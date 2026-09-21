@@ -14,7 +14,7 @@ The project-wide non-negotiables are **16 pixels per Unity unit**, **16 x 16 px 
 
 The exact camera, import, asset-size, perspective, pivot, sorting, collision, animation, UI, and drawing requirements are defined in the [Gozer pixel-art and camera standard](#gozer-pixel-art-and-camera-standard) later in this README. That section is canonical for all future art and scenes.
 
-Why is the city on lockdown? Why does Gozer only go out alone (or coop)? How did Gozer become a hero? 
+Why is the city on lockdown? Why does Gozer only go out alone or in co-op? How did Gozer become a hero?
 
 ## The player fantasy
 
@@ -82,7 +82,10 @@ The current local build now contains the first playable version of the town-to-e
 - Enter the original fixed 64 x 48 test field while using the base melee weapon at melee level 1.
 - After purchasing the Reinforced Melee Weapon, generate a fresh 92 x 68 level-2 field every time the expedition scene is entered, including multiple expeditions during the same game launch.
 - Randomize the level-2 ground pattern, forest placement, enemy positions, and extraction location from a new runtime seed for each expedition.
-- Place the level-2 extraction zone at least 42 world units from the player spawn, inside a protected clearing surrounded by a loose grove with two entrances.
+- Save and log every procedural expedition seed, show it during loading, and reproduce an exact layout from a requested seed through code or `-expedition-seed=<number>`.
+- Build a deterministic multi-segment route before placing scenery, reserve 1.65 world units of clearance around it, validate connectivity on a 0.5-unit flood-fill grid, and retry invalid candidates deterministically up to 20 times.
+- Enter every expedition through a minimum-five-second black loading/reveal sequence. The player, combat, enemies, and physics remain paused while a smoothly decelerating overhead camera zooms to the character and the full screen fades from 0% to 100% brightness. There is no camera blur.
+- Place the level-2 extraction zone at least 42 world units from the player spawn, tucked inside a tight grove with route-facing and opposite entrances. Its `4.3 x 2.7` world-unit orange marker uses 48% opacity and sorting order `-9999`, so it behaves as a readable ground decal beneath characters, enemies, and trees.
 - Keep enemy and extraction-reinforcement placement inside the active arena bounds and away from solid obstacles whenever a valid sampled position is available.
 - Explore fields built from three night-grass variants and the same visual language as TownHub, with dense nighttime trees and natural sight-line obstructions.
 - Move and aim freely while the camera follows the player.
@@ -130,28 +133,25 @@ The current local build now contains the first playable version of the town-to-e
 
 ## Latest completed functional milestone
 
-The first upgrade-driven expedition change is now implemented: purchasing the Reinforced Melee Weapon changes both player power and the next fight area.
+The procedural level-2 expedition is now deterministic, reproducible, connectivity-validated, visually inspectable, and protected by automated stress tests.
 
-The playable loop currently reaches:
+### Procedural-expedition reliability and inspection
 
-`Leave town → fight → collect supplies → extract → return`
+- ✅ Generate the `92 x 68` level-2 arena from a saved seed with exactly 170 regular trees.
+- ✅ Preserve a clear multi-segment route from player spawn to extraction before adding forest and grove scenery.
+- ✅ Reject unreachable candidates with a conservative four-direction flood-fill and regenerate deterministically when necessary.
+- ✅ Keep extraction, trees, and grove scenery inside arena boundaries while maintaining spawn and extraction clearances.
+- ✅ Reproduce the same extraction and scenery positions when the same seed is generated again.
+- ✅ Validate seeds 1–500 in five batches of 100 without loading 500 Unity scenes.
+- ✅ Preview the real production expedition immediately through **RPG → Tests → Preview Random Expedition**, without walking through TownHub.
+- ✅ Begin each expedition behind a black loading screen, then reveal the generated arena with a five-second brightness fade and smoothly decelerating overhead-to-player zoom.
+- ✅ Keep the enlarged extraction marker on the ground layer at 48% opacity while the tighter grove partially conceals it.
 
-The loop now includes the previously missing payoff:
+The playable progression loop remains:
 
-`Spend rewards → become permanently stronger → want another expedition`
+`Leave town → fight → collect supplies → extract → return → spend rewards → become permanently stronger → attempt a changed expedition`
 
-### Reinforced melee weapon and level-2 expedition
-
-- ✅ Purchase it from the player-home workbench for **8 Town Supplies**.
-- ✅ Permanently increase melee damage from 1 to 2.
-- ✅ Reduce the current enemy from three required hits to two.
-- ✅ Increase upgraded expeditions from 8 enemies to 12.
-- ✅ Replace the fixed test layout with a larger randomized level-2 field on the next expedition.
-- ✅ Move the extraction zone, rebuild the forest and ground pattern, and redistribute enemies every time the upgraded player enters the field.
-- ✅ Clearly communicate whether the upgrade was purchased, is unaffordable, or is already owned.
-- ✅ Persist the upgrade between scenes and game sessions.
-
-The infirmary remains a recovery cost rather than permanent progression. The workbench now gives successful extraction a lasting positive payoff and visibly changes the following run, completing the initial version of the core loop.
+The Reinforced Melee Weapon remains the first permanent reward: it costs 8 Town Supplies, raises melee damage from 1 to 2, increases the expedition from 8 to 12 enemies, unlocks the larger procedural field, and persists between sessions. The infirmary remains a recovery cost rather than permanent progression.
 
 ## Comprehensive development checklist
 
@@ -161,21 +161,38 @@ This is the project's single source of truth for completed milestones and remain
 
 The level-2 generator is suitable for playtesting and can generate multiple expeditions in one launch without intentionally retaining earlier worlds. Before procedural expeditions become the production core loop, complete these six steps:
 
-- [ ] **Generate a deterministic layout from a saved seed.** Save or log the seed with each run so a reported map can be reproduced exactly for debugging, balancing, and future daily challenges.
-- [ ] **Carve a guaranteed route from spawn to extraction.** Build one or more traversable corridors before adding trees and encounter dressing, rather than relying entirely on random spacing.
-- [ ] **Validate connectivity before constructing the final scene.** Use a grid flood-fill or pathfinding check to prove that the player can reach extraction and required objectives; reject and regenerate invalid layouts.
+For rapid visual inspection in Unity, use **RPG → Tests → Preview Random Expedition**. It opens the production expedition scene with a fresh procedural seed and enters Play Mode directly, without requiring the level-2 unlock or a trip through TownHub.
+
+- [x] **Generate a deterministic layout from a saved seed.** The last seed is saved and every run logs its seed; requested and command-line seeds reproduce the same layout.
+- [x] **Carve a guaranteed route from spawn to extraction.** A deterministic multi-segment corridor is reserved before trees and extraction-grove scenery are placed.
+- [x] **Validate connectivity before constructing the final scene.** A grid flood-fill rejects invalid candidates and retries deterministically before scene objects are built.
 - [ ] **Batch terrain updates and pool repeated scenery.** Replace thousands of individual tile writes and repeated tree creation/destruction with block tilemap updates, pooled objects, tile-based decoration, or combined renderers after profiling the target hardware.
 - [ ] **Move arena rules into level and biome configuration assets.** Store dimensions, density, extraction distance, enemy budget, tiles, scenery, and progression requirements as data instead of expanding hard-coded melee-level conditionals.
-- [ ] **Add automated generator stress tests.** Generate and validate at least 1,000 seeds, checking reachability, boundary containment, extraction entrances, spawn separation, overlaps, object counts, and generation time.
+- [x] **Add automated generator stress tests.** The lightweight editor test has validated 500 unique seeds in five batches of 100 without loading gameplay scenes.
 
 Known weaknesses to cover while completing this work:
 
-- [ ] Make open-position fallbacks collision-safe instead of accepting a potentially blocked edge position after sampling fails.
-- [ ] Keep extraction-grove scenery inside the arena boundary when extraction is placed near an edge.
+- [x] Make open-position fallbacks collision-safe instead of accepting a potentially blocked edge position after sampling fails.
+- [x] Keep extraction-grove scenery inside the arena boundary when extraction is placed near an edge.
 - [ ] Replace fragile scene-name and object-name lookups with explicit references or validated configuration.
-- [ ] Add loading feedback or move generation across frames if profiling shows a visible scene-entry hitch.
-- [ ] Decide how seeds participate in saves, replays, daily expeditions, co-op synchronization, and bug reports.
+- [x] Add a minimum-five-second black expedition loading/reveal sequence with a loading tab, a 0% to 100% brightness fade, and a smoothly decelerating overhead camera zoom. No blur effect is used.
+- [ ] Decide how seeds participate in future daily expeditions and co-op synchronization. Saves, exact-seed reproduction, command-line reproduction, and bug-report logging now use the saved expedition seed.
 - [ ] Add authored landmarks and layout grammar so repeated expeditions feel structurally different rather than only randomly scattered.
+
+### Generator validation evidence
+
+The current generator passed seeds **1–500** in five separate 100-seed batches. Each seed is generated twice and fails the batch immediately if any assertion fails. The automated checks cover:
+
+- deterministic replay of the layout seed, retry attempt, extraction position, all regular-tree positions, and all grove-tree positions;
+- successful generation within 20 deterministic attempts;
+- four-direction reachability from player spawn `(0, -18)` to extraction on a 0.5-unit validation grid;
+- extraction inside the arena and at least 42 world units from spawn;
+- exactly 170 regular trees and between 8 and 14 extraction-grove trees;
+- no regular tree within the seven-unit spawn clearing;
+- arena containment for extraction, regular trees, and grove trees; and
+- at least 0.75 world units between every pair of scenery positions.
+
+These are fast in-memory layout tests, not 500 instantiated scenes. They prove determinism, reachability, containment, counts, and spacing. They do not replace visual Play Mode inspection of sprite sorting, perceived extraction visibility, enemy behavior, loading animation, or real scene-generation performance; use **Preview Random Expedition** for those checks.
 
 ### Core single-player systems still missing
 
@@ -222,7 +239,7 @@ The proof-of-fun question remains: **after a successful run, does the player imm
 
 ## Setting and tone
 
-An isolated town survives at the edge of a wilderness that becomes unnatural after dark... Every direction you "go out" to from the city is different.; the wilderness, outside of town, is an overgrown industrial exclusion zone // a cursed forest // a collapsed underground world. It is full of literal montsers, town people who became part of the wilderness and animals.
+An isolated town survives at the edge of a wilderness that becomes unnatural after dark. Every route out of the city can lead somewhere different: an overgrown industrial exclusion zone, a cursed forest, or a collapsed underground world. It is populated by literal monsters, townspeople who became part of the wilderness, and altered animals.
 
 The important tonal rule: town life is genuinely comforting and cozy. Outside the city is dark and scary.
 
@@ -376,9 +393,9 @@ Each row contains four frames and plays at 8 FPS. Idle uses frame 0 of the last 
 
 Keep the feet on the same baseline in every frame. Motion belongs in limbs and body bounce, not in a drifting pivot.
 
-### Required town asset canvases
+### Approved town asset canvases
 
-All dimensions below are exact source-pixel canvas sizes at 16 PPU. Transparent padding is allowed only inside the stated canvas.
+All dimensions below are exact source-pixel canvas sizes at 16 PPU. Transparent padding is allowed only inside the stated canvas. Storage, watchtower, and greenhouse are retired prototypes rather than active town requirements; their dimensions remain documented only in case they are deliberately reintroduced.
 
 | Asset | Pixel canvas | Tile/world footprint of canvas | Ratio |
 | --- | ---: | ---: | ---: |
@@ -391,7 +408,7 @@ All dimensions below are exact source-pixel canvas sizes at 16 PPU. Transparent 
 | Greenhouse L1-L3 | 96 x 80 each | 6 x 5 | 6:5 |
 | Expedition gate | 96 x 48 | 6 x 3 | 2:1 |
 
-Every level of an upgradeable building must use the same canvas, pivot, contact point, and door position so sprite swaps do not jump. The expedition gate currently uses one closed frame only; no opening animation is part of the present design.
+Every level of an upgradeable building must use the same canvas, pivot, contact point, and door position so sprite swaps do not jump. Closed and open expedition-gate assets exist, but the active gate currently displays the closed state only; no opening animation is implemented.
 
 ### Proportions and drawing rules
 
@@ -439,20 +456,10 @@ Before accepting new art or a new gameplay scene, verify:
 9. The result is readable at native 320 x 180 and crisp at integer display scales.
 <!-- END PIXEL ART STANDARD -->
 
-## Pixel Art That Needs Creating
+## Remaining pixel-art backlog
 
-3. **Storage building** — 160 x 128 px
-   - Reinforced shed/warehouse with a broad door, stacked crate motif, and a small lamp.
-4. **Workbench** — 96 x 64 px
-   - Separate freestanding bench with tools, vice, and a warm lantern glow.
-5. **Watchtower, levels 1–3** — three 160 x 192 px transparent PNGs
-   - L1: rough timber lookout; L2: roof, bell, stronger supports; L3: tall beacon and orange town banner.
-6. **Infirmary, levels 2 and 3** — three 192 x 160 px transparent PNGs
-   - L1: modest clinic; L2: extension and herb rack; L3: lit treatment wing and recognizable medical sign (no modern red-cross trademark).
-7. **Greenhouse, levels 1–3** — three 192 x 160 px transparent PNGs
-   - L1: small glass/cloth growing shelter; L2: second bay and water barrel; L3: reinforced glowing greenhouse with healthy crops.
-8. **Expedition gate** — 192 x 96 px
-   - Closed and open frames; make the outside-facing side darker and less welcoming.
-9. Props around the town, and visually and functionally finishing the town.
-10. Characters for each building
-11. Mobs and Monsters in the fightning area
+The repository already contains the active town character sheet, workbench, infirmary exports, and closed/open expedition-gate artwork. Do not recreate retired storage, watchtower, or greenhouse art unless those buildings are intentionally returned to the design.
+
+- Add more town props and functional dressing after the active town layout is settled.
+- Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.
+- Replace placeholder expedition enemies and combat effects with production mob, monster, hit, and attack artwork while preserving the established scale and projection.

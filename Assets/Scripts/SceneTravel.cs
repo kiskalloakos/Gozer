@@ -16,6 +16,19 @@ public static class SceneTravel
         SceneManager.LoadScene(destinationScene);
     }
 
+    public static void LoadExpeditionWithSeed(int seed)
+    {
+        ExpeditionSeedManager.QueueSeed(seed);
+        Load("ExpeditionField");
+    }
+
+    public static bool ReplayLastExpedition()
+    {
+        if (!ExpeditionSeedManager.QueueLastSeed()) return false;
+        Load("ExpeditionField");
+        return true;
+    }
+
     private static void ApplyPendingSpawn(Scene scene, LoadSceneMode mode)
     {
         SceneManager.sceneLoaded -= ApplyPendingSpawn;

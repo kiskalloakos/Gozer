@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class ExtractionZone : MonoBehaviour
 {
+    const int GroundMarkerSortingOrder = -9999;
+    static readonly Vector3 GroundMarkerScale = new Vector3(4.3f, 2.7f, 1f);
+
     [Min(.1f)] public float extractionSeconds = 10f;
     public string destinationScene = "TownHub";
     public string destinationSpawnId = SceneTravel.TownExpeditionGate;
@@ -14,6 +17,21 @@ public class ExtractionZone : MonoBehaviour
     ExpeditionPlayerCombat playerCombat;
 
     public float RemainingSeconds => Mathf.Max(0f, extractionSeconds - elapsed);
+
+    void Awake()
+    {
+        // The extraction marker is painted on the ground. Characters, enemies,
+        // tree trunks, and tree canopies must always render over it.
+        transform.localScale = GroundMarkerScale;
+        var marker = GetComponent<SpriteRenderer>();
+        if (marker)
+        {
+            marker.sortingOrder = GroundMarkerSortingOrder;
+            var color = marker.color;
+            color.a = .48f;
+            marker.color = color;
+        }
+    }
 
     void Update()
     {

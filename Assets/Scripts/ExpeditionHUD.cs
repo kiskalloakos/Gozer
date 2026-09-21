@@ -70,7 +70,7 @@ public class ExpeditionHUD : MonoBehaviour
 
         var oldColor = GUI.color;
         GUI.color = new Color(.035f, .04f, .055f, .94f);
-        GUI.Box(new Rect(panelX, panelY, panelWidth, 78f), GUIContent.none);
+        GUI.DrawTexture(new Rect(panelX, panelY, panelWidth, 78f), Texture2D.whiteTexture);
 
         var label = new GUIStyle(GUI.skin.label)
         {
@@ -93,9 +93,11 @@ public class ExpeditionHUD : MonoBehaviour
             var rect = new Rect(slotsX + i * (slotSize + gap), panelY + 21f, slotSize, slotSize);
             bool filled = i == 0 && displayedSupplies > 0;
             GUI.color = filled ? new Color(.95f, .67f, .22f, 1f) : new Color(.28f, .32f, .39f, 1f);
-            GUI.Box(rect, GUIContent.none);
+            GUI.DrawTexture(rect, Texture2D.whiteTexture);
             GUI.color = filled ? new Color(.31f, .2f, .06f, 1f) : new Color(.07f, .08f, .11f, 1f);
-            GUI.Box(new Rect(rect.x + 3f, rect.y + 3f, rect.width - 6f, rect.height - 6f), GUIContent.none);
+            GUI.DrawTexture(
+                new Rect(rect.x + 3f, rect.y + 3f, rect.width - 6f, rect.height - 6f),
+                Texture2D.whiteTexture);
             GUI.color = Color.white;
             GUI.Label(new Rect(rect.x + 4f, rect.y + 2f, 14f, 16f), (i + 1).ToString(), label);
             if (filled)

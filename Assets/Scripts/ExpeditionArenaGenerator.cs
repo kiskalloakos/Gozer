@@ -14,13 +14,16 @@ public static class ExpeditionArenaGenerator
     const int BaseHalfHeight = 24;
     const int LevelTwoHalfWidth = 46;
     const int LevelTwoHalfHeight = 34;
-    const int LevelTwoTreeCount = 170;
+    const int LevelTwoTreeCount = ExpeditionLayoutPlanner.DefaultTreeCount;
 
     static int halfWidth = BaseHalfWidth;
     static int halfHeight = BaseHalfHeight;
     static Random random;
 
     public static int CurrentSeed { get; private set; }
+    public static int CurrentLayoutAttempt { get; private set; }
+    public static int CurrentHalfWidth => halfWidth;
+    public static int CurrentHalfHeight => halfHeight;
     public static float MinX => -halfWidth + 3f;
     public static float MaxX => halfWidth - 3f;
     public static float MinY => -halfHeight + 3f;
@@ -28,10 +31,14 @@ public static class ExpeditionArenaGenerator
 
     public static void GenerateForCurrentProgression(Scene scene)
     {
-        if (scene.name != ExpeditionScene || PlayerProgression.MeleeLevel < 2)
+        bool proceduralPreviewRequested = ExpeditionSeedManager.HasPendingSeed;
+        if (scene.name != ExpeditionScene ||
+            (PlayerProgression.MeleeLevel < 2 && !proceduralPreviewRequested))
         {
             halfWidth = BaseHalfWidth;
             halfHeight = BaseHalfHeight;
+            CurrentSeed = 0;
+            CurrentLayoutAttempt = 0;
             return;
         }
 
@@ -40,20 +47,25 @@ public static class ExpeditionArenaGenerator
         if (GameObject.Find(GenerationMarker)) return;
 
         new GameObject(GenerationMarker);
-        CurrentSeed = Guid.NewGuid().GetHashCode();
-        random = new Random(CurrentSeed);
-
         var player = Object.FindAnyObjectByType<ExpeditionPlayerHealth>();
         var extraction = Object.FindAnyObjectByType<ExtractionZone>();
         Vector2 playerPosition = player ? player.transform.position : new Vector2(0f, -18f);
-        Vector2 extractionPosition = ChooseExtractionPosition(playerPosition);
+        CurrentSeed = ExpeditionSeedManager.BeginRun();
+        if (!ExpeditionLayoutPlanner.TryCreateValid(CurrentSeed, playerPosition, out var layout,
+                halfWidth, halfHeight, LevelTwoTreeCount))
+            throw new InvalidOperationException(
+                $"Expedition seed {CurrentSeed} failed after {ExpeditionLayoutPlanner.MaximumGenerationAttempts} attempts.");
+        CurrentLayoutAttempt = layout.Attempt;
+        random = new Random(layout.LayoutSeed);
+        Debug.Log($"Expedition layout ready: seed={CurrentSeed}, attempt={CurrentLayoutAttempt}, " +
+            $"layoutSeed={layout.LayoutSeed}, trees={layout.TreePositions.Count}, grove={layout.GrovePositions.Count}.");
 
         RebuildGround();
         ResizeBoundary();
-        if (extraction) extraction.transform.position = extractionPosition;
-        RebuildForest(playerPosition, extractionPosition);
+        if (extraction) extraction.transform.position = layout.ExtractionPosition;
+        RebuildForest(layout);
         Physics2D.SyncTransforms();
-        RedistributeEnemies(playerPosition, extractionPosition);
+        RedistributeEnemies(playerPosition, layout.ExtractionPosition);
     }
 
     public static Vector2 FindOpenPosition(Transform player, Transform extraction, Camera outsideCamera = null)
@@ -76,7 +88,16 @@ public static class ExpeditionArenaGenerator
             if (IsOpen(candidate, .65f)) return candidate;
         }
 
-        return new Vector2(NextBool() ? MinX : MaxX, Range(MinY, MaxY));
+        for (float y = MinY; y <= MaxY; y += 1f)
+        for (float x = MinX; x <= MaxX; x += 1f)
+        {
+            var candidate = new Vector2(x, y);
+            if (player && Vector2.Distance(candidate, player.position) < 8f) continue;
+            if (extraction && Vector2.Distance(candidate, extraction.position) < 5f) continue;
+            if (IsOpen(candidate, .65f)) return candidate;
+        }
+        Debug.LogError("No collision-safe expedition spawn position was available; using the player spawn.");
+        return player ? (Vector2)player.position : Vector2.zero;
     }
 
     static void RebuildGround()
@@ -126,63 +147,17 @@ public static class ExpeditionArenaGenerator
         if (collider) collider.size = size;
     }
 
-    static Vector2 ChooseExtractionPosition(Vector2 playerPosition)
-    {
-        for (int attempt = 0; attempt < 50; attempt++)
-        {
-            Vector2 candidate;
-            switch (random.Next(4))
-            {
-                case 0: candidate = new Vector2(Range(MinX, MaxX), MaxY - Range(0f, 5f)); break;
-                case 1: candidate = new Vector2(Range(MinX, MaxX), MinY + Range(0f, 5f)); break;
-                case 2: candidate = new Vector2(MinX + Range(0f, 5f), Range(MinY, MaxY)); break;
-                default: candidate = new Vector2(MaxX - Range(0f, 5f), Range(MinY, MaxY)); break;
-            }
-
-            if (Vector2.Distance(candidate, playerPosition) >= 42f) return candidate;
-        }
-
-        return new Vector2(MaxX - 2f, MaxY - 2f);
-    }
-
-    static void RebuildForest(Vector2 playerPosition, Vector2 extractionPosition)
+    static void RebuildForest(ExpeditionLayoutPlan layout)
     {
         var rootObject = GameObject.Find("Trees");
         if (!rootObject || rootObject.transform.childCount == 0) return;
 
         Transform root = rootObject.transform;
         var template = root.GetChild(0).gameObject;
-        var occupied = new List<Vector2>();
-
-        for (int i = 0; i < LevelTwoTreeCount; i++)
-        {
-            Vector2 position = default;
-            bool found = false;
-            for (int attempt = 0; attempt < 30; attempt++)
-            {
-                position = RandomPoint(1.5f);
-                if (Vector2.Distance(position, playerPosition) < 7f) continue;
-                if (Vector2.Distance(position, extractionPosition) < 5.5f) continue;
-                if (TooClose(position, occupied, 1.05f)) continue;
-                found = true;
-                break;
-            }
-            if (!found) continue;
-
-            occupied.Add(position);
-            CreateTreeClone(template, root, position, $"Generated Tree {i + 1}");
-        }
-
-        // A loose grove obscures the destination from a distance, but the large
-        // protected clearing and two skipped angles always leave entrances.
-        int groveIndex = 1;
-        for (int i = 0; i < 14; i++)
-        {
-            if (i == 3 || i == 10) continue;
-            float angle = i / 14f * Mathf.PI * 2f;
-            Vector2 position = extractionPosition + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 5.25f;
-            CreateTreeClone(template, root, position, $"Generated Extraction Grove {groveIndex++}");
-        }
+        for (int i = 0; i < layout.TreePositions.Count; i++)
+            CreateTreeClone(template, root, layout.TreePositions[i], $"Generated Tree {i + 1}");
+        for (int i = 0; i < layout.GrovePositions.Count; i++)
+            CreateTreeClone(template, root, layout.GrovePositions[i], $"Generated Extraction Grove {i + 1}");
 
         for (int i = root.childCount - 1; i >= 0; i--)
         {
@@ -226,14 +201,6 @@ public static class ExpeditionArenaGenerator
         foreach (var collider in Physics2D.OverlapCircleAll(position, radius))
             if (!collider.isTrigger) return false;
         return true;
-    }
-
-    static bool TooClose(Vector2 position, List<Vector2> others, float minimumDistance)
-    {
-        float squaredDistance = minimumDistance * minimumDistance;
-        foreach (var other in others)
-            if ((position - other).sqrMagnitude < squaredDistance) return true;
-        return false;
     }
 
     static Vector2 PositionJustOutsideCamera(Camera camera)

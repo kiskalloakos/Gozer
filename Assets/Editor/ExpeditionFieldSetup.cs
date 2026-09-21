@@ -245,12 +245,12 @@ public static class ExpeditionFieldSetup
         var extraction = new GameObject("Extraction Zone");
         extraction.transform.SetParent(parent, false);
         extraction.transform.localPosition = new Vector3(20, 12, 0);
-        extraction.transform.localScale = new Vector3(3f, 2f, 1f);
+        extraction.transform.localScale = new Vector3(4.3f, 2.7f, 1f);
 
         var renderer = extraction.AddComponent<SpriteRenderer>();
         renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SquarePath);
-        renderer.color = new Color(.92f, .55f, .12f, .72f);
-        renderer.sortingOrder = -1100;
+        renderer.color = new Color(.92f, .55f, .12f, .48f);
+        renderer.sortingOrder = -9999;
         extraction.AddComponent<BoxCollider2D>().isTrigger = true;
         extraction.AddComponent<ExtractionZone>().extractionSeconds = 10f;
     }
