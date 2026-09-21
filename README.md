@@ -526,7 +526,7 @@ Before accepting new art or a new gameplay scene, verify:
 - [ ] **“Hidden” field of view** Already in, but it should be upgradable from the town supplies.
 - [ ] **Can sleep and skip night, but gets harder with more skips**
 - [ ] When clicking expedition gate, there’s a moon animation with a wolf sound effect and it zooms in from top down to the character and for a slight mini second you can see where the extraction zone is. This is a Easter egg. Also, dnb-like music starts to get you in the mood.
-- [ ] Mircovolts-like elements?
+- [ ] Mircovolts-like elements? Farmerama-like elements? Zoomumba-like elements?
 - [ ] ENEMIES: Damage + HP
 - [ ] ANIMALS as mobs
 - [ ] FARM
@@ -543,9 +543,9 @@ Co-op remains a later pillar. The single-player loop above should be proven befo
 # VISUAL
 
 
-- [ ] swoosh effect for melee attacks
-- [ ] first enemy looks
-- [ ] swords and guns
+- [ ] swoosh effect for melee attacks '/Users/kiskalloakos/Documents/Pixel Art Assets/Thrust'
+- [ ] first enemy looks '/Users/kiskalloakos/Documents/Pixel Art Assets/Tiny RPG Character Asset Pack 02 -Free Demon_A&Blood Monster_A/Characters(100x100 split)/Demon_A/Demon_A'
+- [ ] swords and guns 
 - [ ] inventory (either one) is not centered
 - [ ] Add more town props and functional dressing after the active town layout is settled.
 - [ ] Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.
