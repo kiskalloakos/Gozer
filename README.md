@@ -1,6 +1,6 @@
 # Gozer
 
-![alt text](https://github.com/kiskalloakos/Gozer/blob/270f5d7642847d01ee2bc0d02d7e8c92f360e398/TownCharacterSheet.png)
+![alt text](https://github.com/kiskalloakos/Gozer/blob/6f5c3006f497f0f4629626ef2c59adf2834f907f/Screenshot%202026-09-21%20at%2016.47.11.png)
 
 ## One-sentence pitch
 
