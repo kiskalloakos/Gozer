@@ -4,9 +4,10 @@ using UnityEngine.SceneManagement;
 public static class ExpeditionDifficultyDirector
 {
     const string ExpeditionScene = "ExpeditionField";
-    const string ReinforcementPrefix = "Melee Level 2 Reinforcement";
+    const string ScaledPopulationPrefix = "Scaled Population Enemy";
     const string ExtractionReinforcementPrefix = "Extraction Reinforcement";
     const string ExtractionMarker = "Extraction Reinforcements Spawned";
+    const int RegularEnemyPopulationMultiplier = 2;
     const int LevelTwoExtraEnemies = 4;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -14,15 +15,15 @@ public static class ExpeditionDifficultyDirector
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.sceneLoaded += OnSceneLoaded;
-        AddLevelTwoEnemies(SceneManager.GetActiveScene());
+        AddScaledEnemyPopulation(SceneManager.GetActiveScene());
     }
 
     static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        AddLevelTwoEnemies(scene);
+        AddScaledEnemyPopulation(scene);
     }
 
-    static void AddLevelTwoEnemies(Scene scene)
+    static void AddScaledEnemyPopulation(Scene scene)
     {
         ExpeditionArenaGenerator.GenerateForCurrentProgression(scene);
         if (scene.name != ExpeditionScene) return;
@@ -34,24 +35,28 @@ public static class ExpeditionDifficultyDirector
             ExpeditionArenaGenerator.CurrentHalfHeight,
             ExpeditionArenaGenerator.CurrentSeed);
 
-        if (PlayerProgression.MeleeLevel < 2) return;
-
-        int completedRuns = ExpeditionRunProgression.CompletedRuns;
-        ExpeditionFieldOfView.Install(
-            loadingPlayer ? loadingPlayer.transform : null,
-            completedRuns,
-            true);
+        bool isLevelTwo = PlayerProgression.MeleeLevel >= 2;
+        int completedRuns = isLevelTwo ? ExpeditionRunProgression.CompletedRuns : 0;
+        if (isLevelTwo)
+            ExpeditionFieldOfView.Install(
+                loadingPlayer ? loadingPlayer.transform : null,
+                completedRuns,
+                true);
 
         var enemies = Object.FindObjectsByType<WildernessEnemy>();
         if (enemies.Length == 0) return;
         foreach (var enemy in enemies)
-            if (enemy.name.StartsWith(ReinforcementPrefix)) return;
+            if (enemy.name.StartsWith(ScaledPopulationPrefix)) return;
 
         var template = enemies[0];
         var player = Object.FindAnyObjectByType<ExpeditionPlayerHealth>();
         var extraction = Object.FindAnyObjectByType<ExtractionZone>();
 
-        int extraEnemyCount = LevelTwoExtraEnemies + ExpeditionRunProgression.RegularEnemyBonus;
+        int levelTwoAdditionalEnemies = isLevelTwo
+            ? LevelTwoExtraEnemies + ExpeditionRunProgression.RegularEnemyBonus
+            : 0;
+        int extraEnemyCount = enemies.Length * (RegularEnemyPopulationMultiplier - 1)
+            + levelTwoAdditionalEnemies * RegularEnemyPopulationMultiplier;
         for (int i = 0; i < extraEnemyCount; i++)
         {
             Vector2 position = ExpeditionArenaGenerator.FindOpenPosition(player ? player.transform : null,
@@ -61,11 +66,12 @@ public static class ExpeditionDifficultyDirector
                 position,
                 Quaternion.identity,
                 template.transform.parent);
-            reinforcement.name = $"{ReinforcementPrefix} {i + 1}";
+            reinforcement.name = $"{ScaledPopulationPrefix} {i + 1}";
         }
 
-        foreach (var enemy in Object.FindObjectsByType<WildernessEnemy>())
-            enemy.ApplyRunDifficulty(completedRuns);
+        if (isLevelTwo)
+            foreach (var enemy in Object.FindObjectsByType<WildernessEnemy>())
+                enemy.ApplyRunDifficulty(completedRuns);
     }
 
     public static void SpawnExtractionReinforcements()

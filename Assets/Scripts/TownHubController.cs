@@ -32,7 +32,7 @@ public class TownHubController : MonoBehaviour
         RemoveRetiredBuildings();
         if (!PlayerPrefs.HasKey(GoldKey))
             PlayerPrefs.SetInt(GoldKey, startingGold);
-        Gold = PlayerPrefs.GetInt(GoldKey, startingGold);
+        Gold = GoldInventoryLocation.GetTotalGold();
         IsInjured = PlayerPrefs.GetInt(ExpeditionPlayerHealth.InjuryKey, 0) == 1;
         if (!PlayerPrefs.HasKey(ExpeditionPlayerHealth.HealthKey))
             PlayerPrefs.SetInt(ExpeditionPlayerHealth.HealthKey,
@@ -73,27 +73,22 @@ public class TownHubController : MonoBehaviour
 
     public static bool TrySpendGold(int amount, out int remainingGold)
     {
-        remainingGold = GetGoldBalance();
-        if (amount < 0 || remainingGold < amount) return false;
-
-        remainingGold -= amount;
-        PlayerPrefs.SetInt(GoldKey, remainingGold);
-        PlayerPrefs.Save();
+        if (!GoldInventoryLocation.TrySpend(amount, out remainingGold)) return false;
         if (Instance) Instance.Gold = remainingGold;
         return true;
     }
 
     public static int GetGoldBalance()
-        => PlayerPrefs.GetInt(GoldKey, DefaultStartingGold);
+        => GoldInventoryLocation.GetTotalGold();
 
     public static void AddSecuredGold(int amount)
     {
         if (amount <= 0) return;
-        int gold = GetGoldBalance();
-        PlayerPrefs.SetInt(GoldKey, gold + amount);
+        GoldInventoryLocation.AddAsNewPlayerStack(amount);
         PlayerPrefs.SetInt(PendingSecuredGoldKey,
             PlayerPrefs.GetInt(PendingSecuredGoldKey, 0) + amount);
         PlayerPrefs.Save();
+        if (Instance) Instance.Gold = GetGoldBalance();
     }
 
     public void TreatPlayer(int cost)

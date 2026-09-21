@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>Modal player bag shown with E. The chest reuses the same 4 x 4 art and slot geometry.</summary>
@@ -9,7 +10,9 @@ public class PlayerInventoryUI : MonoBehaviour
 
     public static bool IsOpen { get; private set; }
 
-    bool draggingGold;
+    readonly GoldStackCursor goldCursor = new GoldStackCursor();
+    readonly HashSet<int> rightDragVisited = new HashSet<int>();
+    bool rightDragging;
     TownPlayerController playerMovement;
     bool playerMovementWasEnabled;
 
@@ -36,7 +39,9 @@ public class PlayerInventoryUI : MonoBehaviour
 
     void Close()
     {
-        draggingGold = false;
+        goldCursor.ReturnHeld(GetHUD());
+        rightDragging = false;
+        rightDragVisited.Clear();
         IsOpen = false;
         UnlockPlayer();
     }
@@ -53,72 +58,85 @@ public class PlayerInventoryUI : MonoBehaviour
         Rect panel = GetCenteredPanelRect();
         DrawPanel(panel, "INVENTORY");
 
-        var hud = GetComponent<ExpeditionHUD>();
-        if (!hud) hud = FindAnyObjectByType<ExpeditionHUD>();
-        int gold = 0;
-        int slot = 0;
-        if (hud) hud.GetPlayerInventoryGold(out gold, out slot);
-        if (GoldInventoryLocation.CurrentContainer == GoldInventoryLocation.Container.HomeChest)
+        var hud = GetHUD();
+        int hoveredSlot = -1;
+        for (int slot = 0; slot < GoldInventoryLocation.PlayerSlotCount; slot++)
         {
-            gold = hud ? hud.CarriedLoot : 0;
-            slot = 0;
+            int amount = goldCursor.GetSlotAmount(
+                GoldInventoryLocation.Container.PlayerInventory, slot, hud);
+            if (amount > 0) DrawGold(panel, slot, amount);
+            if (amount > 0 && Event.current != null
+                && GetSlotRect(panel, slot).Contains(Event.current.mousePosition))
+                hoveredSlot = slot;
         }
 
-        if (gold > 0 && !draggingGold)
-            DrawGold(panel, slot, gold);
-
-        if (gold > 0 && !draggingGold && Event.current != null &&
-            GetSlotRect(panel, slot).Contains(Event.current.mousePosition))
+        if (hoveredSlot >= 0)
             DrawItemTooltip(Event.current.mousePosition, "GOLD");
 
-        HandlePointer(panel, gold, slot);
+        HandlePointer(panel, hud);
 
-        if (draggingGold && Event.current != null)
+        if (goldCursor.IsHolding && Event.current != null)
         {
             var dragRect = new Rect(Event.current.mousePosition.x - 25f, Event.current.mousePosition.y - 25f, 50f, 50f);
-            ExpeditionHUD.DrawGoldStack(dragRect, gold);
+            ExpeditionHUD.DrawGoldStack(dragRect, goldCursor.TotalAmount);
         }
 
         GUI.color = oldColor;
     }
 
-    void HandlePointer(Rect panel, int gold, int slot)
+    void HandlePointer(Rect panel, ExpeditionHUD hud)
     {
         Event currentEvent = Event.current;
         if (currentEvent == null) return;
-        CursorClickFeedback.SetInteractiveHover(gold > 0 && GetSlotRect(panel, slot).Contains(currentEvent.mousePosition));
-        if (currentEvent.button != 0) return;
+        bool overSlot = TryGetSlotAt(currentEvent.mousePosition, panel, out int slot);
+        int slotAmount = overSlot
+            ? goldCursor.GetSlotAmount(GoldInventoryLocation.Container.PlayerInventory, slot, hud)
+            : 0;
+        CursorClickFeedback.SetInteractiveHover(overSlot && (slotAmount > 0 || goldCursor.IsHolding));
 
         if (currentEvent.type == EventType.MouseDown)
         {
-            if (gold > 0 && GetSlotRect(panel, slot).Contains(currentEvent.mousePosition))
+            if (overSlot && currentEvent.button == 0)
             {
-                draggingGold = true;
+                goldCursor.LeftClick(GoldInventoryLocation.Container.PlayerInventory, slot, hud);
                 currentEvent.Use();
             }
-            else if (panel.Contains(currentEvent.mousePosition))
+            else if (overSlot && currentEvent.button == 1)
+            {
+                rightDragVisited.Clear();
+                rightDragVisited.Add(slot);
+                rightDragging = true;
+                goldCursor.RightClick(GoldInventoryLocation.Container.PlayerInventory, slot, hud);
+                currentEvent.Use();
+            }
+            else if (panel.Contains(currentEvent.mousePosition) && currentEvent.button == 0)
             {
                 currentEvent.Use();
             }
-            else
+            else if (currentEvent.button == 0)
             {
                 Close();
                 currentEvent.Use();
             }
         }
-        else if (currentEvent.type == EventType.MouseDrag && draggingGold)
+        else if (currentEvent.type == EventType.MouseDrag && currentEvent.button == 1 && rightDragging)
         {
+            if (overSlot && rightDragVisited.Add(slot) && goldCursor.IsHolding)
+                goldCursor.RightClick(GoldInventoryLocation.Container.PlayerInventory, slot, hud);
             currentEvent.Use();
         }
-        else if (currentEvent.type == EventType.MouseUp && draggingGold)
+        else if (currentEvent.type == EventType.MouseUp && currentEvent.button == 1 && rightDragging)
         {
-            if (TryGetSlotAt(currentEvent.mousePosition, panel, out int targetSlot) &&
-                GoldInventoryLocation.CurrentContainer == GoldInventoryLocation.Container.PlayerInventory)
-                GoldInventoryLocation.MoveTo(GoldInventoryLocation.Container.PlayerInventory, targetSlot);
+            rightDragging = false;
+            rightDragVisited.Clear();
+            currentEvent.Use();
+        }
+    }
 
-            draggingGold = false;
-            currentEvent.Use();
-        }
+    ExpeditionHUD GetHUD()
+    {
+        var hud = GetComponent<ExpeditionHUD>();
+        return hud ? hud : FindAnyObjectByType<ExpeditionHUD>();
     }
 
     public static Rect GetCenteredPanelRect()

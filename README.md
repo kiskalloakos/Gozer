@@ -61,19 +61,19 @@ The current local build now contains the first playable version of the town-to-e
 - Walk around TownHub with smooth four-direction movement and directional character animation.
 - Move behind tall town scenery and have foreground objects fade instead of hiding the player completely.
 - See the persistent five-heart health display and four-slot inventory bar in every scene.
-- See all secured Gold as one numbered stack in the player inventory instead of as a separate upper-left counter.
+- See secured Gold as numbered, persistent stacks in player-inventory or home-chest slots instead of as a separate upper-left counter.
 - Begin a new save with 18 Gold, enough to test the current workbench and treatment economy.
 - Click the player home to enter its separate interior scene.
 - Click the front door inside the player home to return to TownHub.
 - Click the workbench inside the player home to purchase the one-time Reinforced Melee Weapon upgrade for 8 Gold.
-- Open the animated storage chest beside the Player Home workbench to view its pixel-art inventory panel over a dimmed, paused room; drag the Gold stack between any player-inventory or chest slot, then click outside it or press Escape to close it.
+- Open the animated storage chest beside the Player Home workbench to view its pixel-art inventory panel over a dimmed, paused room; left-click to pick up or place a full Gold stack, right-click to take half or place one, and right-drag to distribute one Gold into each visited slot.
 - Permanently increase melee damage from 1 to 2 after purchasing the workbench upgrade, reducing the current enemy from three required hits to two.
-- Increase the initial expedition population from 8 enemies to 12 after reaching melee level 2; successful procedural runs can raise later populations further.
+- Begin level-1 expeditions with 16 enemies and increase the initial population to 24 after reaching melee level 2; successful procedural runs add two enemies per threat increase.
 - Receive clear workbench feedback when the upgrade is purchased, unaffordable, or already owned.
 - Click the infirmary for treatment when health is missing or the player is injured.
 - Spend 3 Gold at the infirmary to clear the injury and restore all five hearts.
 - Receive clear text feedback when already healthy, successfully treated, unable to afford treatment, or too injured to leave town.
-- Keep health, injury state, Gold balance, and the Gold stack's inventory or chest slot between scene changes and game sessions.
+- Keep health, injury state, total Gold, and every split Gold stack's inventory or chest slot between scene changes and game sessions.
 - Use the expedition gate to leave town, provided the player has more than zero health.
 - Only the player home and infirmary remain as active town buildings; the earlier storage, watchtower, and greenhouse prototypes are retired.
 
@@ -103,8 +103,8 @@ The current local build now contains the first playable version of the town-to-e
 - Receive brief invulnerability and knockback after taking damage, preventing instant repeated hits.
 - Kill a baseline enemy with three normal melee hits or two reinforced-melee hits; enemy health gains one point after every four successful level-2 runs.
 - Make a defeated enemy drop one glowing expedition-supply pickup.
-- Walk over dropped loot to add it to the existing supply stack in the first inventory slot.
-- See secured Gold and newly carried expedition Gold combined into one visible stack count when the secured stack is carried; defeat still removes only the unsecured portion.
+- Walk over dropped loot to add it to an unsecured Gold stack in the first available player-inventory slot.
+- Keep newly carried expedition Gold distinct from secured stacks; successful extraction secures it in the player inventory without moving or merging chest Gold, while defeat removes only the unsecured portion.
 - Find the physical extraction point hidden among the trees.
 - Begin a ten-second extraction countdown by entering the extraction zone.
 - Alert all surviving enemies when extraction begins, causing the activation to create danger.
@@ -146,7 +146,7 @@ The entries below supersede earlier descriptions of the inventory bar in this RE
 - [x] Render the quickbar with point filtering, no compression, no mipmaps, and the source artwork's measured per-column centers so Gold and its count stay aligned in every one of its four cells.
 - [x] Open the full player inventory with **E** from any game scene; it is a 4 × 4 grid using `inventory.png` over a dimmed, paused world.
 - [x] Open the animated Player Home chest beside the workbench into paired, labeled 4 × 4 **INVENTORY** and **CHEST** grids over a dimmed, paused room.
-- [x] Drag Gold between any player-inventory and chest cell, retain its selected container and slot across scene changes and sessions, and continue spending it for workbench upgrades and infirmary treatment regardless of where it is stored.
+- [x] Split Gold into persistent stacks across player-inventory and chest cells using left-click, right-click, and right-drag distribution, while continuing to spend the combined balance for upgrades and treatment regardless of where stacks are stored.
 - [x] Draw Gold as a centered yellow token with a small in-cell top-right count; the open player and chest grids show a **GOLD** tooltip on hover, while the bottom quickbar does not.
 - [x] Restore the hover cursor for interactable world objects and draggable Gold, while retaining the pressed-cursor click feedback.
 
@@ -178,7 +178,7 @@ The playable progression loop remains:
 
 `Leave town → fight → collect supplies → extract → return → spend rewards → become permanently stronger → attempt a changed expedition`
 
-The Reinforced Melee Weapon remains the first permanent reward: it costs 8 Gold, raises melee damage from 1 to 2, begins level-2 expeditions at 12 enemies, unlocks the larger procedural field, and persists between sessions. Successful level-2 runs raise the threat for subsequent expeditions. The infirmary remains a recovery cost rather than permanent progression.
+The Reinforced Melee Weapon remains the first permanent reward: it costs 8 Gold, raises melee damage from 1 to 2, begins level-2 expeditions at 24 enemies, unlocks the larger procedural field, and persists between sessions. Successful level-2 runs raise the threat for subsequent expeditions. The infirmary remains a recovery cost rather than permanent progression.
 
 ## Persistent threat progression
 
@@ -187,7 +187,7 @@ Threat progression begins with the first procedural level-2 expedition. Let `r` 
 | System | Current rule for a level-2 expedition |
 | --- | --- |
 | Threat shown to the player | `r + 1` |
-| Regular enemies | `12 + min(r, 24)` |
+| Regular enemies | `24 + 2 × min(r, 24)` |
 | Extraction reinforcements | `2 + min(floor(r / 2), 6)` |
 | Enemy movement-speed multiplier | `1 + 0.5 × (1 - e^(-0.08r))` |
 | Enemy detection-radius bonus | `4 × (1 - e^(-0.08r))` world units |
@@ -469,48 +469,48 @@ Before accepting new art or a new gameplay scene, verify:
 9. The result is readable at native 320 x 180 and crisp at integer display scales.
 <!-- END PIXEL ART STANDARD -->
 
-<details>
-<summary>To-Do List</summary>
 
-## Comprehensive development checklist
 
-This is the project's single source of truth for completed milestones and remaining work. Checked items are playable now. Unchecked items are not implemented, even when a related prototype exists.
 
-### Immediate priority: make expedition generation production-ready
+### FUNCTIONAL TO-DO AND FIXES
 
-The level-2 generator is suitable for playtesting and can generate multiple expeditions in one launch without intentionally retaining earlier worlds. Before procedural expeditions become the production core loop, complete these steps:
+# DONE
 
-For rapid visual inspection in Unity, use **RPG → Tests → Preview Random Expedition**. It opens the production expedition scene with a fresh procedural seed and enters Play Mode directly, without requiring the level-2 unlock or a trip through TownHub.
-
+- [x] **Create the initial town hub.** The current active town contains the player home, home workbench, infirmary, and expedition gate. Earlier storage, watchtower, and greenhouse prototypes were retired rather than kept as active upgradeable buildings.
+- [x] **Create one compact, replayable expedition zone.** Melee level 1 uses the fixed test field; melee level 2 rebuilds it as a larger randomized field on every entry.
 - [x] **Generate a deterministic layout from a saved seed.** The last seed is saved and every run logs its seed; requested and command-line seeds reproduce the same layout.
 - [x] **Carve a guaranteed route from spawn to extraction.** A deterministic multi-segment corridor is reserved before trees and extraction-grove scenery are placed.
 - [x] **Validate connectivity before constructing the final scene.** A grid flood-fill rejects invalid candidates and retries deterministically before scene objects are built.
 - [x] **Batch terrain updates and pool repeated scenery.** The level-2 ground is submitted through one `SetTilesBlock` call instead of 10,800 individual writes. Forest construction reuses every existing child under the Trees root, grows the pool only when required, and deactivates surplus objects instead of destroying them. Each production preview logs stage timings and reuse counts.
-- [ ] **Profile arena construction in target player builds.** The Editor development-machine baseline is recorded above; validate minimum-spec Windows, macOS, and Linux players before deciding whether the scene-local pool should become cross-scene persistent or tree rendering should be combined further.
-- [ ] **Move arena rules into level and biome configuration assets.** Store dimensions, density, extraction distance, enemy budget, tiles, scenery, and progression requirements as data instead of expanding hard-coded melee-level conditionals.
 - [x] **Add automated generator stress tests.** The lightweight editor test has validated 500 unique seeds in five batches of 100 without loading gameplay scenes.
-
-Known weaknesses to cover while completing this work:
-
 - [x] Make open-position fallbacks collision-safe instead of accepting a potentially blocked edge position after sampling fails.
 - [x] Keep extraction-grove scenery inside the arena boundary when extraction is placed near an edge.
 - [x] Keep the visible ground beyond the unreachable collider boundary for both the loading overview and edge-adjacent gameplay, with a deterministic perimeter forest masking the transition.
-- [ ] Replace fragile scene-name and object-name lookups with explicit references or validated configuration.
 - [x] Add a minimum-five-second black expedition loading/reveal sequence with a loading tab, a 0% to 100% brightness fade, and a smoothly decelerating overhead camera zoom. No blur effect is used.
-- [ ] Decide how seeds participate in future daily expeditions and co-op synchronization. Saves, exact-seed reproduction, command-line reproduction, and bug-report logging now use the saved expedition seed.
-- [ ] Add authored landmarks and layout grammar so repeated expeditions feel structurally different rather than only randomly scattered.
-
-### Completed combat-space and repeated-run escalation work
-
 - [x] **Enlarge the procedural combat space.** Level 2 now generates a `120 x 90` arena with 294 regular trees while level 1 remains the fixed `64 x 48` introductory field.
 - [x] **Seed the player spawn and extraction together.** Each procedural seed reproduces its safe player spawn, route, extraction point, forest, grove, and ground pattern; extraction remains at least 56 world units from spawn.
 - [x] **Add level-2 nighttime visibility.** A uniform 6.5-unit clear circle with a soft edge follows the player, appears during the loading reveal, leaves gameplay UI readable, and tightens gradually toward 4.75 units as threat rises.
 - [x] **Escalate successful procedural runs.** Every level-2 success persists the next threat level and increases later enemy pressure, perception, speed, attack timing, health, and visibility pressure; defeat leaves threat unchanged.
 - [x] **Communicate and reset threat.** Loading displays the current threat, TownHub reports the next threat after success, and the town-progress reset clears the escalation state.
 - [x] **Validate persistent progression safely.** The editor progression test verifies the first two threat increases and restores the existing save values afterward.
+- [x] **Implement one physical extraction point.** Entering it begins a dangerous ten-second countdown, alerts enemies, and spawns reinforcements.
+- [x] **Implement one permanent reward.** The Reinforced Melee Weapon permanently increases damage and changes the next expedition.
+- [x] **Define the first extraction method and why it is dangerous.** It is a physical zone with a ten-second activation, cancelled by leaving or attacking, that alerts enemies and calls reinforcements.
 
-### Core single-player systems still missing
 
+# TO-DO
+
+- [ ] **Complete the intended starter weapon set.** Player movement, mouse aiming, and melee combat work; the planned revolver and shotgun do not exist yet.
+- [ ] **Implement three resource tiers.** Common expedition supplies work; valuable and contaminated resource tiers do not.
+- [ ] **Implement two regular enemies and one escalation enemy.** One wandering/pursuing melee enemy exists; distinct additional archetypes do not.
+- [ ] **Profile arena construction in target player builds.** The Editor development-machine baseline is recorded above; validate minimum-spec Windows, macOS, and Linux players before deciding whether the scene-local pool should become cross-scene persistent or tree rendering should be combined further.
+- [ ] **Move arena rules into level and biome configuration assets.** Store dimensions, density, extraction distance, enemy budget, tiles, scenery, and progression requirements as data instead of expanding hard-coded melee-level conditionals.
+- [ ] **Write the first five town upgrades and define their visible effects.** Reinforced melee is the first permanent upgrade; four more upgrades and the broader town-upgrade plan remain undefined.
+- [ ] **Finalize the production procedural-expedition rules.** Baseline repeated-run difficulty scaling and seed persistence now work; biome structure, richer route grammar, landmarks, objectives, daily/co-op seed policy, and the amount of authored content per run remain undecided.
+- [ ] **Implement co-op multiplayer later.** Begin only after the single-player core loop and procedural generation are reliable.
+- [ ] Replace fragile scene-name and object-name lookups with explicit references or validated configuration.
+- [ ] Decide how seeds participate in future daily expeditions and co-op synchronization. Saves, exact-seed reproduction, command-line reproduction, and bug-report logging now use the saved expedition seed.
+- [ ] Add authored landmarks and layout grammar so repeated expeditions feel structurally different rather than only randomly scattered.
 - [ ] **Expedition objectives.** Add missions such as hunting a target, rescuing someone, activating machinery, delivering an item, or discovering a location so a run has purpose beyond collecting supplies.
 - [ ] **Meaningfully different loot.** Add common, valuable, and contaminated resources plus items that create inventory and extraction decisions.
 - [ ] **Preparation and loadouts.** Let the player choose weapons, consumables, tools, destination, and risk level before leaving town.
@@ -521,34 +521,42 @@ Known weaknesses to cover while completing this work:
 - [ ] **Multiple destinations and route unlocking.** Expand the expedition gate beyond one field and support permanently unlocked routes.
 - [ ] **A run-result screen.** Summarize secured loot, losses, health, treatment needs, spending, discoveries, and world changes after success or defeat.
 - [ ] **Basic game-session flow.** Add a title screen, save slots, pause menu, settings, and clear quit/restart paths.
+- [ ] **Infirmary full setup with NPC, clear upgrades, prices, etc**
+- [ ] **Other town supplies like market for trading specifically so you can trade Gold, etc**
+- [ ] **“Hidden” field of view** Already in, but it should be upgradable from the town supplies.
+- [ ] **Can sleep and skip night, but gets harder with more skips**
+- [ ] When clicking expedition gate, there’s a moon animation with a wolf sound effect and it zooms in from top down to the character and for a slight mini second you can see where the extraction zone is. This is a Easter egg. Also, dnb-like music starts to get you in the mood.
+- [ ] Mircovolts-like elements?
+- [ ] ENEMIES: Damage + HP
+- [ ] ANIMALS as mobs
+- [ ] FARM
+- [ ] Dash ? Sprint with fatigue?
+
 
 Co-op remains a later pillar. The single-player loop above should be proven before networking work begins.
 
-### Original prototype milestones
 
-- [x] **Create the initial town hub.** The current active town contains the player home, home workbench, infirmary, and expedition gate. Earlier storage, watchtower, and greenhouse prototypes were retired rather than kept as active upgradeable buildings.
-- [x] **Create one compact, replayable expedition zone.** Melee level 1 uses the fixed test field; melee level 2 rebuilds it as a larger randomized field on every entry.
-- [ ] **Complete the intended starter weapon set.** Player movement, mouse aiming, and melee combat work; the planned revolver and shotgun do not exist yet.
-- [ ] **Implement three resource tiers.** Common expedition supplies work; valuable and contaminated resource tiers do not.
-- [ ] **Implement two regular enemies and one escalation enemy.** One wandering/pursuing melee enemy exists; distinct additional archetypes do not.
-- [x] **Implement one physical extraction point.** Entering it begins a dangerous ten-second countdown, alerts enemies, and spawns reinforcements.
-- [x] **Implement one permanent reward.** The Reinforced Melee Weapon permanently increases damage and changes the next expedition.
 
-The proof-of-fun question remains: **after a successful run, does the player immediately want to go back out for one more?**
 
-### Near-term design decisions
+### VISUAL AND AUDITORY TO-DO AND FIXES
 
-- [x] **Define the first extraction method and why it is dangerous.** It is a physical zone with a ten-second activation, cancelled by leaving or attacking, that alerts enemies and calls reinforcements.
-- [ ] **Write the first five town upgrades and define their visible effects.** Reinforced melee is the first permanent upgrade; four more upgrades and the broader town-upgrade plan remain undefined.
-- [ ] **Finalize the production procedural-expedition rules.** Baseline repeated-run difficulty scaling and seed persistence now work; biome structure, richer route grammar, landmarks, objectives, daily/co-op seed policy, and the amount of authored content per run remain undecided.
-- [ ] **Implement co-op multiplayer later.** Begin only after the single-player core loop and procedural generation are reliable.
+# VISUAL
 
-## Remaining pixel-art backlog
 
-The repository already contains the active town character sheet, workbench, infirmary exports, and closed/open expedition-gate artwork. Do not recreate retired storage, watchtower, or greenhouse art unless those buildings are intentionally returned to the design.
+- [ ] swoosh effect for melee attacks
+- [ ] first enemy looks
+- [ ] swords and guns
+- [ ] inventory (either one) is not centered
+- [ ] Add more town props and functional dressing after the active town layout is settled.
+- [ ] Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.
+- [ ] Replace placeholder expedition enemies and combat effects with production mob, monster, hit, and attack artwork while preserving the established scale and projection.
 
-- Add more town props and functional dressing after the active town layout is settled.
-- Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.
-- Replace placeholder expedition enemies and combat effects with production mob, monster, hit, and attack artwork while preserving the established scale and projection.
 
-</details>
+# AUDITORY
+- [ ] walking
+- [ ] opening chest
+- [ ] upgrading infintrary
+- [ ] upgrading workbench
+- [ ] hitting swoosh DSGNImpt_MELEE-Magic Kick_HY_PC-006
+- [ ] hitting enemy DSGNMisc_HIT-Hit Noise_HY_PC-005
+- [ ] taking damage 

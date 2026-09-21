@@ -15,8 +15,7 @@ public static class TownProgressReset
     {
         PlayerPrefs.DeleteKey(TownHubController.GoldKey);
         PlayerPrefs.DeleteKey(TownHubController.PendingSecuredGoldKey);
-        PlayerPrefs.DeleteKey(GoldInventoryLocation.ContainerKey);
-        PlayerPrefs.DeleteKey(GoldInventoryLocation.SlotKey);
+        GoldInventoryLocation.ResetSavedState();
         PlayerPrefs.DeleteKey(ExpeditionPlayerHealth.InjuryKey);
         PlayerPrefs.DeleteKey(ExpeditionPlayerHealth.HealthKey);
         PlayerPrefs.DeleteKey(PlayerProgression.ReinforcedMeleeKey);

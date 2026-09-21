@@ -29,11 +29,21 @@ public class ExpeditionHUD : MonoBehaviour
     static Texture2D quickbarArt;
 
     public ExpeditionPlayerHealth health;
-    public int CarriedLoot { get; private set; }
+    readonly int[] carriedLootBySlot = new int[GoldInventoryLocation.PlayerSlotCount];
+    public int CarriedLoot
+    {
+        get
+        {
+            int total = 0;
+            foreach (int amount in carriedLootBySlot) total += amount;
+            return total;
+        }
+    }
 
     string statusMessage = "";
     float statusUntil;
     float goldCountBounceStartedAt = float.NegativeInfinity;
+    int goldCountBounceSlot = -1;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void InstallForCurrentAndFutureScenes()
@@ -59,29 +69,42 @@ public class ExpeditionHUD : MonoBehaviour
     public void AddLoot(int amount)
     {
         if (amount <= 0) return;
-        CarriedLoot += amount;
+        int slot = FindCarriedLootSlot();
+        carriedLootBySlot[slot] += amount;
         statusMessage = $"+{amount} Gold";
         statusUntil = Time.time + 1.4f;
         goldCountBounceStartedAt = Time.unscaledTime;
+        goldCountBounceSlot = slot;
     }
 
     public int SecureLoot()
     {
         int secured = CarriedLoot;
-        CarriedLoot = 0;
-        if (secured > 0) TownHubController.AddSecuredGold(secured);
+        for (int slot = 0; slot < carriedLootBySlot.Length; slot++)
+        {
+            int amount = carriedLootBySlot[slot];
+            if (amount <= 0) continue;
+            GoldInventoryLocation.AddAmount(GoldInventoryLocation.Container.PlayerInventory, slot, amount);
+            carriedLootBySlot[slot] = 0;
+        }
+        if (secured > 0)
+        {
+            PlayerPrefs.SetInt(TownHubController.PendingSecuredGoldKey,
+                PlayerPrefs.GetInt(TownHubController.PendingSecuredGoldKey, 0) + secured);
+            PlayerPrefs.Save();
+        }
         return secured;
     }
 
-    public void LoseLoot() => CarriedLoot = 0;
+    public void LoseLoot() => System.Array.Clear(carriedLootBySlot, 0, carriedLootBySlot.Length);
 
-    public void GetPlayerInventoryGold(out int amount, out int slot)
+    public int GetCarriedLootAtSlot(int slot)
+        => slot >= 0 && slot < carriedLootBySlot.Length ? carriedLootBySlot[slot] : 0;
+
+    public void SetCarriedLootAtSlot(int slot, int amount)
     {
-        int securedGold = TownHubController.GetGoldBalance();
-        bool storedInPlayerInventory =
-            GoldInventoryLocation.CurrentContainer == GoldInventoryLocation.Container.PlayerInventory;
-        amount = storedInPlayerInventory ? securedGold + CarriedLoot : CarriedLoot;
-        slot = storedInPlayerInventory ? GoldInventoryLocation.CurrentSlot : 0;
+        if (slot < 0 || slot >= carriedLootBySlot.Length) return;
+        carriedLootBySlot[slot] = Mathf.Max(0, amount);
     }
 
     void OnGUI()
@@ -92,13 +115,12 @@ public class ExpeditionHUD : MonoBehaviour
             : Mathf.Clamp(PlayerPrefs.GetInt(ExpeditionPlayerHealth.HealthKey,
                 ExpeditionPlayerHealth.DefaultMaxHealthUnits), 0, ExpeditionPlayerHealth.DefaultMaxHealthUnits);
 
-        GetPlayerInventoryGold(out int displayedGold, out int displayedSlot);
         float bounceProgress = Mathf.Clamp01((Time.unscaledTime - goldCountBounceStartedAt) /
             GoldCountBounceDuration);
         float countBounce = Time.unscaledTime - goldCountBounceStartedAt < GoldCountBounceDuration
             ? Mathf.Sin(bounceProgress * Mathf.PI)
             : 0f;
-        DrawQuickbar(displayedGold, displayedSlot, countBounce);
+        DrawQuickbar(this, goldCountBounceSlot, countBounce);
 
         Rect quickbar = GetQuickbarRect();
         float heartsWidth = HealthHeartGUI.GetWidth(maxHearts);
@@ -152,24 +174,39 @@ public class ExpeditionHUD : MonoBehaviour
             panel.y + sourceGridY * scale, sourceCellSize * scale, sourceCellSize * scale);
     }
 
-    public static void DrawQuickbar(int goldAmount, int goldSlot, float countBounce = 0f)
+    public static void DrawQuickbar(ExpeditionHUD hud, int bouncingSlot = -1, float countBounce = 0f)
     {
         var oldColor = GUI.color;
         Rect panel = GetQuickbarRect();
         Texture2D art = GetQuickbarArt();
         GUI.color = Color.white;
         GUI.DrawTexture(panel, art ? art : Texture2D.whiteTexture, ScaleMode.StretchToFill, true);
-        if (goldAmount > 0 && goldSlot >= 0 && goldSlot < QuickbarSlotCount)
+        for (int slotIndex = 0; slotIndex < QuickbarSlotCount; slotIndex++)
         {
+            int goldAmount = GoldInventoryLocation.GetAmount(
+                GoldInventoryLocation.Container.PlayerInventory, slotIndex)
+                + (hud ? hud.GetCarriedLootAtSlot(slotIndex) : 0);
+            if (goldAmount <= 0) continue;
             // Match the full inventory exactly: draw within the cell's inset content box,
             // rather than using the raw quickbar cell bounds.
-            Rect slot = GetQuickbarSlotRect(goldSlot);
+            Rect slot = GetQuickbarSlotRect(slotIndex);
             float inset = Mathf.Max(2f, panel.width / 110f);
             Rect content = new Rect(slot.x + inset, slot.y + inset,
                 slot.width - inset * 2f, slot.height - inset * 2f);
-            DrawGoldStack(content, goldAmount, content.width / 50f, countBounce);
+            DrawGoldStack(content, goldAmount, content.width / 50f,
+                slotIndex == bouncingSlot ? countBounce : 0f);
         }
         GUI.color = oldColor;
+    }
+
+    int FindCarriedLootSlot()
+    {
+        for (int slot = 0; slot < carriedLootBySlot.Length; slot++)
+            if (carriedLootBySlot[slot] > 0) return slot;
+        for (int slot = 0; slot < carriedLootBySlot.Length; slot++)
+            if (GoldInventoryLocation.GetAmount(GoldInventoryLocation.Container.PlayerInventory, slot) == 0)
+                return slot;
+        return 0;
     }
 
     public static void DrawGoldStack(Rect rect, int amount, float contentScale = 1f,
