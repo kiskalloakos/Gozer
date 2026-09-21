@@ -161,9 +161,16 @@ public class WildernessEnemy : MonoBehaviour
         stateUntil = Time.time + .35f;
     }
 
+    public void Relocate(Vector2 position)
+    {
+        if (!body) body = GetComponent<Rigidbody2D>();
+        body.position = position;
+        home = position;
+    }
+
     public static void AlertAllFromExtraction()
     {
-        foreach (var enemy in FindObjectsByType<WildernessEnemy>(FindObjectsSortMode.None))
+        foreach (var enemy in FindObjectsByType<WildernessEnemy>())
             enemy.AlertFromExtraction();
     }
 

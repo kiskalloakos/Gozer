@@ -61,7 +61,9 @@ public static class TownHubSetup
         var collider = player.AddComponent<CapsuleCollider2D>(); collider.size = new Vector2(.55f, .75f); collider.offset = new Vector2(0, .2f);
         var visualObject = new GameObject("Visual"); visualObject.transform.SetParent(player.transform, false);
         var renderer = visualObject.AddComponent<SpriteRenderer>();
-        renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Characters/Rogue_Standing_Simplified_128.png_0001.png");
+        renderer.sprite = AssetDatabase.LoadAllAssetsAtPath("Assets/Art/Characters/TownCharacterSheet.png")
+            .OfType<Sprite>()
+            .FirstOrDefault(candidate => candidate.name == "town_character_down_0");
         renderer.sortingOrder = 400;
         var controller = player.AddComponent<TownPlayerController>(); controller.visual = renderer;
         player.AddComponent<TownPlayerInteractor>();

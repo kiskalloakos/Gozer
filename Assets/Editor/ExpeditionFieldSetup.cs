@@ -290,7 +290,7 @@ public static class ExpeditionFieldSetup
     {
         var town = EditorSceneManager.OpenScene(TownPath, OpenSceneMode.Single);
         var portal = UnityEngine.Object.FindObjectsByType<ScenePortal>(FindObjectsSortMode.None)
-            .FirstOrDefault(candidate => candidate.destinationScene == "RogueTestRoom")
+            .FirstOrDefault(candidate => candidate.destinationScene == "ExpeditionField")
             ?? UnityEngine.Object.FindAnyObjectByType<ScenePortal>();
         if (!portal) throw new InvalidOperationException("Town expedition gate portal was not found.");
 

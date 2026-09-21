@@ -1,6 +1,6 @@
 /// <summary>
 /// Canonical numerical settings for Gozer's 16-pixel orthographic art pipeline.
-/// Keep these values synchronized with PIXEL_ART_STANDARD.md.
+/// Keep these values synchronized with the pixel-art and camera standard in README.md.
 /// </summary>
 public static class PixelArtStandard
 {
