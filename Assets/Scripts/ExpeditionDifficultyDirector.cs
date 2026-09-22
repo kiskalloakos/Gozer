@@ -69,9 +69,12 @@ public static class ExpeditionDifficultyDirector
             reinforcement.name = $"{ScaledPopulationPrefix} {i + 1}";
         }
 
-        if (isLevelTwo)
-            foreach (var enemy in Object.FindObjectsByType<WildernessEnemy>())
+        foreach (var enemy in Object.FindObjectsByType<WildernessEnemy>())
+        {
+            enemy.ApplyThreatHealth(ExpeditionRunProgression.CompletedRuns);
+            if (isLevelTwo)
                 enemy.ApplyRunDifficulty(completedRuns);
+        }
     }
 
     public static void SpawnExtractionReinforcements()

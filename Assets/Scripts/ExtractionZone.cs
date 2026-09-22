@@ -6,8 +6,8 @@ public class ExtractionZone : MonoBehaviour
     static readonly Vector3 GroundMarkerScale = new Vector3(4.3f, 2.7f, 1f);
 
     [Min(.1f)] public float extractionSeconds = 10f;
-    public string destinationScene = "TownHub";
-    public string destinationSpawnId = SceneTravel.TownExpeditionGate;
+    public GameScene destinationScene = GameScene.TownHub;
+    public SceneSpawnPoint destinationSpawn = SceneSpawnPoint.TownExpeditionGate;
 
     float elapsed;
     bool playerInside;
@@ -42,10 +42,13 @@ public class ExtractionZone : MonoBehaviour
 
         travelStarted = true;
         var inventory = FindAnyObjectByType<ExpeditionHUD>();
-        if (inventory) inventory.SecureLoot();
+        int securedGold = inventory ? inventory.SecureLoot() : 0;
         if (PlayerProgression.MeleeLevel >= 2)
             ExpeditionRunProgression.RecordSuccessfulProceduralRun();
-        SceneTravel.Load(destinationScene, destinationSpawnId);
+        ExpeditionRunResult.RecordSuccess(
+            securedGold,
+            FindAnyObjectByType<ExpeditionPlayerHealth>()?.CurrentHealth ?? 0);
+        SceneTravel.Load(destinationScene, destinationSpawn);
     }
 
     void OnTriggerEnter2D(Collider2D other)

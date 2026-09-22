@@ -3,93 +3,60 @@ using UnityEngine.SceneManagement;
 
 public static class SceneTravel
 {
-    public const string PlayerHomeFrontDoor = "player_home_front_door";
-    public const string TownExpeditionGate = "town_expedition_gate";
+    private static SceneSpawnPoint pendingSpawn;
 
-    private static string pendingSpawnId;
-
-    public static void Load(string destinationScene, string spawnId = "")
+    public static void Load(GameScene destinationScene, SceneSpawnPoint spawnPoint = SceneSpawnPoint.None)
     {
-        pendingSpawnId = spawnId;
+        if (VillageTime.Instance)
+        {
+            if (VillageTime.Instance.IsSleeping) return;
+            if (destinationScene == GameScene.ExpeditionField && !VillageTime.Instance.CanEnterExpedition()) return;
+            VillageTime.Instance.Save();
+        }
+        pendingSpawn = spawnPoint;
         SceneManager.sceneLoaded -= ApplyPendingSpawn;
         SceneManager.sceneLoaded += ApplyPendingSpawn;
-        SceneManager.LoadScene(destinationScene);
+        SceneManager.LoadScene(GameSceneCatalog.Name(destinationScene));
     }
 
     public static void LoadExpeditionWithSeed(int seed)
     {
         ExpeditionSeedManager.QueueSeed(seed);
-        Load("ExpeditionField");
+        Load(GameScene.ExpeditionField);
     }
 
     public static bool ReplayLastExpedition()
     {
         if (!ExpeditionSeedManager.QueueLastSeed()) return false;
-        Load("ExpeditionField");
+        Load(GameScene.ExpeditionField);
         return true;
     }
 
     private static void ApplyPendingSpawn(Scene scene, LoadSceneMode mode)
     {
         SceneManager.sceneLoaded -= ApplyPendingSpawn;
-        var spawnId = pendingSpawnId;
-        pendingSpawnId = "";
+        SceneSpawnPoint spawnPoint = pendingSpawn;
+        pendingSpawn = SceneSpawnPoint.None;
+        if (spawnPoint == SceneSpawnPoint.None) return;
 
-        if (string.IsNullOrEmpty(spawnId)) return;
-
-        var player = GameObject.Find("Player");
-        if (!player)
+        SceneReferences references = null;
+        foreach (var candidate in Object.FindObjectsByType<SceneReferences>(FindObjectsSortMode.None))
+            if (candidate.gameObject.scene == scene) { references = candidate; break; }
+        string validationError = "SceneReferences is missing.";
+        if (!references || !references.Validate(out validationError))
         {
-            Debug.LogWarning($"Could not apply scene spawn '{spawnId}': Player was not found in {scene.name}.");
+            Debug.LogError($"Scene travel could not apply {spawnPoint} in {scene.name}: "
+                + (references ? validationError : "SceneReferences is missing."));
+            return;
+        }
+        if (!references.TryGetSpawn(spawnPoint, out Vector2 destination))
+        {
+            Debug.LogError($"SceneReferences has no configured {spawnPoint} spawn in {scene.name}.");
             return;
         }
 
-        if (spawnId == PlayerHomeFrontDoor)
-        {
-            PlaceAtPlayerHomeDoor(player);
-            return;
-        }
-
-        if (spawnId == TownExpeditionGate)
-        {
-            PlaceAtExpeditionGate(player);
-            return;
-        }
-
-        Debug.LogWarning($"Unknown scene spawn id '{spawnId}' in {scene.name}.");
-    }
-
-    private static void PlaceAtPlayerHomeDoor(GameObject player)
-    {
-        var home = GameObject.Find("PLAYER HOME");
-        if (!home)
-        {
-            Debug.LogWarning("Could not place Player at the home door: PLAYER HOME was not found.");
-            return;
-        }
-
-        var footprint = home.GetComponent<Collider2D>();
-        float frontEdge = footprint ? footprint.bounds.min.y : home.transform.position.y;
-        var destination = new Vector2(home.transform.position.x, frontEdge - .55f);
-
-        player.transform.position = new Vector3(destination.x, destination.y, player.transform.position.z);
-        var body = player.GetComponent<Rigidbody2D>();
-        if (body) body.position = destination;
-        Physics2D.SyncTransforms();
-    }
-
-    private static void PlaceAtExpeditionGate(GameObject player)
-    {
-        var gate = GameObject.Find("Town Exit Wall");
-        if (!gate) gate = GameObject.Find("Expedition gate");
-        if (!gate)
-        {
-            Debug.LogWarning("Could not place Player at the expedition gate: no town gate was found.");
-            return;
-        }
-
-        var destination = new Vector2(gate.transform.position.x, gate.transform.position.y + 1.2f);
-        player.transform.position = new Vector3(destination.x, destination.y, player.transform.position.z);
+        Transform player = references.Player;
+        player.position = new Vector3(destination.x, destination.y, player.position.z);
         var body = player.GetComponent<Rigidbody2D>();
         if (body) body.position = destination;
         Physics2D.SyncTransforms();

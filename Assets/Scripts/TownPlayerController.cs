@@ -15,6 +15,20 @@ public class TownPlayerController : MonoBehaviour
 
     public FacingDirection CurrentFacing { get; private set; } = FacingDirection.Down;
 
+    public Vector2 FacingVector
+    {
+        get
+        {
+            switch (CurrentFacing)
+            {
+                case FacingDirection.Right: return Vector2.right;
+                case FacingDirection.Up: return Vector2.up;
+                case FacingDirection.Left: return Vector2.left;
+                default: return Vector2.down;
+            }
+        }
+    }
+
     private Rigidbody2D body;
     private Vector2 movement;
     private float animationClock;
@@ -24,6 +38,8 @@ public class TownPlayerController : MonoBehaviour
 
     void Update()
     {
+        if (GameSessionFlow.IsBlockingGameplay) { movement = Vector2.zero; return; }
+        if (VillageTime.Instance && VillageTime.Instance.IsSleeping) { movement = Vector2.zero; return; }
         movement = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
         if (visual)
         {

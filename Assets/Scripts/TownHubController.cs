@@ -20,6 +20,7 @@ public class TownHubController : MonoBehaviour
     [SerializeField] private int startingGold = DefaultStartingGold;
     private string notice = "Welcome home, Gozer.";
     private float noticeUntil;
+    private bool showingRunResult;
 
     public int Gold { get; private set; }
     public bool IsInjured { get; private set; }
@@ -43,6 +44,11 @@ public class TownHubController : MonoBehaviour
         int securedGold = PlayerPrefs.GetInt(PendingSecuredGoldKey, 0);
         PlayerPrefs.DeleteKey(PendingSecuredGoldKey);
         PlayerPrefs.Save();
+        if (ExpeditionRunResult.TryConsume(out var result))
+        {
+            showingRunResult = true;
+            gameObject.AddComponent<RunResultScreen>().Show(result);
+        }
         bool threatIncreased = ExpeditionRunProgression.TryConsumePendingThreatIncrease(out int threatLevel);
         ShowNotice(threatIncreased
             ? securedGold > 0
@@ -129,18 +135,10 @@ public class TownHubController : MonoBehaviour
     void OnGUI()
     {
         var oldColor = GUI.color;
-        if (Time.time < noticeUntil)
+        if (!showingRunResult && Time.time < noticeUntil)
         {
-            var noticeStyle = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.UpperCenter,
-                fontSize = 14,
-                fontStyle = FontStyle.Normal,
-                wordWrap = true,
-                normal = { textColor = new Color(.92f, .9f, .82f, .78f) }
-            };
             GUI.color = Color.white;
-            GUI.Label(new Rect(Screen.width / 2f - 280f, 10f, 560f, 42f), notice, noticeStyle);
+            ExpeditionHUD.DrawPixelTextCentered(notice, 10f, 2f);
         }
 
         GUI.color = oldColor;

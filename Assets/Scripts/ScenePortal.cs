@@ -2,8 +2,10 @@ using UnityEngine;
 
 public class ScenePortal : MonoBehaviour
 {
-    public string destinationScene;
-    public string destinationSpawnId;
+    public GameScene destinationScene;
+    public SceneSpawnPoint destinationSpawn = SceneSpawnPoint.None;
+    [Tooltip("Marks this portal as the expedition entry and enforces the village clock gate.")]
+    public bool requiresExpeditionTime;
     public string prompt = "Click to travel";
 
     private bool hovered;
@@ -12,9 +14,11 @@ public class ScenePortal : MonoBehaviour
 
     public void Interact()
     {
-        if (destinationScene == "ExpeditionField" && TownHubController.Instance &&
+        if ((requiresExpeditionTime || destinationScene == GameScene.ExpeditionField) && VillageTime.Instance &&
+            !VillageTime.Instance.CanEnterExpedition()) return;
+        if ((requiresExpeditionTime || destinationScene == GameScene.ExpeditionField) && TownHubController.Instance &&
             !TownHubController.Instance.CanBeginExpedition()) return;
-        SceneTravel.Load(destinationScene, destinationSpawnId);
+        SceneTravel.Load(destinationScene, destinationSpawn);
     }
 
     public bool IsPointerOverArt(Vector2 pointer)

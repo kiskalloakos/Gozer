@@ -87,8 +87,8 @@ public static class HomeInteriorSetup
         var doorArt = Art("Door Art", "door.png", Vector2.zero, 355, false, exit.transform);
         doorArt.transform.localPosition = Vector3.zero;
         var portal = exit.AddComponent<ScenePortal>();
-        portal.destinationScene = "TownHub";
-        portal.destinationSpawnId = SceneTravel.PlayerHomeFrontDoor;
+        portal.destinationScene = GameScene.TownHub;
+        portal.destinationSpawn = SceneSpawnPoint.PlayerHomeFrontDoor;
         portal.prompt = "Click the front door to return to town";
         var exitCollider = exit.AddComponent<BoxCollider2D>();
         exitCollider.size = new Vector2(1.75f, .45f);
@@ -193,8 +193,8 @@ public static class HomeInteriorSetup
         if (exit)
         {
             var portal = exit.GetComponent<ScenePortal>() ?? exit.AddComponent<ScenePortal>();
-            portal.destinationScene = "TownHub";
-            portal.destinationSpawnId = SceneTravel.PlayerHomeFrontDoor;
+            portal.destinationScene = GameScene.TownHub;
+            portal.destinationSpawn = SceneSpawnPoint.PlayerHomeFrontDoor;
             portal.prompt = "Click the front door to return to town";
             EditorUtility.SetDirty(portal);
         }

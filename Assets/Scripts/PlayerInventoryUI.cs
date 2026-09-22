@@ -18,6 +18,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
     void Update()
     {
+        if (GameSessionFlow.IsBlockingGameplay) return;
         if (HomeStorageChest.IsModalOpen) return;
 
         if (Input.GetKeyDown(KeyCode.E))
@@ -59,6 +60,7 @@ public class PlayerInventoryUI : MonoBehaviour
         DrawPanel(panel, "INVENTORY");
 
         var hud = GetHUD();
+        DrawQuickbarSlotSelection(panel, hud);
         int hoveredSlot = -1;
         for (int slot = 0; slot < GoldInventoryLocation.PlayerSlotCount; slot++)
         {
@@ -69,6 +71,7 @@ public class PlayerInventoryUI : MonoBehaviour
                 && GetSlotRect(panel, slot).Contains(Event.current.mousePosition))
                 hoveredSlot = slot;
         }
+        DrawQuickbarSlotHotkeys(panel);
 
         if (hoveredSlot >= 0)
             DrawItemTooltip(Event.current.mousePosition, "GOLD");
@@ -198,6 +201,33 @@ public class PlayerInventoryUI : MonoBehaviour
         ExpeditionHUD.DrawGoldStack(new Rect(slotRect.x + inset, slotRect.y + inset,
             slotRect.width - inset * 2f, slotRect.height - inset * 2f), amount,
             (slotRect.width - inset * 2f) / 50f);
+    }
+
+    public static void DrawQuickbarSlotSelection(Rect panel, ExpeditionHUD hud)
+    {
+        if (!hud) return;
+        int activeSlot = hud.ActiveQuickbarSlot;
+        if (activeSlot < 0 || activeSlot >= ExpeditionHUD.QuickbarSlotCount) return;
+        Rect slot = GetSlotRect(panel, activeSlot);
+        float thickness = Mathf.Max(1f, panel.width / 110f);
+        GUI.color = new Color(1f, .8f, .22f, .2f);
+        GUI.DrawTexture(slot, Texture2D.whiteTexture);
+        GUI.color = new Color(1f, .87f, .42f, .95f);
+        GUI.DrawTexture(new Rect(slot.x, slot.y, slot.width, thickness), Texture2D.whiteTexture);
+        GUI.DrawTexture(new Rect(slot.x, slot.yMax - thickness, slot.width, thickness), Texture2D.whiteTexture);
+        GUI.DrawTexture(new Rect(slot.x, slot.y, thickness, slot.height), Texture2D.whiteTexture);
+        GUI.DrawTexture(new Rect(slot.xMax - thickness, slot.y, thickness, slot.height), Texture2D.whiteTexture);
+    }
+
+    public static void DrawQuickbarSlotHotkeys(Rect panel)
+    {
+        float pixel = Mathf.Max(1f, Mathf.Floor(panel.width / 110f));
+        for (int slot = 0; slot < ExpeditionHUD.QuickbarSlotCount; slot++)
+        {
+            Rect slotRect = GetSlotRect(panel, slot);
+            ExpeditionHUD.DrawPixelTextAt((slot + 1).ToString(), slotRect.x + pixel * 3f,
+                slotRect.y + pixel * 2f, pixel);
+        }
     }
 
     public static void DrawItemTooltip(Vector2 pointer, string itemName)

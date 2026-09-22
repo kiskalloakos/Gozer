@@ -67,7 +67,7 @@ The current local build now contains the first playable version of the town-to-e
 - Click the front door inside the player home to return to TownHub.
 - Click the workbench inside the player home to purchase the one-time Reinforced Melee Weapon upgrade for 8 Gold.
 - Open the animated storage chest beside the Player Home workbench to view its pixel-art inventory panel over a dimmed, paused room; left-click to pick up or place a full Gold stack, right-click to take half or place one, and right-drag to distribute one Gold into each visited slot.
-- Permanently increase melee damage from 1 to 2 after purchasing the workbench upgrade, reducing the current enemy from three required hits to two.
+- Permanently increase melee damage from one half-heart to one heart after purchasing the workbench upgrade, reducing a level-1 enemy from six required hits to three.
 - Begin level-1 expeditions with 16 enemies and increase the initial population to 24 after reaching melee level 2; successful procedural runs add two enemies per threat increase.
 - Receive clear workbench feedback when the upgrade is purchased, unaffordable, or already owned.
 - Click the infirmary for treatment when health is missing or the player is injured.
@@ -93,7 +93,7 @@ The current local build now contains the first playable version of the town-to-e
 - Keep the playable arena collider-enclosed while extending seeded ground beyond it to cover the complete loading and gameplay camera footprint; an unreachable perimeter forest hides the boundary and prevents the camera from revealing the empty background.
 - Explore fields built from three night-grass variants and the same visual language as TownHub, with dense nighttime trees and natural sight-line obstructions.
 - Move and aim freely while the camera follows the player.
-- Attack toward the mouse cursor with a short-range melee strike by pressing the left mouse button.
+- Attack the nearest enemy along a short, forward-aimed melee strike by pressing the left mouse button; each swing can damage only one enemy.
 - Knock enemies backward with successful hits.
 - Interrupt an enemy's attack windup by landing a melee hit.
 - See a brief hit flash and placeholder swing effect when combat connects.
@@ -101,7 +101,7 @@ The current local build now contains the first playable version of the town-to-e
 - Read an enemy's alert, pursuit, attack windup, and recovery states through color, movement, and warning indicators.
 - Take half a heart of damage from a successful enemy attack.
 - Receive brief invulnerability and knockback after taking damage, preventing instant repeated hits.
-- Kill a baseline enemy with three normal melee hits or two reinforced-melee hits; enemy health gains one point after every four successful level-2 runs.
+- Level-1 enemies have three hearts (six half-heart units), take half a heart from basic melee or one heart from reinforced melee, and gain half a heart per subsequent threat level. Their health bar appears above them for three seconds after a hit.
 - Make a defeated enemy drop one glowing expedition-supply pickup.
 - Walk over dropped loot to add it to an unsecured Gold stack in the first available player-inventory slot.
 - Keep newly carried expedition Gold distinct from secured stacks; successful extraction secures it in the player inventory without moving or merging chest Gold, while defeat removes only the unsecured portion.
@@ -179,6 +179,8 @@ The playable progression loop remains:
 `Leave town → fight → collect supplies → extract → return → spend rewards → become permanently stronger → attempt a changed expedition`
 
 The Reinforced Melee Weapon remains the first permanent reward: it costs 8 Gold, raises melee damage from 1 to 2, begins level-2 expeditions at 24 enemies, unlocks the larger procedural field, and persists between sessions. Successful level-2 runs raise the threat for subsequent expeditions. The infirmary remains a recovery cost rather than permanent progression.
+
+Planned wooden sword: a separate weapon with area damage. Its wood source, acquisition/crafting steps, damage, and availability are awaiting design details; basic melee remains single-target.
 
 ## Persistent threat progression
 
@@ -473,6 +475,18 @@ Before accepting new art or a new gameplay scene, verify:
 
 
 ### FUNCTIONAL TO-DO AND FIXES
+
+### Village day/night loop
+
+- The village and player home share a saved clock, starting on Day 1 at 8:00 AM. A full 24 hours takes 10 real minutes (8:00 AM to 7:00 PM takes about 4 minutes 35 seconds).
+- Time advances during active village/home gameplay, including after midnight. It pauses during expeditions and sleep transitions; closing the game does not advance it offline.
+- A centered pixel clock beneath the top notices shows the day and AM/PM time, using the inventory counter's digit shapes.
+- From 7:00 PM until 8:00 AM, click the sofa from nearby in the player home to sleep. Before then, a top notice explains that it is too early.
+- Sleeping fades to black and back, keeps the player beside the sofa, and advances to the upcoming 8:00 AM. It does not heal injuries or change threat.
+- The expedition gate rejects daytime entry. Extraction and defeat both return the clock to the upcoming 8:00 AM, so another expedition requires waiting until the next evening.
+- The clock saves on scene transitions, every five seconds, on application pause, and on quit. An unfinished expedition saved before quitting consumes its night when a village/home scene next opens.
+- `RPG → Reset Town Progress Now` also resets the clock to Day 1, 8:00 AM.
+- Code: `VillageTime.cs` owns time, persistence, sleep fade and the clock; `HomeBed.cs` connects the sofa; `SceneTravel.cs` enforces the expedition time gate.
 
 # DONE
 

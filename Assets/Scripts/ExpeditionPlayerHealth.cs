@@ -73,6 +73,8 @@ public class ExpeditionPlayerHealth : MonoBehaviour
     IEnumerator ReturnToTownInjured()
     {
         IsDefeated = true;
+        int lostGold = inventory ? inventory.CarriedLoot : 0;
+        ExpeditionRunResult.RecordDefeat(lostGold, CurrentHealth);
         if (inventory) inventory.LoseLoot();
         if (movement) movement.enabled = false;
         if (combat) combat.enabled = false;
@@ -82,7 +84,7 @@ public class ExpeditionPlayerHealth : MonoBehaviour
         PlayerPrefs.SetInt(HealthKey, 0);
         PlayerPrefs.Save();
         yield return new WaitForSeconds(1.1f);
-        SceneTravel.Load("TownHub", SceneTravel.TownExpeditionGate);
+        SceneTravel.Load(GameScene.TownHub, SceneSpawnPoint.TownExpeditionGate);
     }
 
     void OnGUI()

@@ -16,7 +16,7 @@ public class TownInteractable : MonoBehaviour
         switch (facility)
         {
             case FacilityType.Home:
-                SceneTravel.Load("HomeInterior");
+                SceneTravel.Load(GameScene.HomeInterior);
                 break;
             case FacilityType.Workbench:
                 PurchaseReinforcedMelee();

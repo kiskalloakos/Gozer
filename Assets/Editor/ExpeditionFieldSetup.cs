@@ -14,6 +14,13 @@ public static class ExpeditionFieldSetup
     const string TreePath = "Assets/Art/Environment/TownDressing/TREE_NIGHT.png";
     const string CharacterPath = "Assets/Art/Characters/TownCharacterSheet.png";
     const string SquarePath = "Assets/Art/Environment/Square.png";
+    const string MeleeSwooshPath = "Assets/Resources/Effects/melee_swoosh.png";
+    const string DemonIdlePath = "Assets/Resources/Enemies/DemonA/idle.png";
+    const string DemonWalkPath = "Assets/Resources/Enemies/DemonA/walk.png";
+    const string DemonAttack01Path = "Assets/Resources/Enemies/DemonA/attack01.png";
+    const string DemonAttack02Path = "Assets/Resources/Enemies/DemonA/attack02.png";
+    const string DemonHurtPath = "Assets/Resources/Enemies/DemonA/hurt.png";
+    const string DemonDeathPath = "Assets/Resources/Enemies/DemonA/death.png";
     const string TileFolder = "Assets/Art/Environment/Tiles";
     static readonly string[] NightGrassPaths =
     {
@@ -85,6 +92,13 @@ public static class ExpeditionFieldSetup
             SaveTile($"NightGrass{i + 1}", AssetDatabase.LoadAssetAtPath<Sprite>(NightGrassPaths[i]));
         }
         ConfigureSprite(TreePath, new Vector2(.5f, 0f));
+        ConfigureEffectTexture(MeleeSwooshPath);
+        ConfigureEffectTexture(DemonIdlePath);
+        ConfigureEffectTexture(DemonWalkPath);
+        ConfigureEffectTexture(DemonAttack01Path);
+        ConfigureEffectTexture(DemonAttack02Path);
+        ConfigureEffectTexture(DemonHurtPath);
+        ConfigureEffectTexture(DemonDeathPath);
     }
 
     static void ConfigureSprite(string path, Vector2 pivot)
@@ -117,6 +131,28 @@ public static class ExpeditionFieldSetup
         settings.spriteAlignment = (int)SpriteAlignment.Custom;
         settings.spritePivot = pivot;
         importer.SetTextureSettings(settings);
+        importer.SaveAndReimport();
+    }
+
+    static void ConfigureEffectTexture(string path)
+    {
+        var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (!importer) throw new InvalidOperationException($"Missing melee effect art: {path}");
+
+        bool requiresReimport = importer.textureType != TextureImporterType.Default
+            || importer.filterMode != FilterMode.Point
+            || importer.textureCompression != TextureImporterCompression.Uncompressed
+            || importer.mipmapEnabled
+            || !importer.alphaIsTransparency
+            || importer.wrapMode != TextureWrapMode.Clamp;
+        if (!requiresReimport) return;
+
+        importer.textureType = TextureImporterType.Default;
+        importer.filterMode = FilterMode.Point;
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
+        importer.mipmapEnabled = false;
+        importer.alphaIsTransparency = true;
+        importer.wrapMode = TextureWrapMode.Clamp;
         importer.SaveAndReimport();
     }
 
@@ -218,7 +254,7 @@ public static class ExpeditionFieldSetup
         player.AddComponent<TownPlayerController>().visual = visual;
         var health = player.AddComponent<ExpeditionPlayerHealth>();
         var combat = player.AddComponent<ExpeditionPlayerCombat>();
-        combat.placeholderSprite = AssetDatabase.LoadAssetAtPath<Sprite>(SquarePath);
+        combat.swooshSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(MeleeSwooshPath);
         player.AddComponent<ExpeditionHUD>().health = health;
         return player;
     }
@@ -266,6 +302,12 @@ public static class ExpeditionFieldSetup
             new Vector2(27, 7), new Vector2(-23, 15)
         };
         var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SquarePath);
+        var idleSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(DemonIdlePath);
+        var walkSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(DemonWalkPath);
+        var attack01Sheet = AssetDatabase.LoadAssetAtPath<Texture2D>(DemonAttack01Path);
+        var attack02Sheet = AssetDatabase.LoadAssetAtPath<Texture2D>(DemonAttack02Path);
+        var hurtSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(DemonHurtPath);
+        var deathSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(DemonDeathPath);
 
         for (int i = 0; i < positions.Length; i++)
         {
@@ -275,7 +317,7 @@ public static class ExpeditionFieldSetup
             enemy.transform.localScale = new Vector3(.8f, .8f, 1f);
             var renderer = enemy.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite;
-            renderer.color = new Color(.48f, .16f, .22f);
+            renderer.color = Color.white;
             renderer.sortingOrder = Mathf.RoundToInt(-positions[i].y * 100);
             var body = enemy.AddComponent<Rigidbody2D>();
             body.gravityScale = 0;
@@ -283,6 +325,13 @@ public static class ExpeditionFieldSetup
             body.interpolation = RigidbodyInterpolation2D.Interpolate;
             enemy.AddComponent<CircleCollider2D>().radius = .48f;
             enemy.AddComponent<WildernessEnemy>();
+            var animator = enemy.AddComponent<DemonSpriteAnimator>();
+            animator.idleSheet = idleSheet;
+            animator.walkSheet = walkSheet;
+            animator.attack01Sheet = attack01Sheet;
+            animator.attack02Sheet = attack02Sheet;
+            animator.hurtSheet = hurtSheet;
+            animator.deathSheet = deathSheet;
         }
     }
 
@@ -290,12 +339,13 @@ public static class ExpeditionFieldSetup
     {
         var town = EditorSceneManager.OpenScene(TownPath, OpenSceneMode.Single);
         var portal = UnityEngine.Object.FindObjectsByType<ScenePortal>(FindObjectsSortMode.None)
-            .FirstOrDefault(candidate => candidate.destinationScene == "ExpeditionField")
+            .FirstOrDefault(candidate => candidate.destinationScene == GameScene.ExpeditionField)
             ?? UnityEngine.Object.FindAnyObjectByType<ScenePortal>();
         if (!portal) throw new InvalidOperationException("Town expedition gate portal was not found.");
 
-        portal.destinationScene = "ExpeditionField";
-        portal.destinationSpawnId = "";
+        portal.destinationScene = GameScene.ExpeditionField;
+        portal.requiresExpeditionTime = true;
+        portal.destinationSpawn = SceneSpawnPoint.None;
         portal.prompt = "Click to begin an expedition";
         EditorUtility.SetDirty(portal);
         EditorSceneManager.SaveScene(town);

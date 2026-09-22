@@ -13,7 +13,7 @@ public static class ScenePortalSetup
     public static void Connect()
     {
         var town = EditorSceneManager.OpenScene(TownPath, OpenSceneMode.Single);
-        ConfigurePortal("Town Exit Wall", "ExpeditionField", "Click to begin an expedition");
+        ConfigurePortal("Town Exit Wall", GameScene.ExpeditionField, "Click to begin an expedition");
         EditorSceneManager.SaveScene(town);
 
         EditorBuildSettings.scenes = new[]
@@ -28,7 +28,7 @@ public static class ScenePortalSetup
         Debug.Log("RPG_SCENE_PORTALS_SUCCESS");
     }
 
-    static void ConfigurePortal(string objectName, string destination, string prompt)
+    static void ConfigurePortal(string objectName, GameScene destination, string prompt)
     {
         var target = Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None)
             .FirstOrDefault(candidate => candidate.name == objectName);
@@ -40,6 +40,7 @@ public static class ScenePortalSetup
 
         var portal = target.GetComponent<ScenePortal>() ?? target.AddComponent<ScenePortal>();
         portal.destinationScene = destination;
+        portal.requiresExpeditionTime = destination == GameScene.ExpeditionField;
         portal.prompt = prompt;
         EditorUtility.SetDirty(portal);
     }

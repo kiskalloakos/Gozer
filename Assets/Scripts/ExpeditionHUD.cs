@@ -7,7 +7,6 @@ public class ExpeditionHUD : MonoBehaviour
     // IMGUI coordinates are already screen pixels, so keep a small, consistent safe margin.
     const float QuickbarBottomMargin = 10f;
     const float HeartsToQuickbarGap = 10f;
-    const float QuickbarRightOffset = 10f;
     const float QuickbarArtworkTop = 13f;
     const float QuickbarArtworkBottom = 37f;
     const float GoldCountBounceDuration = .38f;
@@ -25,10 +24,21 @@ public class ExpeditionHUD : MonoBehaviour
         "111101111101111", // 8
         "111101111001111"  // 9
     };
+    static readonly string[] PixelLetterGlyphs =
+    {
+        "010101111101101", "110101110101110", "011100100100011", "110101101101110",
+        "111100110100111", "111100110100100", "011100101101011", "101101111101101",
+        "111010010010111", "001001001101010", "101101110101101", "100100100100111",
+        "101111111101101", "110111111101101", "010101101101010", "110101110100100",
+        "010101101111011", "110101110101101", "011100010001110", "111010010010010",
+        "101101101101010", "101101101101010", "101101111111101", "101101010101101",
+        "101101010010010", "111001010100111"
+    };
 
     static Texture2D quickbarArt;
 
     public ExpeditionPlayerHealth health;
+    public int ActiveQuickbarSlot { get; private set; }
     readonly int[] carriedLootBySlot = new int[GoldInventoryLocation.PlayerSlotCount];
     public int CarriedLoot
     {
@@ -64,6 +74,26 @@ public class ExpeditionHUD : MonoBehaviour
         if (!health) health = GetComponent<ExpeditionPlayerHealth>();
         if (!health) health = FindAnyObjectByType<ExpeditionPlayerHealth>();
         if (!GetComponent<PlayerInventoryUI>()) gameObject.AddComponent<PlayerInventoryUI>();
+    }
+
+    void Update()
+    {
+        if (GameSessionFlow.IsBlockingGameplay) return;
+
+        for (int slot = 0; slot < QuickbarSlotCount; slot++)
+        {
+            if (Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha1 + slot))
+                || Input.GetKeyDown((KeyCode)((int)KeyCode.Keypad1 + slot)))
+            {
+                ActiveQuickbarSlot = slot;
+                return;
+            }
+        }
+
+        float scroll = Input.mouseScrollDelta.y;
+        if (Mathf.Abs(scroll) < Mathf.Epsilon) return;
+        int direction = scroll > 0f ? -1 : 1;
+        ActiveQuickbarSlot = (ActiveQuickbarSlot + direction + QuickbarSlotCount) % QuickbarSlotCount;
     }
 
     public void AddLoot(int amount)
@@ -132,17 +162,8 @@ public class ExpeditionHUD : MonoBehaviour
         if (Time.time < statusUntil)
         {
             var oldColor = GUI.color;
-            var noticeStyle = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.UpperCenter,
-                fontSize = 14,
-                fontStyle = FontStyle.Normal,
-                wordWrap = true,
-                normal = { textColor = new Color(.92f, .9f, .82f, .78f) }
-            };
             GUI.color = Color.white;
-            GUI.Label(new Rect(Screen.width / 2f - 280f, 10f, 560f, 42f),
-                statusMessage, noticeStyle);
+            DrawPixelTextCentered(statusMessage, 10f, 2f);
             GUI.color = oldColor;
         }
     }
@@ -157,7 +178,7 @@ public class ExpeditionHUD : MonoBehaviour
         // padding above and below the four visible slots.
         float y = Screen.height - Screen.safeArea.yMin
             - QuickbarArtworkBottom * scale - QuickbarBottomMargin;
-        return new Rect(Mathf.Round((Screen.width - width) * .5f + QuickbarRightOffset * scale),
+        return new Rect(Mathf.Round((Screen.width - width) * .5f),
             Mathf.Round(y), width, height);
     }
 
@@ -181,6 +202,7 @@ public class ExpeditionHUD : MonoBehaviour
         Texture2D art = GetQuickbarArt();
         GUI.color = Color.white;
         GUI.DrawTexture(panel, art ? art : Texture2D.whiteTexture, ScaleMode.StretchToFill, true);
+        DrawQuickbarSlotSelection(panel, hud ? hud.ActiveQuickbarSlot : -1);
         for (int slotIndex = 0; slotIndex < QuickbarSlotCount; slotIndex++)
         {
             int goldAmount = GoldInventoryLocation.GetAmount(
@@ -196,13 +218,45 @@ public class ExpeditionHUD : MonoBehaviour
             DrawGoldStack(content, goldAmount, content.width / 50f,
                 slotIndex == bouncingSlot ? countBounce : 0f);
         }
+        DrawQuickbarSlotHotkeys(panel);
         GUI.color = oldColor;
+    }
+
+    public static void DrawQuickbarSlotSelection(Rect panel, int activeSlot)
+    {
+        if (activeSlot < 0 || activeSlot >= QuickbarSlotCount) return;
+        Rect slot = GetQuickbarSlotRect(activeSlot);
+        float thickness = Mathf.Max(1f, panel.width / 110f);
+        GUI.color = new Color(1f, .8f, .22f, .22f);
+        GUI.DrawTexture(slot, Texture2D.whiteTexture);
+        GUI.color = new Color(1f, .87f, .42f, .95f);
+        GUI.DrawTexture(new Rect(slot.x, slot.y, slot.width, thickness), Texture2D.whiteTexture);
+        GUI.DrawTexture(new Rect(slot.x, slot.yMax - thickness, slot.width, thickness), Texture2D.whiteTexture);
+        GUI.DrawTexture(new Rect(slot.x, slot.y, thickness, slot.height), Texture2D.whiteTexture);
+        GUI.DrawTexture(new Rect(slot.xMax - thickness, slot.y, thickness, slot.height), Texture2D.whiteTexture);
+    }
+
+    public static void DrawQuickbarSlotHotkeys(Rect panel)
+    {
+        float pixel = Mathf.Max(1f, Mathf.Floor(panel.width / 110f));
+        for (int slot = 0; slot < QuickbarSlotCount; slot++)
+        {
+            Rect slotRect = GetQuickbarSlotRect(slot);
+            DrawPixelTextAt((slot + 1).ToString(), slotRect.x + pixel * 3f,
+                slotRect.y + pixel * 2f, pixel);
+        }
     }
 
     int FindCarriedLootSlot()
     {
         for (int slot = 0; slot < carriedLootBySlot.Length; slot++)
             if (carriedLootBySlot[slot] > 0) return slot;
+        // Expedition pickups should merge into an existing secured player stack
+        // before occupying a new inventory slot. Manual inventory actions can
+        // still split or move stacks after collection.
+        for (int slot = 0; slot < carriedLootBySlot.Length; slot++)
+            if (GoldInventoryLocation.GetAmount(GoldInventoryLocation.Container.PlayerInventory, slot) > 0)
+                return slot;
         for (int slot = 0; slot < carriedLootBySlot.Length; slot++)
             if (GoldInventoryLocation.GetAmount(GoldInventoryLocation.Container.PlayerInventory, slot) == 0)
                 return slot;
@@ -273,6 +327,50 @@ public class ExpeditionHUD : MonoBehaviour
                         pixel, pixel), Texture2D.whiteTexture);
                 }
             }
+        }
+    }
+
+    // Shares the inventory count's exact 3x5 pixel digits, with matching clock letters.
+    public static void DrawPixelTextCentered(string text, float y, float pixel)
+        => DrawPixelTextAt(text, Screen.width * .5f, y, pixel);
+
+    public static void DrawPixelTextAt(string text, float centerX, float y, float pixel)
+    {
+        Color oldColor = GUI.color;
+        GUI.color = new Color(1f, .94f, .68f);
+        string[] words = text.ToUpperInvariant().Split(' ');
+        string line = "";
+        int lineNumber = 0;
+        foreach (string word in words)
+        {
+            string candidate = string.IsNullOrEmpty(line) ? word : line + " " + word;
+            if (candidate.Length > 52 && !string.IsNullOrEmpty(line))
+            {
+                DrawPixelLineAt(line, centerX, y + lineNumber * pixel * 7f, pixel);
+                line = word;
+                lineNumber++;
+            }
+            else line = candidate;
+        }
+        if (!string.IsNullOrEmpty(line)) DrawPixelLineAt(line, centerX, y + lineNumber * pixel * 7f, pixel);
+        GUI.color = oldColor;
+    }
+
+    static void DrawPixelLineAt(string text, float centerX, float y, float pixel)
+    {
+        float x = Mathf.Round(centerX - (text.Length * 4 - 1) * pixel * .5f);
+        foreach (char character in text)
+        {
+            string glyph = character >= '0' && character <= '9'
+                ? GoldCountGlyphs[character - '0']
+                : character >= 'A' && character <= 'Z'
+                    ? PixelLetterGlyphs[character - 'A']
+                    : character == ':' ? "000010000010000" : "000000000000000";
+            for (int row = 0; row < 5; row++)
+            for (int column = 0; column < 3; column++)
+                if (glyph[row * 3 + column] == '1')
+                    GUI.DrawTexture(new Rect(x + column * pixel, y + row * pixel, pixel, pixel), Texture2D.whiteTexture);
+            x += 4 * pixel;
         }
     }
 

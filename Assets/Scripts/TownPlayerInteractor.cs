@@ -8,6 +8,8 @@ public class TownPlayerInteractor : MonoBehaviour
 
     void OnGUI()
     {
+        if (GameSessionFlow.IsBlockingGameplay) return;
+        if (VillageTime.Instance && VillageTime.Instance.IsSleeping) return;
         if (HomeStorageChest.IsModalOpen || PlayerInventoryUI.IsOpen)
         {
             CursorClickFeedback.SetInteractiveHover(false);
@@ -46,6 +48,12 @@ public class TownPlayerInteractor : MonoBehaviour
     {
         interactionPending = true;
         yield return new WaitForSecondsRealtime(CursorClickFeedback.InteractionDelaySeconds);
+
+        if (GameSessionFlow.IsBlockingGameplay || (VillageTime.Instance && VillageTime.Instance.IsSleeping))
+        {
+            interactionPending = false;
+            yield break;
+        }
 
         if (interactable && InteractionProximity.IsWithinRange(transform, interactable))
             interactable.Interact();

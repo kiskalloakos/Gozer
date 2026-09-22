@@ -101,6 +101,7 @@ public class HomeStorageChest : TownInteractable
         Rect chestPanel = PlayerInventoryUI.GetPanelRectAt(new Vector2(center.x + (panelWidth + gap) * .5f, center.y));
         PlayerInventoryUI.DrawPanel(playerPanel, "INVENTORY");
         PlayerInventoryUI.DrawPanel(chestPanel, "CHEST");
+        PlayerInventoryUI.DrawQuickbarSlotSelection(playerPanel, FindAnyObjectByType<ExpeditionHUD>());
 
         bool showTooltip = false;
         for (int slot = 0; slot < GoldInventoryLocation.PlayerSlotCount; slot++)
@@ -121,6 +122,7 @@ public class HomeStorageChest : TownInteractable
                 && PlayerInventoryUI.GetSlotRect(chestPanel, slot).Contains(Event.current.mousePosition))
                 showTooltip = true;
         }
+        PlayerInventoryUI.DrawQuickbarSlotHotkeys(playerPanel);
         if (showTooltip) PlayerInventoryUI.DrawItemTooltip(Event.current.mousePosition, "GOLD");
 
         HandlePointer(playerPanel, chestPanel);

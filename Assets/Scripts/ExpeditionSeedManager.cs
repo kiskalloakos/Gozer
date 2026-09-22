@@ -6,6 +6,8 @@ public static class ExpeditionSeedManager
     public const string LastSeedKey = "Expedition.LastSeed";
     const string PendingSeedKey = "Expedition.PendingSeed";
     const string HasPendingSeedKey = "Expedition.HasPendingSeed";
+    const string PendingSourceKey = "Expedition.PendingSeedSource";
+    const string PendingDailyDateKey = "Expedition.PendingDailyDate";
     const string CommandLinePrefix = "-expedition-seed=";
 
     static bool commandLineSeedConsumed;
@@ -15,43 +17,81 @@ public static class ExpeditionSeedManager
 
     public static void QueueSeed(int seed)
     {
+        QueueSeed(seed, ExpeditionSeedSource.Requested);
+    }
+
+    static void QueueSeed(int seed, ExpeditionSeedSource source, string dailyDate = "")
+    {
         PlayerPrefs.SetInt(PendingSeedKey, seed);
         PlayerPrefs.SetInt(HasPendingSeedKey, 1);
+        PlayerPrefs.SetString(PendingSourceKey, source.ToString());
+        PlayerPrefs.SetString(PendingDailyDateKey, dailyDate ?? "");
         PlayerPrefs.Save();
     }
 
     public static bool QueueLastSeed()
     {
         if (!PlayerPrefs.HasKey(LastSeedKey)) return false;
-        QueueSeed(LastSeed);
+        QueueSeed(LastSeed, ExpeditionSeedSource.Replay);
         return true;
     }
+
+    public static void QueueDailySeed(DateTime utcDate)
+    {
+        string date = utcDate.ToString("yyyy-MM-dd");
+        QueueSeed(StableDateSeed(date), ExpeditionSeedSource.Daily, date);
+    }
+
+    public static void QueueTodaySeed() => QueueDailySeed(DateTime.UtcNow.Date);
+
+    /// <summary>Reserved for a future host-authoritative co-op handshake.</summary>
+    public static void QueueCoopSeed(int hostSeed)
+        => QueueSeed(hostSeed, ExpeditionSeedSource.CoopHost);
 
     public static int BeginRun()
     {
         int seed;
-        string source;
+        ExpeditionSeedSource source;
+        string dailyDate = "";
         if (TryConsumeCommandLineSeed(out seed))
         {
-            source = "command line";
+            source = ExpeditionSeedSource.CommandLine;
         }
         else if (PlayerPrefs.GetInt(HasPendingSeedKey, 0) == 1)
         {
             seed = PlayerPrefs.GetInt(PendingSeedKey);
             PlayerPrefs.DeleteKey(PendingSeedKey);
             PlayerPrefs.DeleteKey(HasPendingSeedKey);
-            source = "requested seed";
+            Enum.TryParse(PlayerPrefs.GetString(PendingSourceKey, ExpeditionSeedSource.Requested.ToString()), out source);
+            dailyDate = PlayerPrefs.GetString(PendingDailyDateKey, "");
+            PlayerPrefs.DeleteKey(PendingSourceKey);
+            PlayerPrefs.DeleteKey(PendingDailyDateKey);
         }
         else
         {
             seed = Guid.NewGuid().GetHashCode();
-            source = "new run";
+            source = ExpeditionSeedSource.NewRun;
         }
 
         PlayerPrefs.SetInt(LastSeedKey, seed);
         PlayerPrefs.Save();
+        ExpeditionRunIdentity.Begin(seed, source, ExpeditionRunProgression.ThreatLevel, dailyDate);
         Debug.Log($"EXPEDITION_SEED={seed} ({source})");
         return seed;
+    }
+
+    static int StableDateSeed(string date)
+    {
+        unchecked
+        {
+            uint hash = 2166136261u;
+            foreach (char character in date)
+            {
+                hash ^= character;
+                hash *= 16777619u;
+            }
+            return (int)(hash & 0x7fffffff);
+        }
     }
 
     static bool TryConsumeCommandLineSeed(out int seed)

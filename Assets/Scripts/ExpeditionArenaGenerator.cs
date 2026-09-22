@@ -40,6 +40,8 @@ public static class ExpeditionArenaGenerator
             halfHeight = BaseHalfHeight;
             CurrentSeed = 0;
             CurrentLayoutAttempt = 0;
+            if (scene.name == ExpeditionScene)
+                ExpeditionRunIdentity.Begin(0, ExpeditionSeedSource.FixedField, 0);
             return;
         }
 
@@ -57,6 +59,7 @@ public static class ExpeditionArenaGenerator
             throw new InvalidOperationException(
                 $"Expedition seed {CurrentSeed} failed after {ExpeditionLayoutPlanner.MaximumGenerationAttempts} attempts.");
         CurrentLayoutAttempt = layout.Attempt;
+        ExpeditionRunIdentity.RecordLayout(layout.LayoutSeed, layout.Attempt, ExpeditionRunProgression.ThreatLevel);
         random = new Random(layout.LayoutSeed);
         long layoutMilliseconds = generationTimer.ElapsedMilliseconds;
         Debug.Log($"Expedition layout ready: seed={CurrentSeed}, attempt={CurrentLayoutAttempt}, " +

@@ -45,7 +45,8 @@ public static class TownHubSetup
         Block("Cross road", new Vector2(0, 0), new Vector2(29, 3.5f), new Color(.48f, .37f, .25f), -9989, environment);
         var expeditionGate = Block("Expedition gate", Position(preservedPositions, "Expedition gate", new Vector2(0, -10.15f)), new Vector2(6, .35f), new Color(.92f, .55f, .18f), -4000, environment);
         var townPortal = expeditionGate.AddComponent<ScenePortal>();
-        townPortal.destinationScene = "ExpeditionField";
+        townPortal.destinationScene = GameScene.ExpeditionField;
+        townPortal.requiresExpeditionTime = true;
         townPortal.prompt = "Click to begin an expedition";
 
         CreateFacility("PLAYER HOME", Position(preservedPositions, "PLAYER HOME", new Vector2(-9.5f, 6.7f)), new Vector2(5.5f, 4.3f),

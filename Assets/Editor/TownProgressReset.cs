@@ -13,6 +13,8 @@ public static class TownProgressReset
 
     static void ResetTownProgress(bool logResult)
     {
+        VillageTime.ResetSavedClock();
+        PlayerPrefs.DeleteKey("Expedition.PendingRunResult");
         PlayerPrefs.DeleteKey(TownHubController.GoldKey);
         PlayerPrefs.DeleteKey(TownHubController.PendingSecuredGoldKey);
         GoldInventoryLocation.ResetSavedState();
