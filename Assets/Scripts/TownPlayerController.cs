@@ -45,6 +45,12 @@ public class TownPlayerController : MonoBehaviour
     void Awake()
     {
         body = GetComponent<Rigidbody2D>();
+        // The HUD used to rely solely on a scene-load callback. Unity can
+        // reload scripts while Play Mode is running without replaying that
+        // callback, leaving the town with no quickbar, health, or energy UI.
+        // The player is present in every gameplay scene, so it is the stable
+        // place to guarantee the HUD.
+        EnsureGameplayHUD();
         if (!meleeAttackSheet)
             meleeAttackSheet = Resources.Load<Texture2D>("Player/melee_attacks");
         if (meleeAttackSheet) meleeAttackSheet.filterMode = FilterMode.Point;
@@ -53,6 +59,7 @@ public class TownPlayerController : MonoBehaviour
 
     void Update()
     {
+        EnsureGameplayHUD();
         if (GameSessionFlow.IsBlockingGameplay) { movement = Vector2.zero; return; }
         if (VillageTime.Instance && VillageTime.Instance.IsSleeping) { movement = Vector2.zero; return; }
         movement = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
@@ -98,6 +105,11 @@ public class TownPlayerController : MonoBehaviour
             visual.flipX = false;
             visual.sortingOrder = Mathf.RoundToInt(-transform.position.y * 100);
         }
+    }
+
+    void EnsureGameplayHUD()
+    {
+        if (!GetComponent<ExpeditionHUD>()) gameObject.AddComponent<ExpeditionHUD>();
     }
 
     void FixedUpdate() => body.MovePosition(body.position + movement * speed * Time.fixedDeltaTime);

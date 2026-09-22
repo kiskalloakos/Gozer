@@ -392,6 +392,7 @@ public sealed class GameSessionFlow : MonoBehaviour
         PlayerPrefs.SetInt(ExpeditionSeedManager.LastSeedKey, data.lastSeed);
         ExpeditionRunIdentity.RestoreSerialized(data.expeditionRunIdentity);
         PlayerPrefs.SetString("Village.TotalMinutes", data.villageMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        VillageTime.Instance?.RestoreSavedTime(data.villageMinutes);
         if (!data.itemsSaved)
         {
             RestoreLegacyStacks(ItemInventory.Container.PlayerInventory, InventoryItemId.Gold, data.playerGold);
@@ -460,7 +461,7 @@ public sealed class GameSessionFlow : MonoBehaviour
             ExpeditionPlayerHealth.InjuryKey, PlayerProgression.ReinforcedMeleeKey, ExpeditionRunProgression.CompletedRunsKey,
             ExpeditionRunProgression.PendingThreatIncreaseKey, ExpeditionSeedManager.LastSeedKey, "Expedition.PendingSeed", "Expedition.HasPendingSeed",
             "Expedition.PendingSeedSource", "Expedition.PendingDailyDate",
-            "Expedition.PendingRunResult", "Expedition.ResultSuccess", "Expedition.ResultSecuredGold", "Expedition.ResultLostGold", "Expedition.ResultHealthUnits", "Expedition.ResultNextThreat" };
+            "Expedition.PendingRunResult", "Expedition.ResultSuccess", "Expedition.ResultSecuredGold", "Expedition.ResultLostGold", "Expedition.ResultLostItemCount", "Expedition.ResultHealthUnits", "Expedition.ResultNextThreat" };
         foreach (string key in keys) PlayerPrefs.DeleteKey(key);
         PlayerPrefs.DeleteKey(TownUpgradeBuilding.ProgressKey("infirmary"));
         ExpeditionRunIdentity.Clear();

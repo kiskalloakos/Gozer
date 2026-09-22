@@ -48,7 +48,10 @@ public sealed class RunResultScreen : MonoBehaviour
         ExpeditionHUD.DrawPixelTextAt(summary.succeeded
             ? $"SECURED GOLD  {summary.securedGold}"
             : $"LOST GOLD  {summary.lostGold}", x + width * .5f, y + height * .43f, 2f);
-        ExpeditionHUD.DrawPixelTextAt($"HEALTH  {summary.healthUnits / 2f:0.0} HEARTS", x + width * .5f, y + height * .60f, 2f);
+        if (!summary.succeeded && summary.lostItemCount > 0)
+            ExpeditionHUD.DrawPixelTextAt($"LOST ITEMS  {summary.lostItemCount}", x + width * .5f, y + height * .60f, 2f);
+        ExpeditionHUD.DrawPixelTextAt($"HEALTH  {summary.healthUnits / 2f:0.0} HEARTS", x + width * .5f,
+            y + height * (summary.succeeded || summary.lostItemCount == 0 ? .60f : .77f), 2f);
         if (summary.succeeded && summary.nextThreat > 0)
             ExpeditionHUD.DrawPixelTextAt($"NEXT THREAT  {summary.nextThreat}", x + width * .5f, y + height * .77f, 2f);
         GUI.color = oldColor;

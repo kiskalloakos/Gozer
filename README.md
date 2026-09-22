@@ -556,7 +556,8 @@ Before accepting new art or a new gameplay scene, verify:
 - [x] inventory (either one) is not centered
 - [x] we need numbers 1-4 on the bot navbar, and also display those numbers in inventory, and be able to switch between those numbers with scroll-wheel and also numbers on keyboard
 - [x] attacking MEELEE animation for Player
-- [ ] swords and guns 
+- [x] swords
+- [ ] guns
 - [ ] Add more town props and functional dressing after the active town layout is settled.
 - [ ] Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.
 

@@ -73,8 +73,19 @@ public class ExpeditionPlayerHealth : MonoBehaviour
     IEnumerator ReturnToTownInjured()
     {
         IsDefeated = true;
+        ItemStack[] carriedItems = ItemInventory.ReadSlots(ItemInventory.Container.PlayerInventory);
         int lostGold = inventory ? inventory.CarriedLoot : 0;
-        ExpeditionRunResult.RecordDefeat(lostGold, CurrentHealth);
+        int lostItemCount = 0;
+        foreach (ItemStack stack in carriedItems)
+        {
+            if (stack.item == InventoryItemId.Gold) lostGold += stack.amount;
+            else if (stack.item != InventoryItemId.Empty) lostItemCount += stack.amount;
+        }
+
+        // Everything in the player bag was carried into the expedition and is
+        // lost on death. Home-chest storage stays safe in town.
+        ItemInventory.WriteSlots(ItemInventory.Container.PlayerInventory, null);
+        ExpeditionRunResult.RecordDefeat(lostGold, CurrentHealth, lostItemCount);
         if (inventory) inventory.LoseLoot();
         if (movement) movement.enabled = false;
         if (combat) combat.enabled = false;

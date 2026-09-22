@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ExpeditionPlayerCombat : MonoBehaviour
@@ -59,21 +60,60 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         if (Vector2.Dot(direction, facing) < 0f) return;
 
         ChoppableTree treeTarget = null;
-        WildernessEnemy target = null;
-        float nearest = float.PositiveInfinity;
+        float nearestTree = float.PositiveInfinity;
+        float nearestObstacle = float.PositiveInfinity;
+        var enemyDistances = new Dictionary<WildernessEnemy, float>();
         foreach (var hit in Physics2D.CircleCastAll(transform.position, attackRadius * .5f,
                      direction, attackRange + attackRadius * .5f))
         {
+            if (!hit.collider || hit.collider.transform == transform
+                || hit.collider.transform.IsChildOf(transform)) continue;
             var tree = hit.collider ? hit.collider.transform.GetComponentInParent<ChoppableTree>() : null;
             var enemy = hit.collider ? hit.collider.transform.GetComponentInParent<WildernessEnemy>() : null;
-            if (!tree && !enemy) continue;
+            if (!tree && !enemy)
+            {
+                if (!hit.collider.isTrigger) nearestObstacle = Mathf.Min(nearestObstacle, hit.distance);
+                continue;
+            }
             Vector2 targetPosition = tree ? (Vector2)tree.transform.position : enemy.transform.position;
             if (Vector2.Dot(targetPosition - (Vector2)transform.position, direction) <= 0f
-                || hit.distance >= nearest) continue;
-            treeTarget = tree;
-            target = enemy;
-            nearest = hit.distance;
+                || hit.distance >= nearestObstacle) continue;
+            if (tree)
+            {
+                if (hit.distance >= nearestTree) continue;
+                treeTarget = tree;
+                nearestTree = hit.distance;
+            }
+            else if (!enemyDistances.TryGetValue(enemy, out float previousDistance)
+                     || hit.distance < previousDistance)
+                enemyDistances[enemy] = hit.distance;
         }
+
+        // The cast can include the player and several overlapping colliders.
+        // Only a solid collider before a target blocks the swing.
+        if (nearestObstacle < nearestTree) treeTarget = null;
+        WildernessEnemy target = null;
+        WildernessEnemy secondTarget = null;
+        float nearestEnemy = float.PositiveInfinity;
+        float secondNearestEnemy = float.PositiveInfinity;
+        foreach (var pair in enemyDistances)
+        {
+            if (pair.Value >= nearestObstacle) continue;
+            if (pair.Value < nearestEnemy)
+            {
+                secondTarget = target;
+                secondNearestEnemy = nearestEnemy;
+                target = pair.Key;
+                nearestEnemy = pair.Value;
+            }
+            else if (pair.Value < secondNearestEnemy)
+            {
+                secondTarget = pair.Key;
+                secondNearestEnemy = pair.Value;
+            }
+        }
+        if (treeTarget && nearestTree <= nearestEnemy) { target = null; secondTarget = null; }
+        else treeTarget = null;
 
         // A left click is not an attack by itself. Doors, chests, workbenches,
         // empty ground, and other world interactions must never drain energy.
@@ -89,10 +129,17 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         nextAttackTime = Time.time + attackCooldown;
         Attacked?.Invoke();
 
-        // A short, narrow sweep selects only the first resource or enemy in
-        // the aimed direction. The visual arc is not an area-of-effect attack.
+        // The sword can strike two distinct enemies in the aimed sweep.
         if (treeTarget) treeTarget.TryChop();
-        else if (target) target.TakeDamage(CurrentAttackDamage(), transform.position, knockbackDistance);
+        else if (target)
+        {
+            var hud = FindAnyObjectByType<ExpeditionHUD>();
+            bool swordEquipped = hud && hud.IsSwordEquipped;
+            int attackDamage = damage + (swordEquipped ? swordDamageBonus : 0);
+            target.TakeDamage(attackDamage, transform.position, knockbackDistance);
+            if (secondTarget && swordEquipped)
+                secondTarget.TakeDamage(attackDamage, transform.position, knockbackDistance);
+        }
         if (movementController) movementController.PlayMeleeAttack(direction);
         // The player transform is positioned at their feet. Lift the visual to
         // weapon height so it does not appear on the ground beneath their legs.
@@ -107,12 +154,6 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         if (!collider) return false;
         return collider.GetComponentInParent<TownInteractable>()
             || collider.GetComponentInParent<ScenePortal>();
-    }
-
-    int CurrentAttackDamage()
-    {
-        var hud = FindAnyObjectByType<ExpeditionHUD>();
-        return damage + (hud && hud.IsSwordEquipped ? swordDamageBonus : 0);
     }
 
     void ShowSwoosh(Vector2 center, Vector2 direction)

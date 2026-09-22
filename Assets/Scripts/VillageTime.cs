@@ -113,6 +113,14 @@ public sealed class VillageTime : MonoBehaviour
         Save();
     }
 
+    /// <summary>Synchronizes the persistent clock after a save-slot restore.</summary>
+    public void RestoreSavedTime(double totalMinutes)
+    {
+        TotalMinutes = !double.IsNaN(totalMinutes) && !double.IsInfinity(totalMinutes)
+            && totalMinutes >= 0d ? totalMinutes : MorningMinute;
+        saveTimer = 0f;
+    }
+
     public void Save()
     {
         PlayerPrefs.SetString(MinutesKey, TotalMinutes.ToString("R", System.Globalization.CultureInfo.InvariantCulture));

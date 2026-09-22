@@ -80,8 +80,21 @@ public class ExpeditionHUD : MonoBehaviour
 
     static void EnsureHUD(Scene scene, LoadSceneMode mode)
     {
-        if (FindAnyObjectByType<ExpeditionHUD>()) return;
-        new GameObject("Player HUD").AddComponent<ExpeditionHUD>();
+        if (!scene.IsValid() || !scene.isLoaded) return;
+        foreach (var root in scene.GetRootGameObjects())
+            if (root.GetComponentInChildren<ExpeditionHUD>(true)) return;
+
+        foreach (var root in scene.GetRootGameObjects())
+        {
+            var player = root.GetComponentInChildren<TownPlayerController>(true);
+            if (!player) continue;
+            player.gameObject.AddComponent<ExpeditionHUD>();
+            return;
+        }
+
+        var hudObject = new GameObject("Player HUD");
+        if (hudObject.scene != scene) SceneManager.MoveGameObjectToScene(hudObject, scene);
+        hudObject.AddComponent<ExpeditionHUD>();
     }
 
     void Awake()
@@ -145,13 +158,19 @@ public class ExpeditionHUD : MonoBehaviour
 
     public int SecureLoot()
     {
-        int secured = CarriedLoot;
+        int secured = 0;
         for (int slot = 0; slot < carriedLootBySlot.Length; slot++)
         {
             int amount = carriedLootBySlot[slot];
             if (amount <= 0) continue;
-            ItemInventory.AddToSlot(ItemInventory.Container.PlayerInventory, slot, InventoryItemId.Gold, amount);
+
+            // Loot is shown in the matching quickbar slot while it is carried,
+            // but players may rearrange their bag before extracting. Store it
+            // only after a real inventory operation succeeds; otherwise it
+            // remains carried instead of being silently deleted.
+            if (!StoreGold(slot, amount)) continue;
             carriedLootBySlot[slot] = 0;
+            secured += amount;
         }
         if (secured > 0)
         {
@@ -160,6 +179,21 @@ public class ExpeditionHUD : MonoBehaviour
             PlayerPrefs.Save();
         }
         return secured;
+    }
+
+    static bool StoreGold(int preferredPlayerSlot, int amount)
+    {
+        if (ItemInventory.AddToSlot(ItemInventory.Container.PlayerInventory,
+                preferredPlayerSlot, InventoryItemId.Gold, amount))
+            return true;
+
+        // A valid expedition return can use either persistent storage. This
+        // prevents a full player bag from discarding the extraction reward.
+        if (ItemInventory.AddItem(ItemInventory.Container.PlayerInventory,
+                InventoryItemId.Gold, amount))
+            return true;
+        return ItemInventory.AddItem(ItemInventory.Container.HomeChest,
+            InventoryItemId.Gold, amount);
     }
 
     public void LoseLoot() => System.Array.Clear(carriedLootBySlot, 0, carriedLootBySlot.Length);
