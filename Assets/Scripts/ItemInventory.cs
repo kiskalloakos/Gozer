@@ -202,6 +202,14 @@ public static class ItemInventory
             || item == InventoryItemId.Sword
             || item == InventoryItemId.Shovel;
 
+    public static string GetDisplayName(InventoryItemId item)
+        => item == InventoryItemId.Axe ? "WOODEN AXE"
+            : item == InventoryItemId.Pickaxe ? "PICKAXE"
+            : item == InventoryItemId.Sword ? "SWORD"
+            : item == InventoryItemId.Shovel ? "SHOVEL"
+            : item == InventoryItemId.Wood ? "WOOD"
+            : item == InventoryItemId.Gold ? "GOLD" : "ITEM";
+
     public static bool TrySpendGold(int amount, out int remainingGold)
     {
         remainingGold = GetTotal(InventoryItemId.Gold);

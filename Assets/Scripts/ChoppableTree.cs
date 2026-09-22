@@ -44,9 +44,9 @@ public sealed class ChoppableTree : MonoBehaviour
         if (VillageTime.Instance.Day >= SavedRegrowDay()) Regrow();
     }
 
-    public bool TryChop()
+    public bool TryChop(InventoryItemId equippedTool)
     {
-        if (chopped) return false;
+        if (equippedTool != InventoryItemId.Axe || chopped) return false;
 
         remainingHits = Mathf.Max(0, remainingHits - 1);
         if (remainingHits > 0) return true;

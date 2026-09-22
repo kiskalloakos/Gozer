@@ -119,9 +119,11 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         // empty ground, and other world interactions must never drain energy.
         if (!treeTarget && !target) return;
 
-        // Trees are resource nodes, not enemies. They cannot be chopped until
-        // the player has an axe in the player bag.
-        if (treeTarget && ItemInventory.FindItemSlot(ItemInventory.Container.PlayerInventory, InventoryItemId.Axe) < 0) return;
+        // Trees are resource nodes, not enemies. They can only be chopped with
+        // the axe currently equipped in the active quickbar slot. Owning an
+        // axe somewhere else in the bag must not make a sword chop trees.
+        var hud = FindAnyObjectByType<ExpeditionHUD>();
+        if (treeTarget && (!hud || !hud.IsAxeEquipped)) return;
 
         // Energy is spent only after a valid enemy or tree target is found.
         if (energy && !energy.TryConsume(attackEnergyCost)) return;
@@ -130,10 +132,9 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         Attacked?.Invoke();
 
         // The sword can strike two distinct enemies in the aimed sweep.
-        if (treeTarget) treeTarget.TryChop();
+        if (treeTarget) treeTarget.TryChop(hud.ActiveQuickbarItem);
         else if (target)
         {
-            var hud = FindAnyObjectByType<ExpeditionHUD>();
             bool swordEquipped = hud && hud.IsSwordEquipped;
             int attackDamage = damage + (swordEquipped ? swordDamageBonus : 0);
             target.TakeDamage(attackDamage, transform.position, knockbackDistance);

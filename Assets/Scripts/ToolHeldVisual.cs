@@ -19,7 +19,7 @@ public sealed class ToolHeldVisual : MonoBehaviour
         var heldObject = new GameObject("Held Tool");
         heldObject.transform.SetParent(transform, false);
         heldVisual = heldObject.AddComponent<SpriteRenderer>();
-        axeTexture = axeTexture ? axeTexture : Resources.Load<Texture2D>("UI/pickaxe");
+        axeTexture = axeTexture ? axeTexture : Resources.Load<Texture2D>("UI/wooden_axe");
         swordTexture = swordTexture ? swordTexture : Resources.Load<Texture2D>("UI/wooden_sword");
         axeSprite = CreateToolSprite(axeTexture);
         swordSprite = CreateToolSprite(swordTexture);

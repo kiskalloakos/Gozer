@@ -330,10 +330,7 @@ public sealed class WorkbenchCraftingUI : MonoBehaviour
     }
 
     static string ItemName(InventoryItemId item)
-        => item == InventoryItemId.Axe ? "AXE"
-            : item == InventoryItemId.Pickaxe ? "PICKAXE"
-            : item == InventoryItemId.Sword ? "SWORD"
-            : item == InventoryItemId.Shovel ? "SHOVEL" : "TOOL";
+        => ItemInventory.GetDisplayName(item);
 
     void OnDisable()
     {

@@ -288,12 +288,7 @@ public class PlayerInventoryUI : MonoBehaviour
     }
 
     static string ItemName(InventoryItemId item)
-        => item == InventoryItemId.Axe ? "AXE"
-            : item == InventoryItemId.Pickaxe ? "PICKAXE"
-            : item == InventoryItemId.Sword ? "SWORD"
-            : item == InventoryItemId.Shovel ? "SHOVEL"
-            : item == InventoryItemId.Wood ? "WOOD"
-            : item == InventoryItemId.Gold ? "GOLD" : "ITEM";
+        => ItemInventory.GetDisplayName(item);
 
     void LockPlayer()
     {

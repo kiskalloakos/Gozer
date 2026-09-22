@@ -504,6 +504,8 @@ Before accepting new art or a new gameplay scene, verify:
 - [x] Replace fragile scene-name and object-name lookups with explicit references or validated configuration.
 - [x] Decide how seeds participate in future daily expeditions and co-op synchronization. Saves, exact-seed reproduction, command-line reproduction, and bug-report logging now use the saved expedition seed.
 - [x] ENEMIES: Damage + HP
+- [x] **Preparation and loadouts.** Let the player choose weapons, consumables, tools, destination, and risk level before leaving town.
+- [x] **trees should also regrow with time**
 
 ## TO-DO
 
@@ -511,8 +513,6 @@ Before accepting new art or a new gameplay scene, verify:
 ### TOWN
 
 
-- [x] **Preparation and loadouts.** Let the player choose weapons, consumables, tools, destination, and risk level before leaving town.
-- [x] **trees should also regrow with time**
 - [ ] **FARMING SYSTEM, CROPS**
 - [ ] Gradual Unlocks: You start with access to your farm and the immediate town, but many regions remain blocked initially. Progression-Based: You open these locked areas by completing side quests, repairing infrastructure, or upgrading your tools. Open-Ended Freedom: While the map expands linearly through gameplay milestones, you have total freedom in how you spend your daily time, choose your skills, and interact with villagers.
 - [ ] **Infirmary full setup with NPC, clear upgrades, prices, etc**
@@ -557,6 +557,7 @@ Before accepting new art or a new gameplay scene, verify:
 - [x] we need numbers 1-4 on the bot navbar, and also display those numbers in inventory, and be able to switch between those numbers with scroll-wheel and also numbers on keyboard
 - [x] attacking MEELEE animation for Player
 - [x] swords
+- [ ] wooden tools: movement in all 4 directions
 - [ ] guns
 - [ ] Add more town props and functional dressing after the active town layout is settled.
 - [ ] Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.

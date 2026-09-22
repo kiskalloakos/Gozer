@@ -70,6 +70,29 @@ public class ExpeditionHUD : MonoBehaviour
     float goldCountBounceStartedAt = float.NegativeInfinity;
     int goldCountBounceSlot = -1;
 
+    // The HUD is scene-owned, but its invariant is game-wide: every loaded
+    // gameplay scene must have one usable HUD. A persistent watchdog repairs
+    // accidental disables and timing gaps around scene transitions.
+    sealed class HUDWatchdog : MonoBehaviour
+    {
+        void Update()
+        {
+            EnsureHUD(SceneManager.GetActiveScene(), LoadSceneMode.Single);
+        }
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void InstallWatchdog()
+    {
+        var existing = FindAnyObjectByType<HUDWatchdog>();
+        if (existing) return;
+
+        var watchdog = new GameObject("Player HUD Watchdog");
+        watchdog.hideFlags = HideFlags.HideAndDontSave;
+        DontDestroyOnLoad(watchdog);
+        watchdog.AddComponent<HUDWatchdog>();
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void InstallForCurrentAndFutureScenes()
     {
@@ -81,20 +104,36 @@ public class ExpeditionHUD : MonoBehaviour
     static void EnsureHUD(Scene scene, LoadSceneMode mode)
     {
         if (!scene.IsValid() || !scene.isLoaded) return;
+
+        ExpeditionHUD firstHud = null;
         foreach (var root in scene.GetRootGameObjects())
-            if (root.GetComponentInChildren<ExpeditionHUD>(true)) return;
+        {
+            var huds = root.GetComponentsInChildren<ExpeditionHUD>(true);
+            foreach (var hud in huds)
+            {
+                if (!firstHud) firstHud = hud;
+                if (!hud.enabled) hud.enabled = true;
+                if (!hud.gameObject.activeSelf) hud.gameObject.SetActive(true);
+                if (!root.activeSelf) root.SetActive(true);
+            }
+        }
+        if (firstHud) return;
 
         foreach (var root in scene.GetRootGameObjects())
         {
             var player = root.GetComponentInChildren<TownPlayerController>(true);
             if (!player) continue;
-            player.gameObject.AddComponent<ExpeditionHUD>();
+            var hud = player.GetComponent<ExpeditionHUD>();
+            if (!hud) hud = player.gameObject.AddComponent<ExpeditionHUD>();
+            hud.enabled = true;
+            player.gameObject.SetActive(true);
             return;
         }
 
         var hudObject = new GameObject("Player HUD");
         if (hudObject.scene != scene) SceneManager.MoveGameObjectToScene(hudObject, scene);
-        hudObject.AddComponent<ExpeditionHUD>();
+        var fallbackHud = hudObject.AddComponent<ExpeditionHUD>();
+        fallbackHud.enabled = true;
     }
 
     void Awake()
@@ -419,7 +458,7 @@ public class ExpeditionHUD : MonoBehaviour
         switch (item)
         {
             case InventoryItemId.Axe:
-                if (!axeArt) axeArt = Resources.Load<Texture2D>("UI/pickaxe");
+                if (!axeArt) axeArt = Resources.Load<Texture2D>("UI/wooden_axe");
                 return axeArt;
             case InventoryItemId.Pickaxe:
                 if (!woodenPickaxeArt) woodenPickaxeArt = Resources.Load<Texture2D>("UI/wooden_pickaxe");
