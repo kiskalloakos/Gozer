@@ -13,7 +13,7 @@ public class ExpeditionPlayerCombat : MonoBehaviour
     [Header("Attack effect")]
     public Texture2D swooshSheet;
     [Min(.01f)] public float swooshFrameDuration = .055f;
-    [Min(.1f)] public float swooshScale = .58f;
+    [Min(.1f)] public float swooshScale = .25f;
     [Min(0f)] public float swooshHeightAboveFeet = 1f;
     [Min(1)] public int swooshFrameHeight = 32;
 

@@ -6503,7 +6503,7 @@ MonoBehaviour:
   knockbackDistance: 1.15
   swooshSheet: {fileID: 0}
   swooshFrameDuration: 0.055
-  swooshScale: 0.58
+  swooshScale: 0.25
   swooshHeightAboveFeet: 1
   swooshFrameHeight: 32
 --- !u!70 &687858120
