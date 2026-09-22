@@ -3479,10 +3479,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd3fe7d94dc204a9fa8109a5d1fd312e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExpeditionPlayerCombat
-  attackRange: 1.15
+  attackRange: 0.9
   attackRadius: 0.7
   attackCooldown: 0.38
   damage: 1
+  attackEnergyCost: 1
   placeholderSprite: {fileID: 7482667652216324306, guid: 19cc779f75e304866a9fb26c4508bd8d, type: 3}
 --- !u!114 &340215138
 MonoBehaviour:

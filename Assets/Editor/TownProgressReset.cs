@@ -17,9 +17,10 @@ public static class TownProgressReset
         PlayerPrefs.DeleteKey("Expedition.PendingRunResult");
         PlayerPrefs.DeleteKey(TownHubController.GoldKey);
         PlayerPrefs.DeleteKey(TownHubController.PendingSecuredGoldKey);
-        GoldInventoryLocation.ResetSavedState();
+        ItemInventory.ResetSavedState();
         PlayerPrefs.DeleteKey(ExpeditionPlayerHealth.InjuryKey);
         PlayerPrefs.DeleteKey(ExpeditionPlayerHealth.HealthKey);
+        PlayerPrefs.DeleteKey(ExpeditionPlayerEnergy.EnergyKey);
         PlayerPrefs.DeleteKey(PlayerProgression.ReinforcedMeleeKey);
         PlayerPrefs.DeleteKey(ExpeditionRunProgression.CompletedRunsKey);
         PlayerPrefs.DeleteKey(ExpeditionRunProgression.PendingThreatIncreaseKey);

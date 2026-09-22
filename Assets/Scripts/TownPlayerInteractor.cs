@@ -10,7 +10,7 @@ public class TownPlayerInteractor : MonoBehaviour
     {
         if (GameSessionFlow.IsBlockingGameplay) return;
         if (VillageTime.Instance && VillageTime.Instance.IsSleeping) return;
-        if (HomeStorageChest.IsModalOpen || PlayerInventoryUI.IsOpen)
+        if (HomeStorageChest.IsModalOpen || WorkbenchCraftingUI.IsModalOpen || PlayerInventoryUI.IsOpen)
         {
             CursorClickFeedback.SetInteractiveHover(false);
             return;

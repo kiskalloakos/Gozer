@@ -3,7 +3,7 @@ using UnityEngine.Serialization;
 
 public class TownHubController : MonoBehaviour
 {
-    public const int DefaultStartingGold = 18;
+    public const int DefaultStartingGold = 0;
     static readonly string[] RetiredBuildingNames =
     {
         "STORAGE",
@@ -30,10 +30,13 @@ public class TownHubController : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        ItemInventory.EnsureStarterAxe();
         RemoveRetiredBuildings();
+        // Ignore the old serialized 18-gold prototype value for new games.
+        startingGold = DefaultStartingGold;
         if (!PlayerPrefs.HasKey(GoldKey))
             PlayerPrefs.SetInt(GoldKey, startingGold);
-        Gold = GoldInventoryLocation.GetTotalGold();
+        Gold = ItemInventory.GetTotal(InventoryItemId.Gold);
         IsInjured = PlayerPrefs.GetInt(ExpeditionPlayerHealth.InjuryKey, 0) == 1;
         if (!PlayerPrefs.HasKey(ExpeditionPlayerHealth.HealthKey))
             PlayerPrefs.SetInt(ExpeditionPlayerHealth.HealthKey,
@@ -79,18 +82,19 @@ public class TownHubController : MonoBehaviour
 
     public static bool TrySpendGold(int amount, out int remainingGold)
     {
-        if (!GoldInventoryLocation.TrySpend(amount, out remainingGold)) return false;
+        if (!ItemInventory.TrySpendGold(amount, out remainingGold)) return false;
         if (Instance) Instance.Gold = remainingGold;
         return true;
     }
 
     public static int GetGoldBalance()
-        => GoldInventoryLocation.GetTotalGold();
+        => ItemInventory.GetTotal(InventoryItemId.Gold);
 
     public static void AddSecuredGold(int amount)
     {
         if (amount <= 0) return;
-        GoldInventoryLocation.AddAsNewPlayerStack(amount);
+        ItemInventory.AddItem(ItemInventory.Container.PlayerInventory, InventoryItemId.Gold, amount,
+            preferNewSlot: true);
         PlayerPrefs.SetInt(PendingSecuredGoldKey,
             PlayerPrefs.GetInt(PendingSecuredGoldKey, 0) + amount);
         PlayerPrefs.Save();

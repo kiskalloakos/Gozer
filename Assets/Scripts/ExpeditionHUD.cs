@@ -7,6 +7,7 @@ public class ExpeditionHUD : MonoBehaviour
     // IMGUI coordinates are already screen pixels, so keep a small, consistent safe margin.
     const float QuickbarBottomMargin = 10f;
     const float HeartsToQuickbarGap = 10f;
+    const float HeartsToEnergyGap = 9f;
     const float QuickbarArtworkTop = 13f;
     const float QuickbarArtworkBottom = 37f;
     const float GoldCountBounceDuration = .38f;
@@ -36,10 +37,24 @@ public class ExpeditionHUD : MonoBehaviour
     };
 
     static Texture2D quickbarArt;
+    static Texture2D axeArt;
+    static Texture2D woodenPickaxeArt;
+    static Texture2D woodenSwordArt;
+    static Texture2D woodenShovelArt;
+    static Texture2D woodArt;
 
     public ExpeditionPlayerHealth health;
+    public ExpeditionPlayerEnergy energy;
     public int ActiveQuickbarSlot { get; private set; }
-    readonly int[] carriedLootBySlot = new int[GoldInventoryLocation.PlayerSlotCount];
+    public InventoryItemId ActiveQuickbarItem
+        => ActiveQuickbarSlot >= 0 && ActiveQuickbarSlot < ItemInventory.PlayerSlotCount
+            ? ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, ActiveQuickbarSlot).item
+            : InventoryItemId.Empty;
+    public bool IsAxeEquipped
+        => ActiveQuickbarItem == InventoryItemId.Axe;
+    public bool IsSwordEquipped
+        => ActiveQuickbarItem == InventoryItemId.Sword;
+    readonly int[] carriedLootBySlot = new int[ItemInventory.PlayerSlotCount];
     public int CarriedLoot
     {
         get
@@ -73,6 +88,21 @@ public class ExpeditionHUD : MonoBehaviour
     {
         if (!health) health = GetComponent<ExpeditionPlayerHealth>();
         if (!health) health = FindAnyObjectByType<ExpeditionPlayerHealth>();
+        if (!energy) energy = GetComponent<ExpeditionPlayerEnergy>();
+        if (!energy && health) energy = health.GetComponent<ExpeditionPlayerEnergy>();
+        var playerController = GetComponent<TownPlayerController>()
+            ? GetComponent<TownPlayerController>()
+            : FindAnyObjectByType<TownPlayerController>();
+        if (!energy)
+        {
+            if (playerController)
+            {
+                energy = playerController.GetComponent<ExpeditionPlayerEnergy>();
+                if (!energy) energy = playerController.gameObject.AddComponent<ExpeditionPlayerEnergy>();
+            }
+        }
+        if (playerController && !playerController.GetComponent<ToolHeldVisual>())
+            playerController.gameObject.AddComponent<ToolHeldVisual>();
         if (!GetComponent<PlayerInventoryUI>()) gameObject.AddComponent<PlayerInventoryUI>();
     }
 
@@ -107,6 +137,12 @@ public class ExpeditionHUD : MonoBehaviour
         goldCountBounceSlot = slot;
     }
 
+    public void ShowStatus(string message, float seconds = 1.4f)
+    {
+        statusMessage = message;
+        statusUntil = Time.time + seconds;
+    }
+
     public int SecureLoot()
     {
         int secured = CarriedLoot;
@@ -114,7 +150,7 @@ public class ExpeditionHUD : MonoBehaviour
         {
             int amount = carriedLootBySlot[slot];
             if (amount <= 0) continue;
-            GoldInventoryLocation.AddAmount(GoldInventoryLocation.Container.PlayerInventory, slot, amount);
+            ItemInventory.AddToSlot(ItemInventory.Container.PlayerInventory, slot, InventoryItemId.Gold, amount);
             carriedLootBySlot[slot] = 0;
         }
         if (secured > 0)
@@ -144,6 +180,11 @@ public class ExpeditionHUD : MonoBehaviour
             ? health.CurrentHealth
             : Mathf.Clamp(PlayerPrefs.GetInt(ExpeditionPlayerHealth.HealthKey,
                 ExpeditionPlayerHealth.DefaultMaxHealthUnits), 0, ExpeditionPlayerHealth.DefaultMaxHealthUnits);
+        int maxEnergy = energy ? Mathf.CeilToInt(energy.MaxEnergy) : Mathf.CeilToInt(ExpeditionPlayerEnergy.DefaultMaxEnergy);
+        float currentEnergy = energy
+            ? energy.CurrentEnergy
+            : Mathf.Clamp(PlayerPrefs.GetFloat(ExpeditionPlayerEnergy.EnergyKey,
+                ExpeditionPlayerEnergy.DefaultStartingEnergy), 0f, maxEnergy);
 
         float bounceProgress = Mathf.Clamp01((Time.unscaledTime - goldCountBounceStartedAt) /
             GoldCountBounceDuration);
@@ -154,10 +195,14 @@ public class ExpeditionHUD : MonoBehaviour
 
         Rect quickbar = GetQuickbarRect();
         float heartsWidth = HealthHeartGUI.GetWidth(maxHearts);
-        float heartsX = quickbar.center.x - heartsWidth * .5f;
+        float energyWidth = EnergyBoltGUI.GetWidth(maxEnergy);
+        float statusWidth = heartsWidth + HeartsToEnergyGap + energyWidth;
+        float heartsX = quickbar.center.x - statusWidth * .5f;
         float heartsY = quickbar.y + QuickbarArtworkTop * GetPixelScale()
             - HealthHeartGUI.HeartHeight - HeartsToQuickbarGap;
         HealthHeartGUI.Draw(healthUnits, maxHearts, heartsX, heartsY);
+        EnergyBoltGUI.Draw(currentEnergy, maxEnergy,
+            heartsX + heartsWidth + HeartsToEnergyGap, heartsY);
 
         if (Time.time < statusUntil)
         {
@@ -205,16 +250,34 @@ public class ExpeditionHUD : MonoBehaviour
         DrawQuickbarSlotSelection(panel, hud ? hud.ActiveQuickbarSlot : -1);
         for (int slotIndex = 0; slotIndex < QuickbarSlotCount; slotIndex++)
         {
-            int goldAmount = GoldInventoryLocation.GetAmount(
-                GoldInventoryLocation.Container.PlayerInventory, slotIndex)
+            ItemStack stack = ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, slotIndex);
+            if (ItemInventory.IsTool(stack.item))
+            {
+                Rect axeSlot = GetQuickbarSlotRect(slotIndex);
+                float axeInset = Mathf.Max(2f, panel.width / 110f);
+                DrawItemIcon(new Rect(axeSlot.x + axeInset, axeSlot.y + axeInset,
+                    axeSlot.width - axeInset * 2f, axeSlot.height - axeInset * 2f), stack.item);
+            }
+
+            if (stack.item == InventoryItemId.Wood && stack.amount > 0)
+            {
+                Rect woodSlot = GetQuickbarSlotRect(slotIndex);
+                float woodInset = Mathf.Max(2f, panel.width / 110f);
+                DrawWoodStack(new Rect(woodSlot.x + woodInset, woodSlot.y + woodInset,
+                    woodSlot.width - woodInset * 2f, woodSlot.height - woodInset * 2f), stack.amount,
+                    (woodSlot.width - woodInset * 2f) / 50f);
+            }
+
+            int goldAmount = ItemInventory.GetAmount(
+                ItemInventory.Container.PlayerInventory, slotIndex, InventoryItemId.Gold)
                 + (hud ? hud.GetCarriedLootAtSlot(slotIndex) : 0);
             if (goldAmount <= 0) continue;
             // Match the full inventory exactly: draw within the cell's inset content box,
             // rather than using the raw quickbar cell bounds.
-            Rect slot = GetQuickbarSlotRect(slotIndex);
-            float inset = Mathf.Max(2f, panel.width / 110f);
-            Rect content = new Rect(slot.x + inset, slot.y + inset,
-                slot.width - inset * 2f, slot.height - inset * 2f);
+            Rect goldSlot = GetQuickbarSlotRect(slotIndex);
+            float goldInset = Mathf.Max(2f, panel.width / 110f);
+            Rect content = new Rect(goldSlot.x + goldInset, goldSlot.y + goldInset,
+                goldSlot.width - goldInset * 2f, goldSlot.height - goldInset * 2f);
             DrawGoldStack(content, goldAmount, content.width / 50f,
                 slotIndex == bouncingSlot ? countBounce : 0f);
         }
@@ -255,10 +318,10 @@ public class ExpeditionHUD : MonoBehaviour
         // before occupying a new inventory slot. Manual inventory actions can
         // still split or move stacks after collection.
         for (int slot = 0; slot < carriedLootBySlot.Length; slot++)
-            if (GoldInventoryLocation.GetAmount(GoldInventoryLocation.Container.PlayerInventory, slot) > 0)
+            if (ItemInventory.GetAmount(ItemInventory.Container.PlayerInventory, slot, InventoryItemId.Gold) > 0)
                 return slot;
         for (int slot = 0; slot < carriedLootBySlot.Length; slot++)
-            if (GoldInventoryLocation.GetAmount(GoldInventoryLocation.Container.PlayerInventory, slot) == 0)
+            if (ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, slot).item == InventoryItemId.Empty)
                 return slot;
         return 0;
     }
@@ -293,6 +356,65 @@ public class ExpeditionHUD : MonoBehaviour
         }
 
         DrawGoldCount(rect, amount, countBounce);
+        GUI.color = oldColor;
+    }
+
+    public static void DrawToolIcon(Rect rect)
+    {
+        DrawItemIcon(rect, InventoryItemId.Axe);
+    }
+
+    public static void DrawItemIcon(Rect rect, InventoryItemId item)
+    {
+        Texture2D art = ToolArt(item);
+        if (!art) return;
+        art.filterMode = FilterMode.Point;
+
+        var oldColor = GUI.color;
+        GUI.color = Color.white;
+        float scale = Mathf.Min(rect.width / art.width, rect.height / art.height);
+        Rect icon = new Rect(rect.center.x - art.width * scale * .5f,
+            rect.center.y - art.height * scale * .5f,
+            art.width * scale, art.height * scale);
+        GUI.DrawTexture(icon, art, ScaleMode.StretchToFill, true);
+        GUI.color = oldColor;
+    }
+
+    static Texture2D ToolArt(InventoryItemId item)
+    {
+        switch (item)
+        {
+            case InventoryItemId.Axe:
+                if (!axeArt) axeArt = Resources.Load<Texture2D>("UI/pickaxe");
+                return axeArt;
+            case InventoryItemId.Pickaxe:
+                if (!woodenPickaxeArt) woodenPickaxeArt = Resources.Load<Texture2D>("UI/wooden_pickaxe");
+                return woodenPickaxeArt;
+            case InventoryItemId.Sword:
+                if (!woodenSwordArt) woodenSwordArt = Resources.Load<Texture2D>("UI/wooden_sword");
+                return woodenSwordArt;
+            case InventoryItemId.Shovel:
+                if (!woodenShovelArt) woodenShovelArt = Resources.Load<Texture2D>("UI/wooden_shovel");
+                return woodenShovelArt;
+            default:
+                return null;
+        }
+    }
+
+    public static void DrawWoodStack(Rect rect, int amount, float contentScale = 1f)
+    {
+        if (!woodArt) woodArt = Resources.Load<Texture2D>("UI/wood-onground");
+        if (!woodArt) return;
+        woodArt.filterMode = FilterMode.Point;
+
+        var oldColor = GUI.color;
+        GUI.color = Color.white;
+        float scale = Mathf.Min(rect.width / woodArt.width, rect.height / woodArt.height);
+        Rect icon = new Rect(rect.center.x - woodArt.width * scale * .5f,
+            rect.center.y - woodArt.height * scale * .5f,
+            woodArt.width * scale, woodArt.height * scale);
+        GUI.DrawTexture(icon, woodArt, ScaleMode.StretchToFill, true);
+        DrawGoldCount(rect, amount, 0f);
         GUI.color = oldColor;
     }
 

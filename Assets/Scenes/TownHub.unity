@@ -6496,11 +6496,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd3fe7d94dc204a9fa8109a5d1fd312e, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ExpeditionPlayerCombat
-  attackRange: 1.15
+  attackRange: 0.9
   attackRadius: 0.7
   attackCooldown: 0.38
   damage: 1
   knockbackDistance: 1.15
+  attackEnergyCost: 1
   swooshSheet: {fileID: 0}
   swooshFrameDuration: 0.055
   swooshScale: 0.25

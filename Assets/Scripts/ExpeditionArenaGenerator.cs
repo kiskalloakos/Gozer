@@ -230,7 +230,10 @@ public static class ExpeditionArenaGenerator
     {
         tree.name = name;
         tree.transform.SetPositionAndRotation(position, Quaternion.identity);
+        var choppable = tree.GetComponent<ChoppableTree>();
+        if (!choppable) choppable = tree.AddComponent<ChoppableTree>();
         tree.SetActive(true);
+        choppable.ResetForGeneration();
         var renderer = tree.GetComponent<SpriteRenderer>();
         if (renderer) renderer.sortingOrder = Mathf.RoundToInt(-position.y * 100f);
     }

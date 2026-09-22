@@ -25,6 +25,18 @@ public sealed class GameSessionFlow : MonoBehaviour
         public string savedAt;
         public int gold;
         public int health;
+        public float energy;
+        public bool energySaved;
+        public int wood;
+        public bool itemsSaved;
+        public ItemStack[] playerItems;
+        public ItemStack[] chestItems;
+        public bool woodStacksSaved;
+        public int[] playerWood;
+        public int[] chestWood;
+        public int playerAxeSlot;
+        public int chestAxeSlot;
+        public bool toolsSaved;
         public int completedRuns;
         public float villageMinutes;
         public int[] playerGold;
@@ -63,7 +75,7 @@ public sealed class GameSessionFlow : MonoBehaviour
         // the old, unscoped PlayerPrefs data to the first slot on first launch.
         if (!PlayerPrefs.HasKey(ActiveSlotKey) && HasLegacyGameState())
         {
-            GoldInventoryLocation.GetTotalGold(); // complete legacy Gold migration before snapshotting
+            ItemInventory.GetTotal(InventoryItemId.Gold); // complete legacy item migration before snapshotting
             activeSlot = 0;
             PlayerPrefs.SetInt(ActiveSlotKey, activeSlot);
             SaveActiveSlot();
@@ -101,7 +113,8 @@ public sealed class GameSessionFlow : MonoBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.Escape) && !PlayerInventoryUI.IsOpen && !HomeStorageChest.IsModalOpen)
+        if (Input.GetKeyDown(KeyCode.Escape) && !PlayerInventoryUI.IsOpen
+            && !HomeStorageChest.IsModalOpen && !WorkbenchCraftingUI.IsModalOpen)
             Open(MenuScreen.Pause);
     }
 
@@ -308,12 +321,19 @@ public sealed class GameSessionFlow : MonoBehaviour
     void SaveActiveSlot()
     {
         if (activeSlot < 0 || activeSlot >= SlotCount) return;
+        ItemInventory.EnsureStarterAxe();
         var data = new SaveData
         {
             exists = true,
             savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
-            gold = PlayerPrefs.GetInt(TownHubController.GoldKey, TownHubController.DefaultStartingGold),
+            gold = ItemInventory.GetTotal(InventoryItemId.Gold),
             health = PlayerPrefs.GetInt(ExpeditionPlayerHealth.HealthKey, ExpeditionPlayerHealth.DefaultMaxHealthUnits),
+            energy = PlayerPrefs.GetFloat(ExpeditionPlayerEnergy.EnergyKey, ExpeditionPlayerEnergy.DefaultStartingEnergy),
+            energySaved = true,
+            wood = ItemInventory.GetTotal(InventoryItemId.Wood),
+            itemsSaved = true,
+            playerItems = ItemInventory.ReadSlots(ItemInventory.Container.PlayerInventory),
+            chestItems = ItemInventory.ReadSlots(ItemInventory.Container.HomeChest),
             completedRuns = PlayerPrefs.GetInt(ExpeditionRunProgression.CompletedRunsKey, 0),
             villageMinutes = ParseFloat(PlayerPrefs.GetString("Village.TotalMinutes", "480"), 480f),
             injured = PlayerPrefs.GetInt(ExpeditionPlayerHealth.InjuryKey, 0),
@@ -321,8 +341,8 @@ public sealed class GameSessionFlow : MonoBehaviour
             infirmaryLevel = PlayerPrefs.GetInt(TownUpgradeBuilding.ProgressKey("infirmary"), 1),
             lastSeed = PlayerPrefs.GetInt(ExpeditionSeedManager.LastSeedKey, 0),
             expeditionRunIdentity = PlayerPrefs.GetString(ExpeditionRunIdentity.PlayerPrefsKey, ""),
-            playerGold = ReadGold(GoldInventoryLocation.Container.PlayerInventory),
-            chestGold = ReadGold(GoldInventoryLocation.Container.HomeChest)
+            playerGold = null,
+            chestGold = null
         };
         PlayerPrefs.SetString(SlotKey(activeSlot), JsonUtility.ToJson(data));
         PlayerPrefs.Save();
@@ -335,6 +355,36 @@ public sealed class GameSessionFlow : MonoBehaviour
         ClearGameState();
         PlayerPrefs.SetInt(TownHubController.GoldKey, data.gold);
         PlayerPrefs.SetInt(ExpeditionPlayerHealth.HealthKey, data.health);
+        // Older save-slot JSON predates energy. Treat those saves as fully
+        // rested rather than restoring JsonUtility's missing-field default of 0.
+        PlayerPrefs.SetFloat(ExpeditionPlayerEnergy.EnergyKey,
+            data.energySaved ? data.energy : ExpeditionPlayerEnergy.DefaultStartingEnergy);
+        if (data.itemsSaved)
+        {
+            ItemInventory.WriteSlots(ItemInventory.Container.PlayerInventory, data.playerItems);
+            ItemInventory.WriteSlots(ItemInventory.Container.HomeChest, data.chestItems);
+        }
+        else if (data.woodStacksSaved)
+        {
+            RestoreLegacyStacks(ItemInventory.Container.PlayerInventory, InventoryItemId.Wood, data.playerWood);
+            RestoreLegacyStacks(ItemInventory.Container.HomeChest, InventoryItemId.Wood, data.chestWood);
+            if (data.playerWood == null && data.chestWood == null && data.wood > 0)
+                ItemInventory.AddItem(ItemInventory.Container.PlayerInventory, InventoryItemId.Wood, data.wood);
+        }
+        else
+        {
+            // Older saves only had a total wood counter. Let the normal
+            // migration place that total into the first available player slot.
+            if (data.wood > 0)
+                ItemInventory.AddItem(ItemInventory.Container.PlayerInventory,
+                    InventoryItemId.Wood, data.wood);
+        }
+        if (!data.itemsSaved && data.toolsSaved)
+            RestoreLegacyAxe(data.playerAxeSlot, data.chestAxeSlot);
+        else if (!data.itemsSaved)
+        {
+            ItemInventory.EnsureStarterAxe();
+        }
         PlayerPrefs.SetInt(ExpeditionPlayerHealth.InjuryKey, data.injured);
         PlayerPrefs.SetInt(ExpeditionRunProgression.CompletedRunsKey, data.completedRuns);
         PlayerPrefs.SetInt(PlayerProgression.ReinforcedMeleeKey, data.meleeUpgrade);
@@ -342,9 +392,14 @@ public sealed class GameSessionFlow : MonoBehaviour
         PlayerPrefs.SetInt(ExpeditionSeedManager.LastSeedKey, data.lastSeed);
         ExpeditionRunIdentity.RestoreSerialized(data.expeditionRunIdentity);
         PlayerPrefs.SetString("Village.TotalMinutes", data.villageMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        WriteGold(GoldInventoryLocation.Container.PlayerInventory, data.playerGold);
-        WriteGold(GoldInventoryLocation.Container.HomeChest, data.chestGold);
-        PlayerPrefs.SetInt(GoldInventoryLocation.StackMigrationKey, 1);
+        if (!data.itemsSaved)
+        {
+            RestoreLegacyStacks(ItemInventory.Container.PlayerInventory, InventoryItemId.Gold, data.playerGold);
+            RestoreLegacyStacks(ItemInventory.Container.HomeChest, InventoryItemId.Gold, data.chestGold);
+            if (data.playerGold == null && data.chestGold == null && data.gold > 0)
+                ItemInventory.AddItem(ItemInventory.Container.PlayerInventory,
+                    InventoryItemId.Gold, data.gold);
+        }
         activeSlot = slot;
         PlayerPrefs.SetInt(ActiveSlotKey, slot);
         PlayerPrefs.Save();
@@ -365,18 +420,29 @@ public sealed class GameSessionFlow : MonoBehaviour
     }
 
     static string SlotKey(int slot) => SlotKeyPrefix + slot;
-    static int[] ReadGold(GoldInventoryLocation.Container container)
+    static void RestoreLegacyStacks(ItemInventory.Container container, InventoryItemId item, int[] values)
     {
-        int count = container == GoldInventoryLocation.Container.PlayerInventory ? GoldInventoryLocation.PlayerSlotCount : GoldInventoryLocation.ChestSlotCount;
-        var values = new int[count];
-        for (int i = 0; i < count; i++) values[i] = PlayerPrefs.GetInt(GoldInventoryLocation.StackKey(container, i), 0);
-        return values;
+        if (values == null) return;
+        int count = Mathf.Min(values.Length,
+            container == ItemInventory.Container.PlayerInventory
+                ? ItemInventory.PlayerSlotCount : ItemInventory.ChestSlotCount);
+        for (int slot = 0; slot < count; slot++)
+        {
+            if (values[slot] <= 0) continue;
+            if (ItemInventory.CanPlace(container, slot, item))
+                ItemInventory.SetStack(container, slot, item, values[slot]);
+            else
+                ItemInventory.AddItem(container, item, values[slot]);
+        }
     }
-    static void WriteGold(GoldInventoryLocation.Container container, int[] values)
+
+    static void RestoreLegacyAxe(int playerSlot, int chestSlot)
     {
-        int count = container == GoldInventoryLocation.Container.PlayerInventory ? GoldInventoryLocation.PlayerSlotCount : GoldInventoryLocation.ChestSlotCount;
-        for (int i = 0; i < count; i++)
-            if (values != null && i < values.Length && values[i] > 0) PlayerPrefs.SetInt(GoldInventoryLocation.StackKey(container, i), values[i]);
+        if (playerSlot >= 0 && ItemInventory.CanPlace(ItemInventory.Container.PlayerInventory, playerSlot, InventoryItemId.Axe))
+            ItemInventory.SetStack(ItemInventory.Container.PlayerInventory, playerSlot, InventoryItemId.Axe, 1);
+        if (chestSlot >= 0 && ItemInventory.CanPlace(ItemInventory.Container.HomeChest, chestSlot, InventoryItemId.Axe))
+            ItemInventory.SetStack(ItemInventory.Container.HomeChest, chestSlot, InventoryItemId.Axe, 1);
+        ItemInventory.EnsureStarterAxe();
     }
     static float ParseFloat(string value, float fallback)
         => float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float result) ? result : fallback;
@@ -388,8 +454,9 @@ public sealed class GameSessionFlow : MonoBehaviour
     static void ClearGameState()
     {
         VillageTime.ResetSavedClock();
-        GoldInventoryLocation.ResetSavedState();
+        ItemInventory.ResetSavedState();
         string[] keys = { TownHubController.GoldKey, TownHubController.PendingSecuredGoldKey, ExpeditionPlayerHealth.HealthKey,
+            ExpeditionPlayerEnergy.EnergyKey,
             ExpeditionPlayerHealth.InjuryKey, PlayerProgression.ReinforcedMeleeKey, ExpeditionRunProgression.CompletedRunsKey,
             ExpeditionRunProgression.PendingThreatIncreaseKey, ExpeditionSeedManager.LastSeedKey, "Expedition.PendingSeed", "Expedition.HasPendingSeed",
             "Expedition.PendingSeedSource", "Expedition.PendingDailyDate",

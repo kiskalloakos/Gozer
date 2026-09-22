@@ -10,7 +10,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
     public static bool IsOpen { get; private set; }
 
-    readonly GoldStackCursor goldCursor = new GoldStackCursor();
+    readonly InventoryStackCursor itemCursor = new InventoryStackCursor();
     readonly HashSet<int> rightDragVisited = new HashSet<int>();
     bool rightDragging;
     TownPlayerController playerMovement;
@@ -19,7 +19,7 @@ public class PlayerInventoryUI : MonoBehaviour
     void Update()
     {
         if (GameSessionFlow.IsBlockingGameplay) return;
-        if (HomeStorageChest.IsModalOpen) return;
+        if (HomeStorageChest.IsModalOpen || WorkbenchCraftingUI.IsModalOpen) return;
 
         if (Input.GetKeyDown(KeyCode.E))
         {
@@ -40,7 +40,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
     void Close()
     {
-        goldCursor.ReturnHeld(GetHUD());
+        itemCursor.ReturnHeld(GetHUD());
         rightDragging = false;
         rightDragVisited.Clear();
         IsOpen = false;
@@ -62,26 +62,36 @@ public class PlayerInventoryUI : MonoBehaviour
         var hud = GetHUD();
         DrawQuickbarSlotSelection(panel, hud);
         int hoveredSlot = -1;
-        for (int slot = 0; slot < GoldInventoryLocation.PlayerSlotCount; slot++)
+        for (int slot = 0; slot < ItemInventory.PlayerSlotCount; slot++)
         {
-            int amount = goldCursor.GetSlotAmount(
-                GoldInventoryLocation.Container.PlayerInventory, slot, hud);
-            if (amount > 0) DrawGold(panel, slot, amount);
-            if (amount > 0 && Event.current != null
+            ItemStack stack = ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, slot);
+            int amount = itemCursor.GetGoldSlotAmount(ItemInventory.Container.PlayerInventory, slot, hud);
+            if (ItemInventory.IsTool(stack.item)) DrawTool(panel, slot, stack.item);
+            else if (stack.item == InventoryItemId.Wood) DrawWood(panel, slot, stack.amount);
+            else if (amount > 0) DrawGold(panel, slot, amount);
+            if ((stack.item != InventoryItemId.Empty || amount > 0) && Event.current != null
                 && GetSlotRect(panel, slot).Contains(Event.current.mousePosition))
                 hoveredSlot = slot;
         }
         DrawQuickbarSlotHotkeys(panel);
 
         if (hoveredSlot >= 0)
-            DrawItemTooltip(Event.current.mousePosition, "GOLD");
+        {
+            ItemStack stack = ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, hoveredSlot);
+            DrawItemTooltip(Event.current.mousePosition,
+                stack.item == InventoryItemId.Empty ? "GOLD" : ItemName(stack.item));
+        }
 
         HandlePointer(panel, hud);
 
-        if (goldCursor.IsHolding && Event.current != null)
+        if (itemCursor.IsHolding && Event.current != null)
         {
             var dragRect = new Rect(Event.current.mousePosition.x - 25f, Event.current.mousePosition.y - 25f, 50f, 50f);
-            ExpeditionHUD.DrawGoldStack(dragRect, goldCursor.TotalAmount);
+            if (ItemInventory.IsTool(itemCursor.HeldItem)) ExpeditionHUD.DrawItemIcon(dragRect, itemCursor.HeldItem);
+            else if (itemCursor.HeldItem == InventoryItemId.Wood)
+                ExpeditionHUD.DrawWoodStack(dragRect, itemCursor.Amount);
+            else if (itemCursor.HeldItem == InventoryItemId.Gold)
+                ExpeditionHUD.DrawGoldStack(dragRect, itemCursor.Amount);
         }
 
         GUI.color = oldColor;
@@ -92,16 +102,18 @@ public class PlayerInventoryUI : MonoBehaviour
         Event currentEvent = Event.current;
         if (currentEvent == null) return;
         bool overSlot = TryGetSlotAt(currentEvent.mousePosition, panel, out int slot);
+        ItemStack stack = overSlot
+            ? ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, slot) : default;
         int slotAmount = overSlot
-            ? goldCursor.GetSlotAmount(GoldInventoryLocation.Container.PlayerInventory, slot, hud)
-            : 0;
-        CursorClickFeedback.SetInteractiveHover(overSlot && (slotAmount > 0 || goldCursor.IsHolding));
+            ? itemCursor.GetGoldSlotAmount(ItemInventory.Container.PlayerInventory, slot, hud) : 0;
+        bool occupied = overSlot && (stack.item != InventoryItemId.Empty || slotAmount > 0);
+        CursorClickFeedback.SetInteractiveHover(overSlot && (occupied || itemCursor.IsHolding));
 
         if (currentEvent.type == EventType.MouseDown)
         {
             if (overSlot && currentEvent.button == 0)
             {
-                goldCursor.LeftClick(GoldInventoryLocation.Container.PlayerInventory, slot, hud);
+                itemCursor.LeftClick(ItemInventory.Container.PlayerInventory, slot, hud);
                 currentEvent.Use();
             }
             else if (overSlot && currentEvent.button == 1)
@@ -109,7 +121,7 @@ public class PlayerInventoryUI : MonoBehaviour
                 rightDragVisited.Clear();
                 rightDragVisited.Add(slot);
                 rightDragging = true;
-                goldCursor.RightClick(GoldInventoryLocation.Container.PlayerInventory, slot, hud);
+                itemCursor.RightClick(ItemInventory.Container.PlayerInventory, slot, hud);
                 currentEvent.Use();
             }
             else if (panel.Contains(currentEvent.mousePosition) && currentEvent.button == 0)
@@ -124,8 +136,8 @@ public class PlayerInventoryUI : MonoBehaviour
         }
         else if (currentEvent.type == EventType.MouseDrag && currentEvent.button == 1 && rightDragging)
         {
-            if (overSlot && rightDragVisited.Add(slot) && goldCursor.IsHolding)
-                goldCursor.RightClick(GoldInventoryLocation.Container.PlayerInventory, slot, hud);
+            if (overSlot && rightDragVisited.Add(slot) && itemCursor.IsHolding)
+                itemCursor.RightClick(ItemInventory.Container.PlayerInventory, slot, hud);
             currentEvent.Use();
         }
         else if (currentEvent.type == EventType.MouseUp && currentEvent.button == 1 && rightDragging)
@@ -184,7 +196,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
     public static bool TryGetSlotAt(Vector2 pointer, Rect panel, out int slot)
     {
-        for (int i = 0; i < GoldInventoryLocation.PlayerSlotCount; i++)
+        for (int i = 0; i < ItemInventory.PlayerSlotCount; i++)
         {
             if (!GetSlotRect(panel, i).Contains(pointer)) continue;
             slot = i;
@@ -201,6 +213,26 @@ public class PlayerInventoryUI : MonoBehaviour
         ExpeditionHUD.DrawGoldStack(new Rect(slotRect.x + inset, slotRect.y + inset,
             slotRect.width - inset * 2f, slotRect.height - inset * 2f), amount,
             (slotRect.width - inset * 2f) / 50f);
+    }
+
+    public static void DrawWood(Rect panel, int slot, int amount)
+    {
+        Rect slotRect = GetSlotRect(panel, slot);
+        float inset = Mathf.Max(2f, panel.width / 110f);
+        ExpeditionHUD.DrawWoodStack(new Rect(slotRect.x + inset, slotRect.y + inset,
+            slotRect.width - inset * 2f, slotRect.height - inset * 2f), amount,
+            (slotRect.width - inset * 2f) / 50f);
+    }
+
+    public static void DrawTool(Rect panel, int slot)
+        => DrawTool(panel, slot, InventoryItemId.Axe);
+
+    public static void DrawTool(Rect panel, int slot, InventoryItemId item)
+    {
+        Rect slotRect = GetSlotRect(panel, slot);
+        float inset = Mathf.Max(2f, panel.width / 110f);
+        ExpeditionHUD.DrawItemIcon(new Rect(slotRect.x + inset, slotRect.y + inset,
+            slotRect.width - inset * 2f, slotRect.height - inset * 2f), item);
     }
 
     public static void DrawQuickbarSlotSelection(Rect panel, ExpeditionHUD hud)
@@ -255,6 +287,14 @@ public class PlayerInventoryUI : MonoBehaviour
         return inventoryArt;
     }
 
+    static string ItemName(InventoryItemId item)
+        => item == InventoryItemId.Axe ? "AXE"
+            : item == InventoryItemId.Pickaxe ? "PICKAXE"
+            : item == InventoryItemId.Sword ? "SWORD"
+            : item == InventoryItemId.Shovel ? "SHOVEL"
+            : item == InventoryItemId.Wood ? "WOOD"
+            : item == InventoryItemId.Gold ? "GOLD" : "ITEM";
+
     void LockPlayer()
     {
         playerMovement = FindAnyObjectByType<TownPlayerController>();
@@ -273,6 +313,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
     void OnDisable()
     {
+        itemCursor.ReturnHeld(GetHUD());
         if (IsOpen) Close();
     }
 }

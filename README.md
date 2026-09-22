@@ -510,8 +510,10 @@ Before accepting new art or a new gameplay scene, verify:
 
 ### TOWN
 
-- [ ] **FARMING SYSTEM, CROPS, CHOPPING TREES, GROWING TREES**
-- [ ] **Preparation and loadouts.** Let the player choose weapons, consumables, tools, destination, and risk level before leaving town.
+
+- [x] **Preparation and loadouts.** Let the player choose weapons, consumables, tools, destination, and risk level before leaving town.
+- [x] **trees should also regrow with time**
+- [ ] **FARMING SYSTEM, CROPS**
 - [ ] Gradual Unlocks: You start with access to your farm and the immediate town, but many regions remain blocked initially. Progression-Based: You open these locked areas by completing side quests, repairing infrastructure, or upgrading your tools. Open-Ended Freedom: While the map expands linearly through gameplay milestones, you have total freedom in how you spend your daily time, choose your skills, and interact with villagers.
 - [ ] **Infirmary full setup with NPC, clear upgrades, prices, etc**
 - [ ] **Other town supplies like market for trading specifically so you can trade Gold, etc**
@@ -525,7 +527,7 @@ Before accepting new art or a new gameplay scene, verify:
 
 - [ ] **Meaningfully different loot.** Add common, valuable, and contaminated resources plus items that create inventory and extraction decisions.
 - [ ] **Implement three resource tiers.** Common expedition supplies work; valuable and contaminated resource tiers do not.
-- [ ] **Implement two regular enemies and one escalation enemy.** One wandering/pursuing melee enemy exists; distinct additional archetypes do not.
+- [ ] **Implement two regular enemies and one escalation enemy.** One wandering/pursuing melee enemy exists; distinct additional archetypes do not. **Demons could pretend that they are npcs**
 - [ ] **Write the first five town upgrades and define their visible effects.** Reinforced melee is the first permanent upgrade; four more upgrades and the broader town-upgrade plan remain undefined.
 - [ ] **Expedition objectives.** Add missions such as hunting a target, rescuing someone, activating machinery, delivering an item, or discovering a location so a run has purpose beyond collecting supplies.
 - [ ] **More enemy archetypes.** Add at least one fundamentally different regular enemy and one escalation enemy instead of only increasing the number of the current stalker.
