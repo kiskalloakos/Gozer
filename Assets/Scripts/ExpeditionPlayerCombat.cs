@@ -68,6 +68,7 @@ public class ExpeditionPlayerCombat : MonoBehaviour
             nearest = hit.distance;
         }
         if (target) target.TakeDamage(damage, transform.position, knockbackDistance);
+        if (movementController) movementController.PlayMeleeAttack(direction);
         // The player transform is positioned at their feet. Lift the visual to
         // weapon height so it does not appear on the ground beneath their legs.
         Vector2 visualOrigin = (Vector2)transform.position + Vector2.up * swooshHeightAboveFeet;

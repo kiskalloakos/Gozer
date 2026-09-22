@@ -510,14 +510,13 @@ Before accepting new art or a new gameplay scene, verify:
 
 ### TOWN
 
-
+- [ ] **FARMING SYSTEM, CROPS, CHOPPING TREES, GROWING TREES**
 - [ ] **Preparation and loadouts.** Let the player choose weapons, consumables, tools, destination, and risk level before leaving town.
 - [ ] Gradual Unlocks: You start with access to your farm and the immediate town, but many regions remain blocked initially. Progression-Based: You open these locked areas by completing side quests, repairing infrastructure, or upgrading your tools. Open-Ended Freedom: While the map expands linearly through gameplay milestones, you have total freedom in how you spend your daily time, choose your skills, and interact with villagers.
 - [ ] **Infirmary full setup with NPC, clear upgrades, prices, etc**
 - [ ] **Other town supplies like market for trading specifically so you can trade Gold, etc**
-- [ ] Farmerama-like elements? Zoomumba-like elements?
-- [ ] ANIMALS as mobs (How about this as a meme? https://www.tiktok.com/@hyraxhub/video/7687660914950130975?_r=1&_t=ZN-99wClKYnuI2 and then also crocodiles, afking around ponds), also cats (https://toffeecraft.itch.io/cat-pack)
-- [ ] FARM
+- [ ] **Farmerama-like elements? Zoomumba-like elements?**
+- [ ] **ANIMALS as mobs** (How about this as a meme? https://www.tiktok.com/@hyraxhub/video/7687660914950130975?_r=1&_t=ZN-99wClKYnuI2 and then also crocodiles, afking around ponds), also cats (https://toffeecraft.itch.io/cat-pack)
 
 
 
@@ -554,7 +553,7 @@ Before accepting new art or a new gameplay scene, verify:
 - [x] first enemy looks '/Users/kiskalloakos/Documents/Pixel Art Assets/Tiny RPG Character Asset Pack 02 -Free Demon_A&Blood Monster_A/Characters(100x100 split)/Demon_A/Demon_A'
 - [x] inventory (either one) is not centered
 - [x] we need numbers 1-4 on the bot navbar, and also display those numbers in inventory, and be able to switch between those numbers with scroll-wheel and also numbers on keyboard
-- [ ] attacking MEELEE animation for Player
+- [x] attacking MEELEE animation for Player
 - [ ] swords and guns 
 - [ ] Add more town props and functional dressing after the active town layout is settled.
 - [ ] Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.

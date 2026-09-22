@@ -13,6 +13,7 @@ public static class ExpeditionFieldSetup
     const string HomePath = "Assets/Scenes/HomeInterior.unity";
     const string TreePath = "Assets/Art/Environment/TownDressing/TREE_NIGHT.png";
     const string CharacterPath = "Assets/Art/Characters/TownCharacterSheet.png";
+    const string PlayerMeleeAttackPath = "Assets/Art/UI/base character meelee attacks.png";
     const string SquarePath = "Assets/Art/Environment/Square.png";
     const string MeleeSwooshPath = "Assets/Resources/Effects/melee_swoosh.png";
     const string DemonIdlePath = "Assets/Resources/Enemies/DemonA/idle.png";
@@ -251,7 +252,9 @@ public static class ExpeditionFieldSetup
         visual.sprite = AssetDatabase.LoadAllAssetsAtPath(CharacterPath).OfType<Sprite>()
             .FirstOrDefault(candidate => candidate.name == "town_character_down_0");
         visual.sortingOrder = 1800;
-        player.AddComponent<TownPlayerController>().visual = visual;
+        var controller = player.AddComponent<TownPlayerController>();
+        controller.visual = visual;
+        controller.meleeAttackSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(PlayerMeleeAttackPath);
         var health = player.AddComponent<ExpeditionPlayerHealth>();
         var combat = player.AddComponent<ExpeditionPlayerCombat>();
         combat.swooshSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(MeleeSwooshPath);

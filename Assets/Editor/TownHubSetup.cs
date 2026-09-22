@@ -66,7 +66,11 @@ public static class TownHubSetup
             .OfType<Sprite>()
             .FirstOrDefault(candidate => candidate.name == "town_character_down_0");
         renderer.sortingOrder = 400;
-        var controller = player.AddComponent<TownPlayerController>(); controller.visual = renderer;
+        var controller = player.AddComponent<TownPlayerController>();
+        controller.visual = renderer;
+        controller.meleeAttackSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(
+            "Assets/Art/UI/base character meelee attacks.png");
+        player.AddComponent<ExpeditionPlayerCombat>();
         player.AddComponent<TownPlayerInteractor>();
 
         var cameraObject = new GameObject("Main Camera"); cameraObject.tag = "MainCamera";
