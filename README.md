@@ -519,6 +519,7 @@ Before accepting new art or a new gameplay scene, verify:
 - [ ] **Field-use items.** Add healing, escape tools, temporary buffs, deployable objects, and consumables that compete with loot for inventory space.
 - [ ] **Contamination and town consequences.** Allow powerful finds to unlock benefits while also causing visible town problems, events, or story branches.
 - [ ] **Multiple destinations and route unlocking.** Expand the expedition gate beyond one field and support permanently unlocked routes.
+- [ ] Gradual Unlocks: You start with access to your farm and the immediate town, but many regions remain blocked initially. Progression-Based: You open these locked areas by completing side quests, repairing infrastructure, or upgrading your tools. Open-Ended Freedom: While the map expands linearly through gameplay milestones, you have total freedom in how you spend your daily time, choose your skills, and interact with villagers.
 - [ ] **A run-result screen.** Summarize secured loot, losses, health, treatment needs, spending, discoveries, and world changes after success or defeat.
 - [ ] **Basic game-session flow.** Add a title screen, save slots, pause menu, settings, and clear quit/restart paths.
 - [ ] **Infirmary full setup with NPC, clear upgrades, prices, etc**
@@ -528,7 +529,7 @@ Before accepting new art or a new gameplay scene, verify:
 - [ ] When clicking expedition gate, there’s a moon animation with a wolf sound effect and it zooms in from top down to the character and for a slight mini second you can see where the extraction zone is. This is a Easter egg. Also, dnb-like music starts to get you in the mood.
 - [ ] Mircovolts-like elements? Farmerama-like elements? Zoomumba-like elements?
 - [ ] ENEMIES: Damage + HP
-- [ ] ANIMALS as mobs
+- [ ] ANIMALS as mobs (How about this as a meme? https://www.tiktok.com/@hyraxhub/video/7687660914950130975?_r=1&_t=ZN-99wClKYnuI2 and then also crocodiles, afking around ponds)
 - [ ] FARM
 - [ ] Dash ? Sprint with fatigue?
 
@@ -547,6 +548,7 @@ Co-op remains a later pillar. The single-player loop above should be proven befo
 - [ ] first enemy looks '/Users/kiskalloakos/Documents/Pixel Art Assets/Tiny RPG Character Asset Pack 02 -Free Demon_A&Blood Monster_A/Characters(100x100 split)/Demon_A/Demon_A'
 - [ ] swords and guns 
 - [ ] inventory (either one) is not centered
+- [ ] we need numbers 1-4 on the bot navbar, and also display those numbers in inventory, and be able to switch between those numbers with scroll-wheel and also numbers on keyboard
 - [ ] Add more town props and functional dressing after the active town layout is settled.
 - [ ] Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.
 - [ ] Replace placeholder expedition enemies and combat effects with production mob, monster, hit, and attack artwork while preserving the established scale and projection.
