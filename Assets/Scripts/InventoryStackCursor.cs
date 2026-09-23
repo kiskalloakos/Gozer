@@ -12,48 +12,48 @@ public sealed class InventoryStackCursor
     int heldSecuredAmount;
     int heldCarriedAmount;
 
-    public int GetGoldSlotAmount(ItemInventory.Container container, int slot, ExpeditionHUD hud = null)
+    public int GetGoldSlotAmount(ItemInventory.Container container, int slot)
     {
         int amount = ItemInventory.GetAmount(container, slot, InventoryItemId.Gold);
-        if (container == ItemInventory.Container.PlayerInventory && hud)
-            amount += hud.GetCarriedLootAtSlot(slot);
+        if (container == ItemInventory.Container.PlayerInventory)
+            amount += CurrentExpeditionLoot.GetAtSlot(slot);
         return amount;
     }
 
-    public void LeftClick(ItemInventory.Container container, int slot, ExpeditionHUD hud = null)
+    public void LeftClick(ItemInventory.Container container, int slot)
     {
         if (!IsHolding)
         {
-            if (TryGetAvailable(container, slot, hud, out InventoryItemId item, out int amount))
-                Take(container, slot, item, amount, hud);
+            if (TryGetAvailable(container, slot, out InventoryItemId item, out int amount))
+                Take(container, slot, item, amount);
             return;
         }
 
-        PlaceAll(container, slot, hud);
+        PlaceAll(container, slot);
     }
 
-    public void RightClick(ItemInventory.Container container, int slot, ExpeditionHUD hud = null)
+    public void RightClick(ItemInventory.Container container, int slot)
     {
         if (!IsHolding)
         {
-            if (TryGetAvailable(container, slot, hud, out InventoryItemId item, out int amount))
-                Take(container, slot, item, (amount + 1) / 2, hud);
+            if (TryGetAvailable(container, slot, out InventoryItemId item, out int amount))
+                Take(container, slot, item, (amount + 1) / 2);
             return;
         }
 
-        PlaceOne(container, slot, hud);
+        PlaceOne(container, slot);
     }
 
-    public void ReturnHeld(ExpeditionHUD hud = null)
+    public void ReturnHeld()
     {
         if (!IsHolding) return;
-        if (PlaceAll(originContainer, originSlot, hud)) return;
+        if (PlaceAll(originContainer, originSlot)) return;
 
         int emptySlot = ItemInventory.FindEmptySlot(originContainer);
-        if (emptySlot >= 0) PlaceAll(originContainer, emptySlot, hud);
+        if (emptySlot >= 0) PlaceAll(originContainer, emptySlot);
     }
 
-    bool TryGetAvailable(ItemInventory.Container container, int slot, ExpeditionHUD hud,
+    bool TryGetAvailable(ItemInventory.Container container, int slot,
         out InventoryItemId item, out int amount)
     {
         ItemStack stack = ItemInventory.GetStack(container, slot);
@@ -61,16 +61,16 @@ public sealed class InventoryStackCursor
         {
             item = stack.item;
             amount = stack.amount;
-            if (item == InventoryItemId.Gold && container == ItemInventory.Container.PlayerInventory && hud)
-                amount += hud.GetCarriedLootAtSlot(slot);
+            if (item == InventoryItemId.Gold && container == ItemInventory.Container.PlayerInventory)
+                amount += CurrentExpeditionLoot.GetAtSlot(slot);
             return true;
         }
 
-        if (container == ItemInventory.Container.PlayerInventory && hud
-            && hud.GetCarriedLootAtSlot(slot) > 0)
+        if (container == ItemInventory.Container.PlayerInventory
+            && CurrentExpeditionLoot.GetAtSlot(slot) > 0)
         {
             item = InventoryItemId.Gold;
-            amount = hud.GetCarriedLootAtSlot(slot);
+            amount = CurrentExpeditionLoot.GetAtSlot(slot);
             return true;
         }
 
@@ -79,8 +79,7 @@ public sealed class InventoryStackCursor
         return false;
     }
 
-    void Take(ItemInventory.Container container, int slot, InventoryItemId item, int amount,
-        ExpeditionHUD hud)
+    void Take(ItemInventory.Container container, int slot, InventoryItemId item, int amount)
     {
         originContainer = container;
         originSlot = slot;
@@ -91,13 +90,13 @@ public sealed class InventoryStackCursor
         if (item == InventoryItemId.Gold)
         {
             int securedAvailable = ItemInventory.GetAmount(container, slot, item);
-            int carriedAvailable = container == ItemInventory.Container.PlayerInventory && hud
-                ? hud.GetCarriedLootAtSlot(slot) : 0;
+            int carriedAvailable = container == ItemInventory.Container.PlayerInventory
+                ? CurrentExpeditionLoot.GetAtSlot(slot) : 0;
             int remaining = Mathf.Min(amount, securedAvailable + carriedAvailable);
             heldCarriedAmount = Mathf.Min(carriedAvailable, remaining);
             heldSecuredAmount = Mathf.Min(securedAvailable, remaining - heldCarriedAmount);
             if (heldCarriedAmount > 0)
-                hud.SetCarriedLootAtSlot(slot, carriedAvailable - heldCarriedAmount);
+                CurrentExpeditionLoot.SetAtSlot(slot, carriedAvailable - heldCarriedAmount);
             if (heldSecuredAmount > 0)
                 ItemInventory.SetStack(container, slot, item, securedAvailable - heldSecuredAmount);
         }
@@ -111,15 +110,15 @@ public sealed class InventoryStackCursor
         if (Amount <= 0) HeldItem = InventoryItemId.Empty;
     }
 
-    bool PlaceAll(ItemInventory.Container container, int slot, ExpeditionHUD hud)
+    bool PlaceAll(ItemInventory.Container container, int slot)
     {
         if (!IsHolding || !ItemInventory.CanPlace(container, slot, HeldItem)) return false;
         if (heldSecuredAmount > 0)
             ItemInventory.AddToSlot(container, slot, HeldItem, heldSecuredAmount);
         if (heldCarriedAmount > 0)
         {
-            if (container == ItemInventory.Container.PlayerInventory && hud)
-                hud.SetCarriedLootAtSlot(slot, hud.GetCarriedLootAtSlot(slot) + heldCarriedAmount);
+            if (container == ItemInventory.Container.PlayerInventory)
+                CurrentExpeditionLoot.SetAtSlot(slot, CurrentExpeditionLoot.GetAtSlot(slot) + heldCarriedAmount);
             else
                 ItemInventory.AddToSlot(container, slot, HeldItem, heldCarriedAmount);
         }
@@ -127,13 +126,13 @@ public sealed class InventoryStackCursor
         return true;
     }
 
-    bool PlaceOne(ItemInventory.Container container, int slot, ExpeditionHUD hud)
+    bool PlaceOne(ItemInventory.Container container, int slot)
     {
         if (!IsHolding || !ItemInventory.CanPlace(container, slot, HeldItem)) return false;
         if (heldCarriedAmount > 0)
         {
-            if (container == ItemInventory.Container.PlayerInventory && hud)
-                hud.SetCarriedLootAtSlot(slot, hud.GetCarriedLootAtSlot(slot) + 1);
+            if (container == ItemInventory.Container.PlayerInventory)
+                CurrentExpeditionLoot.SetAtSlot(slot, CurrentExpeditionLoot.GetAtSlot(slot) + 1);
             else
                 ItemInventory.AddToSlot(container, slot, HeldItem, 1);
             heldCarriedAmount--;

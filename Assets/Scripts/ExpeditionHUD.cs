@@ -54,16 +54,7 @@ public class ExpeditionHUD : MonoBehaviour
         => ActiveQuickbarItem == InventoryItemId.Axe;
     public bool IsSwordEquipped
         => ActiveQuickbarItem == InventoryItemId.Sword;
-    readonly int[] carriedLootBySlot = new int[ItemInventory.PlayerSlotCount];
-    public int CarriedLoot
-    {
-        get
-        {
-            int total = 0;
-            foreach (int amount in carriedLootBySlot) total += amount;
-            return total;
-        }
-    }
+    public int CarriedLoot => CurrentExpeditionLoot.Total;
 
     string statusMessage = "";
     float statusUntil;
@@ -181,8 +172,8 @@ public class ExpeditionHUD : MonoBehaviour
     public void AddLoot(int amount)
     {
         if (amount <= 0) return;
-        int slot = FindCarriedLootSlot();
-        carriedLootBySlot[slot] += amount;
+        int slot = CurrentExpeditionLoot.FindSlotForAdd();
+        CurrentExpeditionLoot.Add(amount);
         statusMessage = $"+{amount} Gold";
         statusUntil = Time.time + 1.4f;
         goldCountBounceStartedAt = Time.unscaledTime;
@@ -197,53 +188,17 @@ public class ExpeditionHUD : MonoBehaviour
 
     public int SecureLoot()
     {
-        int secured = 0;
-        for (int slot = 0; slot < carriedLootBySlot.Length; slot++)
-        {
-            int amount = carriedLootBySlot[slot];
-            if (amount <= 0) continue;
-
-            // Loot is shown in the matching quickbar slot while it is carried,
-            // but players may rearrange their bag before extracting. Store it
-            // only after a real inventory operation succeeds; otherwise it
-            // remains carried instead of being silently deleted.
-            if (!StoreGold(slot, amount)) continue;
-            carriedLootBySlot[slot] = 0;
-            secured += amount;
-        }
-        if (secured > 0)
-        {
-            PlayerPrefs.SetInt(TownHubController.PendingSecuredGoldKey,
-                PlayerPrefs.GetInt(TownHubController.PendingSecuredGoldKey, 0) + secured);
-            PlayerPrefs.Save();
-        }
-        return secured;
+        return CurrentExpeditionLoot.Secure();
     }
 
-    static bool StoreGold(int preferredPlayerSlot, int amount)
-    {
-        if (ItemInventory.AddToSlot(ItemInventory.Container.PlayerInventory,
-                preferredPlayerSlot, InventoryItemId.Gold, amount))
-            return true;
-
-        // A valid expedition return can use either persistent storage. This
-        // prevents a full player bag from discarding the extraction reward.
-        if (ItemInventory.AddItem(ItemInventory.Container.PlayerInventory,
-                InventoryItemId.Gold, amount))
-            return true;
-        return ItemInventory.AddItem(ItemInventory.Container.HomeChest,
-            InventoryItemId.Gold, amount);
-    }
-
-    public void LoseLoot() => System.Array.Clear(carriedLootBySlot, 0, carriedLootBySlot.Length);
+    public void LoseLoot() => CurrentExpeditionLoot.Lose();
 
     public int GetCarriedLootAtSlot(int slot)
-        => slot >= 0 && slot < carriedLootBySlot.Length ? carriedLootBySlot[slot] : 0;
+        => CurrentExpeditionLoot.GetAtSlot(slot);
 
     public void SetCarriedLootAtSlot(int slot, int amount)
     {
-        if (slot < 0 || slot >= carriedLootBySlot.Length) return;
-        carriedLootBySlot[slot] = Mathf.Max(0, amount);
+        CurrentExpeditionLoot.SetAtSlot(slot, amount);
     }
 
     void OnGUI()
@@ -251,12 +206,12 @@ public class ExpeditionHUD : MonoBehaviour
         int maxHearts = health ? health.maxHearts : ExpeditionPlayerHealth.DefaultMaxHearts;
         int healthUnits = health
             ? health.CurrentHealth
-            : Mathf.Clamp(PlayerPrefs.GetInt(ExpeditionPlayerHealth.HealthKey,
+            : Mathf.Clamp(GameState.Active != null ? GameState.Active.health : PlayerPrefs.GetInt(ExpeditionPlayerHealth.HealthKey,
                 ExpeditionPlayerHealth.DefaultMaxHealthUnits), 0, ExpeditionPlayerHealth.DefaultMaxHealthUnits);
         int maxEnergy = energy ? Mathf.CeilToInt(energy.MaxEnergy) : Mathf.CeilToInt(ExpeditionPlayerEnergy.DefaultMaxEnergy);
         float currentEnergy = energy
             ? energy.CurrentEnergy
-            : Mathf.Clamp(PlayerPrefs.GetFloat(ExpeditionPlayerEnergy.EnergyKey,
+            : Mathf.Clamp(GameState.Active != null ? GameState.Active.energy : PlayerPrefs.GetFloat(ExpeditionPlayerEnergy.EnergyKey,
                 ExpeditionPlayerEnergy.DefaultStartingEnergy), 0f, maxEnergy);
 
         float bounceProgress = Mathf.Clamp01((Time.unscaledTime - goldCountBounceStartedAt) /
@@ -343,7 +298,7 @@ public class ExpeditionHUD : MonoBehaviour
 
             int goldAmount = ItemInventory.GetAmount(
                 ItemInventory.Container.PlayerInventory, slotIndex, InventoryItemId.Gold)
-                + (hud ? hud.GetCarriedLootAtSlot(slotIndex) : 0);
+                + CurrentExpeditionLoot.GetAtSlot(slotIndex);
             if (goldAmount <= 0) continue;
             // Match the full inventory exactly: draw within the cell's inset content box,
             // rather than using the raw quickbar cell bounds.
@@ -381,22 +336,6 @@ public class ExpeditionHUD : MonoBehaviour
             DrawPixelTextAt((slot + 1).ToString(), slotRect.x + pixel * 3f,
                 slotRect.y + pixel * 2f, pixel);
         }
-    }
-
-    int FindCarriedLootSlot()
-    {
-        for (int slot = 0; slot < carriedLootBySlot.Length; slot++)
-            if (carriedLootBySlot[slot] > 0) return slot;
-        // Expedition pickups should merge into an existing secured player stack
-        // before occupying a new inventory slot. Manual inventory actions can
-        // still split or move stacks after collection.
-        for (int slot = 0; slot < carriedLootBySlot.Length; slot++)
-            if (ItemInventory.GetAmount(ItemInventory.Container.PlayerInventory, slot, InventoryItemId.Gold) > 0)
-                return slot;
-        for (int slot = 0; slot < carriedLootBySlot.Length; slot++)
-            if (ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, slot).item == InventoryItemId.Empty)
-                return slot;
-        return 0;
     }
 
     public static void DrawGoldStack(Rect rect, int amount, float contentScale = 1f,

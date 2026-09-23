@@ -14,7 +14,7 @@ public static class PlayerProgression
         AlreadyOwned
     }
 
-    public static bool HasReinforcedMelee => PlayerPrefs.GetInt(ReinforcedMeleeKey, 0) == 1;
+    public static bool HasReinforcedMelee => (GameState.Active != null ? GameState.Active.meleeUpgrade : PlayerPrefs.GetInt(ReinforcedMeleeKey, 0)) == 1;
     public static int MeleeLevel => HasReinforcedMelee ? 2 : 1;
 
     public static int CurrentMeleeDamage => HasReinforcedMelee
@@ -23,14 +23,14 @@ public static class PlayerProgression
 
     public static PurchaseResult PurchaseReinforcedMelee(out int remainingGold)
     {
+        GameState.InstallFromRuntime();
         remainingGold = TownHubController.GetGoldBalance();
 
         if (HasReinforcedMelee) return PurchaseResult.AlreadyOwned;
         if (!TownHubController.TrySpendGold(ReinforcedMeleeCost, out remainingGold))
             return PurchaseResult.NotEnoughGold;
 
-        PlayerPrefs.SetInt(ReinforcedMeleeKey, 1);
-        PlayerPrefs.Save();
+        GameState.Active.meleeUpgrade = 1;
         return PurchaseResult.Purchased;
     }
 }

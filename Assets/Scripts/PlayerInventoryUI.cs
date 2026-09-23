@@ -40,7 +40,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
     void Close()
     {
-        itemCursor.ReturnHeld(GetHUD());
+        itemCursor.ReturnHeld();
         rightDragging = false;
         rightDragVisited.Clear();
         IsOpen = false;
@@ -65,7 +65,7 @@ public class PlayerInventoryUI : MonoBehaviour
         for (int slot = 0; slot < ItemInventory.PlayerSlotCount; slot++)
         {
             ItemStack stack = ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, slot);
-            int amount = itemCursor.GetGoldSlotAmount(ItemInventory.Container.PlayerInventory, slot, hud);
+            int amount = itemCursor.GetGoldSlotAmount(ItemInventory.Container.PlayerInventory, slot);
             if (ItemInventory.IsTool(stack.item)) DrawTool(panel, slot, stack.item);
             else if (stack.item == InventoryItemId.Wood) DrawWood(panel, slot, stack.amount);
             else if (amount > 0) DrawGold(panel, slot, amount);
@@ -105,7 +105,7 @@ public class PlayerInventoryUI : MonoBehaviour
         ItemStack stack = overSlot
             ? ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, slot) : default;
         int slotAmount = overSlot
-            ? itemCursor.GetGoldSlotAmount(ItemInventory.Container.PlayerInventory, slot, hud) : 0;
+            ? itemCursor.GetGoldSlotAmount(ItemInventory.Container.PlayerInventory, slot) : 0;
         bool occupied = overSlot && (stack.item != InventoryItemId.Empty || slotAmount > 0);
         CursorClickFeedback.SetInteractiveHover(overSlot && (occupied || itemCursor.IsHolding));
 
@@ -113,7 +113,7 @@ public class PlayerInventoryUI : MonoBehaviour
         {
             if (overSlot && currentEvent.button == 0)
             {
-                itemCursor.LeftClick(ItemInventory.Container.PlayerInventory, slot, hud);
+                itemCursor.LeftClick(ItemInventory.Container.PlayerInventory, slot);
                 currentEvent.Use();
             }
             else if (overSlot && currentEvent.button == 1)
@@ -121,7 +121,7 @@ public class PlayerInventoryUI : MonoBehaviour
                 rightDragVisited.Clear();
                 rightDragVisited.Add(slot);
                 rightDragging = true;
-                itemCursor.RightClick(ItemInventory.Container.PlayerInventory, slot, hud);
+                itemCursor.RightClick(ItemInventory.Container.PlayerInventory, slot);
                 currentEvent.Use();
             }
             else if (panel.Contains(currentEvent.mousePosition) && currentEvent.button == 0)
@@ -137,7 +137,7 @@ public class PlayerInventoryUI : MonoBehaviour
         else if (currentEvent.type == EventType.MouseDrag && currentEvent.button == 1 && rightDragging)
         {
             if (overSlot && rightDragVisited.Add(slot) && itemCursor.IsHolding)
-                itemCursor.RightClick(ItemInventory.Container.PlayerInventory, slot, hud);
+                itemCursor.RightClick(ItemInventory.Container.PlayerInventory, slot);
             currentEvent.Use();
         }
         else if (currentEvent.type == EventType.MouseUp && currentEvent.button == 1 && rightDragging)
@@ -308,7 +308,7 @@ public class PlayerInventoryUI : MonoBehaviour
 
     void OnDisable()
     {
-        itemCursor.ReturnHeld(GetHUD());
+        itemCursor.ReturnHeld();
         if (IsOpen) Close();
     }
 }

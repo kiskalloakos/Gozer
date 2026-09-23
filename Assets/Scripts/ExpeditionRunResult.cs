@@ -23,7 +23,7 @@ public static class ExpeditionRunResult
     public static void RecordSuccess(int securedGold, int healthUnits)
     {
         Write(true, securedGold, 0, healthUnits, 0,
-            PlayerProgression.MeleeLevel >= 2 ? ExpeditionRunProgression.ThreatLevel : 0);
+            ExpeditionRunProgression.ThreatLevel);
     }
 
     public static void RecordDefeat(int lostGold, int healthUnits, int lostItemCount)
@@ -31,34 +31,28 @@ public static class ExpeditionRunResult
 
     static void Write(bool success, int secured, int lost, int health, int lostItemCount, int threat)
     {
-        PlayerPrefs.SetInt(PendingKey, 1);
-        PlayerPrefs.SetInt(SuccessKey, success ? 1 : 0);
-        PlayerPrefs.SetInt(SecuredKey, Mathf.Max(0, secured));
-        PlayerPrefs.SetInt(LostKey, Mathf.Max(0, lost));
-        PlayerPrefs.SetInt(LostItemCountKey, Mathf.Max(0, lostItemCount));
-        PlayerPrefs.SetInt(HealthKey, Mathf.Max(0, health));
-        PlayerPrefs.SetInt(ThreatKey, Mathf.Max(0, threat));
-        PlayerPrefs.Save();
+        GameState.InstallFromRuntime();
+        GameState.Active.pendingRunResult = true;
+        GameState.Active.resultSucceeded = success;
+        GameState.Active.resultSecuredGold = Mathf.Max(0, secured);
+        GameState.Active.resultLostGold = Mathf.Max(0, lost);
+        GameState.Active.resultLostItemCount = Mathf.Max(0, lostItemCount);
+        GameState.Active.resultHealthUnits = Mathf.Max(0, health);
+        GameState.Active.resultNextThreat = Mathf.Max(0, threat);
     }
 
     public static bool TryConsume(out ExpeditionRunSummary result)
     {
         result = default;
-        if (PlayerPrefs.GetInt(PendingKey, 0) == 0) return false;
-        result.succeeded = PlayerPrefs.GetInt(SuccessKey, 0) == 1;
-        result.securedGold = PlayerPrefs.GetInt(SecuredKey, 0);
-        result.lostGold = PlayerPrefs.GetInt(LostKey, 0);
-        result.lostItemCount = PlayerPrefs.GetInt(LostItemCountKey, 0);
-        result.healthUnits = PlayerPrefs.GetInt(HealthKey, 0);
-        result.nextThreat = PlayerPrefs.GetInt(ThreatKey, 0);
-        PlayerPrefs.DeleteKey(PendingKey);
-        PlayerPrefs.DeleteKey(SuccessKey);
-        PlayerPrefs.DeleteKey(SecuredKey);
-        PlayerPrefs.DeleteKey(LostKey);
-        PlayerPrefs.DeleteKey(LostItemCountKey);
-        PlayerPrefs.DeleteKey(HealthKey);
-        PlayerPrefs.DeleteKey(ThreatKey);
-        PlayerPrefs.Save();
+        GameState.InstallFromRuntime();
+        if (!GameState.Active.pendingRunResult) return false;
+        result.succeeded = GameState.Active.resultSucceeded;
+        result.securedGold = GameState.Active.resultSecuredGold;
+        result.lostGold = GameState.Active.resultLostGold;
+        result.lostItemCount = GameState.Active.resultLostItemCount;
+        result.healthUnits = GameState.Active.resultHealthUnits;
+        result.nextThreat = GameState.Active.resultNextThreat;
+        GameState.Active.pendingRunResult = false;
         return true;
     }
 }

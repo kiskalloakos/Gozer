@@ -150,9 +150,9 @@ public class WildernessEnemy : MonoBehaviour
         stateUntil = Time.time + attackRecoverySeconds;
     }
 
-    public void TakeDamage(int amount, Vector2 attackerPosition, float knockbackDistance)
+    public bool TakeDamage(int amount, Vector2 attackerPosition, float knockbackDistance)
     {
-        if (amount <= 0 || dying) return;
+        if (amount <= 0 || dying) return false;
         currentHealth -= amount;
         healthBarUntil = Time.time + 3f;
         hitFlashUntil = Time.time + .1f;
@@ -176,13 +176,14 @@ public class WildernessEnemy : MonoBehaviour
             if (collider) collider.enabled = false;
             if (spriteAnimator) spriteAnimator.PlayDeath(FinalizeDeath);
             else FinalizeDeath();
-            return;
+            return true;
         }
 
         // A successful melee hit interrupts the current attack windup and gives
         // the player a short window to reposition or follow up.
         state = EnemyState.Alerting;
         stateUntil = Time.time + .2f;
+        return true;
     }
 
     void FinalizeDeath()

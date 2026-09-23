@@ -57,7 +57,7 @@ public class HomeStorageChest : TownInteractable
     public void Close()
     {
         if (!panelOpen || animating) return;
-        itemCursor.ReturnHeld(FindAnyObjectByType<ExpeditionHUD>());
+        itemCursor.ReturnHeld();
         rightDragging = false;
         rightDragVisited.Clear();
         panelOpen = false;
@@ -157,7 +157,7 @@ public class HomeStorageChest : TownInteractable
         {
             if (overSlot && currentEvent.button == 0)
             {
-                itemCursor.LeftClick(container, slot, FindAnyObjectByType<ExpeditionHUD>());
+                itemCursor.LeftClick(container, slot);
                 currentEvent.Use();
             }
             else if (overSlot && currentEvent.button == 1)
@@ -165,7 +165,7 @@ public class HomeStorageChest : TownInteractable
                 rightDragVisited.Clear();
                 rightDragVisited.Add(TargetId(container, slot));
                 rightDragging = true;
-                itemCursor.RightClick(container, slot, FindAnyObjectByType<ExpeditionHUD>());
+                itemCursor.RightClick(container, slot);
                 currentEvent.Use();
             }
             else if ((playerPanel.Contains(currentEvent.mousePosition) || chestPanel.Contains(currentEvent.mousePosition))
@@ -182,7 +182,7 @@ public class HomeStorageChest : TownInteractable
         else if (currentEvent.type == EventType.MouseDrag && currentEvent.button == 1 && rightDragging)
         {
             if (overSlot && rightDragVisited.Add(TargetId(container, slot)) && itemCursor.IsHolding)
-                itemCursor.RightClick(container, slot, FindAnyObjectByType<ExpeditionHUD>());
+                itemCursor.RightClick(container, slot);
             currentEvent.Use();
         }
         else if (currentEvent.type == EventType.MouseUp && currentEvent.button == 1 && rightDragging)
@@ -238,7 +238,7 @@ public class HomeStorageChest : TownInteractable
         StopAllCoroutines();
         panelOpen = false;
         animating = false;
-        itemCursor.ReturnHeld(FindAnyObjectByType<ExpeditionHUD>());
+        itemCursor.ReturnHeld();
         rightDragging = false;
         rightDragVisited.Clear();
         IsModalOpen = false;

@@ -40,7 +40,7 @@ public sealed class ExpeditionLoadingSequence : MonoBehaviour
         player = target;
         elapsed = 0f;
         expeditionSeed = seed;
-        threatLevel = seed == 0 ? 0 : ExpeditionRunProgression.ThreatLevel;
+        threatLevel = ExpeditionRunProgression.ThreatLevel;
         running = true;
         previousTimeScale = Time.timeScale;
         Time.timeScale = 0f;

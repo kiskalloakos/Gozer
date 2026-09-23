@@ -1,28 +1,34 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Owns the game-wide front end. It deliberately keeps the existing gameplay
-/// PlayerPrefs keys intact: each save slot is a snapshot of those keys, which
-/// lets the rest of the game continue to use its simple persistence API.
+/// Owns the game-wide front end. Runtime systems still use PlayerPrefs as a
+/// compatibility layer, but complete save snapshots are stored as independent
+/// files so saves are unlimited and isolated from one another.
 /// </summary>
 public sealed class GameSessionFlow : MonoBehaviour
 {
-    const int SlotCount = 3;
-    const string ActiveSlotKey = "Session.ActiveSlot";
-    const string SlotKeyPrefix = "Session.SaveSlot.";
+    const string ActiveSaveKey = "Session.ActiveSaveId";
+    const string SaveDirectoryName = "Saves";
+    const string SaveFilePrefix = "save-";
+    const string SaveFileSuffix = ".json";
+    const string LegacySlotKeyPrefix = "Session.SaveSlot.";
     const string VolumeKey = "Session.MasterVolume";
     const string FullscreenKey = "Session.Fullscreen";
     public const string EditorPreviewKey = "Session.EditorExpeditionPreview";
 
-    enum MenuScreen { Gameplay, Title, Slots, Pause, Settings, ConfirmQuit, ConfirmSlotAction }
-    enum SlotAction { None, NewGame, Delete }
+    enum MenuScreen { Gameplay, Title, Saves, Pause, Settings, ConfirmQuit, ConfirmSaveAction }
+    enum SaveAction { None, NewGame, Delete }
 
     [Serializable] struct SaveData
     {
         public bool exists;
         public string savedAt;
+        public string saveId;
+        public string displayName;
         public int gold;
         public int health;
         public float energy;
@@ -46,17 +52,22 @@ public sealed class GameSessionFlow : MonoBehaviour
         public int infirmaryLevel;
         public int lastSeed;
         public string expeditionRunIdentity;
+        public GameState gameState;
     }
 
     static GameSessionFlow instance;
     MenuScreen screen;
     MenuScreen returnScreen;
-    int activeSlot = -1;
-    int pendingSlot = -1;
-    SlotAction pendingSlotAction;
+    string activeSaveId;
+    string pendingSaveId;
+    SaveAction pendingSaveAction;
     float preMenuTimeScale = 1f;
+    float autosaveElapsed;
+    Vector2 savesScroll;
 
     public static bool IsBlockingGameplay => instance && instance.screen != MenuScreen.Gameplay;
+    public static string ActiveSaveId => instance ? instance.activeSaveId : PlayerPrefs.GetString(ActiveSaveKey, "");
+    public static void SaveActiveGameNow() { if (instance) instance.SaveActiveGame(); }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Install()
@@ -70,15 +81,17 @@ public sealed class GameSessionFlow : MonoBehaviour
         if (instance && instance != this) { Destroy(gameObject); return; }
         instance = this;
         DontDestroyOnLoad(gameObject);
-        activeSlot = PlayerPrefs.GetInt(ActiveSlotKey, -1);
-        // Preserve progress made before save slots were introduced by promoting
-        // the old, unscoped PlayerPrefs data to the first slot on first launch.
-        if (!PlayerPrefs.HasKey(ActiveSlotKey) && HasLegacyGameState())
+        GameState.InstallFromRuntime();
+        activeSaveId = PlayerPrefs.GetString(ActiveSaveKey, "");
+        MigrateLegacySlotSaves();
+        // Preserve progress made before file saves were introduced by creating
+        // one migrated save from the old unscoped PlayerPrefs data.
+        if (string.IsNullOrEmpty(activeSaveId) && HasLegacyGameState())
         {
             ItemInventory.GetTotal(InventoryItemId.Gold); // complete legacy item migration before snapshotting
-            activeSlot = 0;
-            PlayerPrefs.SetInt(ActiveSlotKey, activeSlot);
-            SaveActiveSlot();
+            activeSaveId = Guid.NewGuid().ToString("N");
+            PlayerPrefs.SetString(ActiveSaveKey, activeSaveId);
+            SaveActiveGame();
         }
         AudioListener.volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 1f));
         Screen.fullScreen = PlayerPrefs.GetInt(FullscreenKey, Screen.fullScreen ? 1 : 0) == 1;
@@ -103,8 +116,17 @@ public sealed class GameSessionFlow : MonoBehaviour
 
     void Update()
     {
-        if (screen == MenuScreen.Title || screen == MenuScreen.Slots || screen == MenuScreen.Settings
-            || screen == MenuScreen.ConfirmQuit || screen == MenuScreen.ConfirmSlotAction)
+        if (screen == MenuScreen.Gameplay && !string.IsNullOrEmpty(activeSaveId))
+        {
+            autosaveElapsed += Time.unscaledDeltaTime;
+            if (autosaveElapsed >= 20f)
+            {
+                autosaveElapsed = 0f;
+                SaveActiveGame();
+            }
+        }
+        if (screen == MenuScreen.Title || screen == MenuScreen.Saves || screen == MenuScreen.Settings
+            || screen == MenuScreen.ConfirmQuit || screen == MenuScreen.ConfirmSaveAction)
             return;
 
         if (screen == MenuScreen.Pause)
@@ -118,8 +140,8 @@ public sealed class GameSessionFlow : MonoBehaviour
             Open(MenuScreen.Pause);
     }
 
-    void OnApplicationPause(bool paused) { if (paused) SaveActiveSlot(); }
-    void OnApplicationQuit() => SaveActiveSlot();
+    void OnApplicationPause(bool paused) { if (paused) SaveActiveGame(); }
+    void OnApplicationQuit() => SaveActiveGame();
 
     void Open(MenuScreen next)
     {
@@ -147,11 +169,11 @@ public sealed class GameSessionFlow : MonoBehaviour
         switch (screen)
         {
             case MenuScreen.Title: DrawTitle(); break;
-            case MenuScreen.Slots: DrawSlots(); break;
+            case MenuScreen.Saves: DrawSaves(); break;
             case MenuScreen.Pause: DrawPause(); break;
             case MenuScreen.Settings: DrawSettings(); break;
             case MenuScreen.ConfirmQuit: DrawConfirmQuit(); break;
-            case MenuScreen.ConfirmSlotAction: DrawConfirmSlotAction(); break;
+            case MenuScreen.ConfirmSaveAction: DrawConfirmSaveAction(); break;
         }
     }
 
@@ -160,44 +182,44 @@ public sealed class GameSessionFlow : MonoBehaviour
         Rect box = Panel(350f, 370f);
         Label("RPG EXPEDITIONS", new Rect(box.x, box.y + 38, box.width, 42), 27, new Color(1f, .78f, .3f));
         Label("TOWN. TREASURE. SURVIVAL.", new Rect(box.x, box.y + 84, box.width, 22), 12, new Color(.78f, .78f, .88f));
-        bool canContinue = activeSlot >= 0 && LoadSlot(activeSlot).exists;
-        if (Button("CONTINUE", box, 130, !canContinue)) { RestoreSlot(activeSlot); Resume(); }
-        if (Button("SAVE SLOTS", box, 184)) Open(MenuScreen.Slots);
+        bool canContinue = !string.IsNullOrEmpty(activeSaveId) && LoadSave(activeSaveId).exists;
+        if (Button("CONTINUE", box, 130, !canContinue)) { RestoreSave(activeSaveId); Resume(); }
+        if (Button("SAVED GAMES", box, 184)) Open(MenuScreen.Saves);
         if (Button("SETTINGS", box, 238)) { returnScreen = MenuScreen.Title; Open(MenuScreen.Settings); }
         if (Button("QUIT GAME", box, 292)) { returnScreen = MenuScreen.Title; Open(MenuScreen.ConfirmQuit); }
-        Label(canContinue ? $"ACTIVE SLOT {activeSlot + 1}" : "CHOOSE A SAVE SLOT TO BEGIN",
+        Label(canContinue ? "ACTIVE SAVE READY" : "CREATE A SAVE TO BEGIN",
             new Rect(box.x, box.y + 335, box.width, 18), 11, new Color(.7f, .7f, .78f));
     }
 
-    void DrawSlots()
+    void DrawSaves()
     {
-        Rect box = Panel(520f, 425f);
-        Label("SAVE SLOTS", new Rect(box.x, box.y + 24, box.width, 32), 23, new Color(1f, .78f, .3f));
-        for (int i = 0; i < SlotCount; i++)
+        List<SaveData> saves = ListSaves();
+        float height = Mathf.Min(520f, Screen.height - 30f);
+        Rect box = Panel(560f, height);
+        Label("SAVED GAMES", new Rect(box.x, box.y + 18, box.width, 32), 23, new Color(1f, .78f, .3f));
+        Rect viewport = new Rect(box.x + 20, box.y + 58, box.width - 40, height - 128);
+        float contentHeight = Mathf.Max(viewport.height, saves.Count * 58f);
+        savesScroll = GUI.BeginScrollView(viewport, savesScroll,
+            new Rect(0f, 0f, viewport.width - 18f, contentHeight));
+        for (int i = 0; i < saves.Count; i++)
         {
-            SaveData data = LoadSlot(i);
-            float y = box.y + 72 + i * 88;
-            string details = data.exists
-                ? $"{data.savedAt}   GOLD {data.gold}   RUNS {data.completedRuns}"
-                : "EMPTY SLOT — START A NEW GAME";
-            if (GUI.Button(new Rect(box.x + 24, y, 350, 55), $"SLOT {i + 1}\n{details}"))
+            SaveData data = saves[i];
+            float y = i * 58f;
+            string details = $"{data.displayName}   {data.savedAt}   GOLD {data.gold}   RUNS {data.completedRuns}";
+            if (GUI.Button(new Rect(0, y, viewport.width - 140, 48), details))
             {
-                if (data.exists)
-                {
-                    SaveActiveSlot();
-                    RestoreSlot(i);
-                    Resume();
-                }
-                else ConfirmSlotAction(i, SlotAction.NewGame);
+                SaveActiveGame();
+                RestoreSave(data.saveId);
+                Resume();
             }
-            if (GUI.Button(new Rect(box.x + 388, y, 105, 55), data.exists ? "DELETE" : "NEW"))
-            {
-                ConfirmSlotAction(i, data.exists ? SlotAction.Delete : SlotAction.NewGame);
-            }
+            if (GUI.Button(new Rect(viewport.width - 128, y, 105, 48), "DELETE")) ConfirmSaveAction(data.saveId, SaveAction.Delete);
         }
-        if (GUI.Button(new Rect(box.x + 24, box.y + 352, 220, 42), "BACK")) Open(MenuScreen.Title);
-        Label("Selecting an existing slot loads it. Saves are captured automatically when pausing or leaving the game.",
-            new Rect(box.x + 24, box.y + 398, box.width - 48, 18), 10, new Color(.72f, .72f, .8f));
+        GUI.EndScrollView();
+        float buttonY = box.yMax - 56;
+        if (GUI.Button(new Rect(box.x + 24, buttonY, 220, 42), "NEW SAVE")) ConfirmSaveAction(Guid.NewGuid().ToString("N"), SaveAction.NewGame);
+        if (GUI.Button(new Rect(box.x + 270, buttonY, 160, 42), "BACK")) Open(MenuScreen.Title);
+        Label("Saves are stored independently. You can create as many as your disk can hold.",
+            new Rect(box.x + 24, box.yMax - 28, box.width - 48, 18), 10, new Color(.72f, .72f, .8f));
     }
 
     void DrawPause()
@@ -205,7 +227,7 @@ public sealed class GameSessionFlow : MonoBehaviour
         Rect box = Panel(330f, 306f);
         Label("PAUSED", new Rect(box.x, box.y + 28, box.width, 36), 26, new Color(1f, .78f, .3f));
         if (Button("RESUME", box, 88)) Resume();
-        if (Button("SAVE & TITLE", box, 142)) { SaveActiveSlot(); Open(MenuScreen.Title); }
+        if (Button("SAVE & TITLE", box, 142)) { SaveActiveGame(); Open(MenuScreen.Title); }
         if (Button("SETTINGS", box, 196)) { returnScreen = MenuScreen.Pause; Open(MenuScreen.Settings); }
         if (Button("QUIT GAME", box, 250)) { returnScreen = MenuScreen.Pause; Open(MenuScreen.ConfirmQuit); }
     }
@@ -237,48 +259,48 @@ public sealed class GameSessionFlow : MonoBehaviour
     {
         Rect box = Panel(390f, 210f);
         Label("LEAVE THE GAME?", new Rect(box.x, box.y + 30, box.width, 34), 22, new Color(1f, .68f, .4f));
-        Label("Your active save slot will be saved.", new Rect(box.x, box.y + 82, box.width, 24), 12, Color.white);
+        Label("Your active save will be saved.", new Rect(box.x, box.y + 82, box.width, 24), 12, Color.white);
         if (GUI.Button(new Rect(box.x + 28, box.y + 140, 150, 40), "CANCEL")) Open(returnScreen);
         if (GUI.Button(new Rect(box.x + 212, box.y + 140, 150, 40), "QUIT")) Quit();
     }
 
-    void ConfirmSlotAction(int slot, SlotAction action)
+    void ConfirmSaveAction(string saveId, SaveAction action)
     {
-        pendingSlot = slot;
-        pendingSlotAction = action;
-        returnScreen = MenuScreen.Slots;
-        Open(MenuScreen.ConfirmSlotAction);
+        pendingSaveId = saveId;
+        pendingSaveAction = action;
+        returnScreen = MenuScreen.Saves;
+        Open(MenuScreen.ConfirmSaveAction);
     }
 
-    void DrawConfirmSlotAction()
+    void DrawConfirmSaveAction()
     {
-        bool isNewGame = pendingSlotAction == SlotAction.NewGame;
+        bool isNewGame = pendingSaveAction == SaveAction.NewGame;
         Rect box = Panel(420f, 235f);
         Label(isNewGame ? "START A NEW GAME?" : "DELETE THIS SAVE?",
             new Rect(box.x, box.y + 28, box.width, 34), 21, new Color(1f, .68f, .4f));
         string message = isNewGame
-            ? $"Slot {pendingSlot + 1} will begin at day one. Your current active slot will be saved first."
-            : $"Slot {pendingSlot + 1} will be permanently removed.";
+            ? "This will begin a new game. Your current active save will be saved first."
+            : "This save will be permanently removed.";
         Label(message, new Rect(box.x + 28, box.y + 78, box.width - 56, 46), 12, Color.white);
         if (GUI.Button(new Rect(box.x + 30, box.y + 166, 160, 40), "CANCEL"))
         {
-            pendingSlotAction = SlotAction.None;
-            Open(MenuScreen.Slots);
+            pendingSaveAction = SaveAction.None;
+            Open(MenuScreen.Saves);
         }
         if (GUI.Button(new Rect(box.x + 230, box.y + 166, 160, 40), isNewGame ? "START NEW" : "DELETE"))
         {
-            if (pendingSlotAction == SlotAction.NewGame)
+            if (pendingSaveAction == SaveAction.NewGame)
             {
-                SaveActiveSlot();
-                StartNewGame(pendingSlot);
+                SaveActiveGame();
+                StartNewGame(pendingSaveId);
                 Resume();
             }
-            else if (pendingSlotAction == SlotAction.Delete)
+            else if (pendingSaveAction == SaveAction.Delete)
             {
-                DeleteSlot(pendingSlot);
-                Open(MenuScreen.Slots);
+                DeleteSave(pendingSaveId);
+                Open(MenuScreen.Saves);
             }
-            pendingSlotAction = SlotAction.None;
+            pendingSaveAction = SaveAction.None;
         }
     }
 
@@ -298,19 +320,22 @@ public sealed class GameSessionFlow : MonoBehaviour
         GUI.Label(rect, value, style);
     }
 
-    void StartNewGame(int slot)
+    void StartNewGame(string saveId)
     {
         ClearGameState();
-        activeSlot = slot;
-        PlayerPrefs.SetInt(ActiveSlotKey, slot);
+        GameState.Replace(GameState.FromLegacyPrefs());
+        activeSaveId = saveId;
+        ChoppableTree.StartNewSave();
+        ItemInventory.EnsureStarterTools();
+        PlayerPrefs.SetString(ActiveSaveKey, activeSaveId);
         PlayerPrefs.Save();
         SceneManager.LoadScene(GameSceneCatalog.Name(GameScene.TownHub));
-        SaveActiveSlot();
+        SaveActiveGame();
     }
 
     void Quit()
     {
-        SaveActiveSlot();
+        SaveActiveGame();
 #if UNITY_EDITOR
         Debug.Log("QUIT GAME requested. Application.Quit is ignored in the Unity Editor.");
 #else
@@ -318,47 +343,72 @@ public sealed class GameSessionFlow : MonoBehaviour
 #endif
     }
 
-    void SaveActiveSlot()
+    void SaveActiveGame()
     {
-        if (activeSlot < 0 || activeSlot >= SlotCount) return;
+        if (string.IsNullOrEmpty(activeSaveId)) return;
+        GameState.InstallFromRuntime();
         ItemInventory.EnsureStarterAxe();
+        GameState.Active.gold = ItemInventory.GetTotal(InventoryItemId.Gold);
+        GameState.Active.playerItems = ItemInventory.ReadSlots(ItemInventory.Container.PlayerInventory);
+        GameState.Active.chestItems = ItemInventory.ReadSlots(ItemInventory.Container.HomeChest);
         var data = new SaveData
         {
             exists = true,
+            saveId = activeSaveId,
+            displayName = string.IsNullOrEmpty(activeSaveId) ? "SAVE" : $"SAVE {activeSaveId.Substring(0, 6).ToUpperInvariant()}",
             savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
             gold = ItemInventory.GetTotal(InventoryItemId.Gold),
-            health = PlayerPrefs.GetInt(ExpeditionPlayerHealth.HealthKey, ExpeditionPlayerHealth.DefaultMaxHealthUnits),
-            energy = PlayerPrefs.GetFloat(ExpeditionPlayerEnergy.EnergyKey, ExpeditionPlayerEnergy.DefaultStartingEnergy),
+            health = GameState.Active.health,
+            energy = GameState.Active.energy,
             energySaved = true,
             wood = ItemInventory.GetTotal(InventoryItemId.Wood),
             itemsSaved = true,
             playerItems = ItemInventory.ReadSlots(ItemInventory.Container.PlayerInventory),
             chestItems = ItemInventory.ReadSlots(ItemInventory.Container.HomeChest),
-            completedRuns = PlayerPrefs.GetInt(ExpeditionRunProgression.CompletedRunsKey, 0),
-            villageMinutes = ParseFloat(PlayerPrefs.GetString("Village.TotalMinutes", "480"), 480f),
-            injured = PlayerPrefs.GetInt(ExpeditionPlayerHealth.InjuryKey, 0),
-            meleeUpgrade = PlayerPrefs.GetInt(PlayerProgression.ReinforcedMeleeKey, 0),
-            infirmaryLevel = PlayerPrefs.GetInt(TownUpgradeBuilding.ProgressKey("infirmary"), 1),
-            lastSeed = PlayerPrefs.GetInt(ExpeditionSeedManager.LastSeedKey, 0),
-            expeditionRunIdentity = PlayerPrefs.GetString(ExpeditionRunIdentity.PlayerPrefsKey, ""),
+            completedRuns = GameState.Active.completedRuns,
+            villageMinutes = (float)GameState.Active.villageMinutes,
+            injured = GameState.Active.injured ? 1 : 0,
+            meleeUpgrade = GameState.Active.meleeUpgrade,
+            infirmaryLevel = GameState.Active.infirmaryLevel,
+            lastSeed = GameState.Active.lastSeed,
+            expeditionRunIdentity = GameState.Active.expeditionRunIdentity,
+            gameState = GameState.Active,
             playerGold = null,
             chestGold = null
         };
-        PlayerPrefs.SetString(SlotKey(activeSlot), JsonUtility.ToJson(data));
-        PlayerPrefs.Save();
+        try { WriteSave(data); }
+        catch (Exception exception) { Debug.LogError($"Could not save game {activeSaveId}: {exception.Message}"); }
     }
 
-    void RestoreSlot(int slot)
+    void RestoreSave(string saveId)
     {
-        SaveData data = LoadSlot(slot);
+        SaveData data = LoadSave(saveId);
         if (!data.exists) return;
+        GameState restoredState = data.gameState ?? new GameState
+        {
+            health = data.health,
+            energy = data.energySaved ? data.energy : ExpeditionPlayerEnergy.DefaultStartingEnergy,
+            injured = data.injured != 0,
+            completedRuns = data.completedRuns,
+            meleeUpgrade = data.meleeUpgrade,
+            infirmaryLevel = data.infirmaryLevel,
+            lastSeed = data.lastSeed,
+            villageMinutes = data.villageMinutes,
+            expeditionRunIdentity = data.expeditionRunIdentity ?? ""
+        };
+        ExpeditionRunProgression.RecoverCompletedTutorial(restoredState);
         ClearGameState();
+        GameState.Replace(restoredState);
+        GameState.Active.gold = data.gold;
+        GameState.Active.pendingSecuredGold = data.gameState != null ? data.gameState.pendingSecuredGold : 0;
+        GameState.Active.playerItems = data.itemsSaved ? data.playerItems : GameState.Active.playerItems;
+        GameState.Active.chestItems = data.itemsSaved ? data.chestItems : GameState.Active.chestItems;
+        GameState.Active.ApplyRuntimeState();
         PlayerPrefs.SetInt(TownHubController.GoldKey, data.gold);
-        PlayerPrefs.SetInt(ExpeditionPlayerHealth.HealthKey, data.health);
+        PlayerPrefs.SetInt(ExpeditionPlayerHealth.HealthKey, GameState.Active.health);
         // Older save-slot JSON predates energy. Treat those saves as fully
         // rested rather than restoring JsonUtility's missing-field default of 0.
-        PlayerPrefs.SetFloat(ExpeditionPlayerEnergy.EnergyKey,
-            data.energySaved ? data.energy : ExpeditionPlayerEnergy.DefaultStartingEnergy);
+        PlayerPrefs.SetFloat(ExpeditionPlayerEnergy.EnergyKey, GameState.Active.energy);
         if (data.itemsSaved)
         {
             ItemInventory.WriteSlots(ItemInventory.Container.PlayerInventory, data.playerItems);
@@ -385,14 +435,8 @@ public sealed class GameSessionFlow : MonoBehaviour
         {
             ItemInventory.EnsureStarterAxe();
         }
-        PlayerPrefs.SetInt(ExpeditionPlayerHealth.InjuryKey, data.injured);
-        PlayerPrefs.SetInt(ExpeditionRunProgression.CompletedRunsKey, data.completedRuns);
-        PlayerPrefs.SetInt(PlayerProgression.ReinforcedMeleeKey, data.meleeUpgrade);
-        PlayerPrefs.SetInt(TownUpgradeBuilding.ProgressKey("infirmary"), data.infirmaryLevel);
-        PlayerPrefs.SetInt(ExpeditionSeedManager.LastSeedKey, data.lastSeed);
-        ExpeditionRunIdentity.RestoreSerialized(data.expeditionRunIdentity);
-        PlayerPrefs.SetString("Village.TotalMinutes", data.villageMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        VillageTime.Instance?.RestoreSavedTime(data.villageMinutes);
+        ExpeditionRunIdentity.RestoreSerialized(GameState.Active.expeditionRunIdentity);
+        VillageTime.Instance?.RestoreSavedTime(GameState.Active.villageMinutes);
         if (!data.itemsSaved)
         {
             RestoreLegacyStacks(ItemInventory.Container.PlayerInventory, InventoryItemId.Gold, data.playerGold);
@@ -401,26 +445,101 @@ public sealed class GameSessionFlow : MonoBehaviour
                 ItemInventory.AddItem(ItemInventory.Container.PlayerInventory,
                     InventoryItemId.Gold, data.gold);
         }
-        activeSlot = slot;
-        PlayerPrefs.SetInt(ActiveSlotKey, slot);
+        activeSaveId = saveId;
+        PlayerPrefs.SetString(ActiveSaveKey, saveId);
         PlayerPrefs.Save();
         SceneManager.LoadScene(GameSceneCatalog.Name(GameScene.TownHub));
     }
 
-    SaveData LoadSlot(int slot)
+    SaveData LoadSave(string saveId)
     {
-        string json = PlayerPrefs.GetString(SlotKey(slot), "");
-        return string.IsNullOrEmpty(json) ? default : JsonUtility.FromJson<SaveData>(json);
+        if (!IsSafeSaveId(saveId)) return default;
+        string path = SavePath(saveId);
+        if (!File.Exists(path)) return default;
+        try { return JsonUtility.FromJson<SaveData>(File.ReadAllText(path)); }
+        catch (Exception exception) { Debug.LogError($"Could not read save {saveId}: {exception.Message}"); return default; }
     }
 
-    void DeleteSlot(int slot)
+    void DeleteSave(string saveId)
     {
-        PlayerPrefs.DeleteKey(SlotKey(slot));
-        if (activeSlot == slot) { activeSlot = -1; PlayerPrefs.SetInt(ActiveSlotKey, -1); }
+        if (IsSafeSaveId(saveId))
+        {
+            string path = SavePath(saveId);
+            if (File.Exists(path)) File.Delete(path);
+        }
+        if (activeSaveId == saveId) { activeSaveId = ""; PlayerPrefs.DeleteKey(ActiveSaveKey); }
         PlayerPrefs.Save();
     }
 
-    static string SlotKey(int slot) => SlotKeyPrefix + slot;
+    List<SaveData> ListSaves()
+    {
+        var result = new List<SaveData>();
+        string directory = SaveDirectoryPath();
+        if (!Directory.Exists(directory)) return result;
+        foreach (string path in Directory.GetFiles(directory, SaveFilePrefix + "*" + SaveFileSuffix))
+        {
+            string id = Path.GetFileNameWithoutExtension(path).Substring(SaveFilePrefix.Length);
+            SaveData data = LoadSave(id);
+            if (data.exists) result.Add(data);
+        }
+        result.Sort((a, b) => string.CompareOrdinal(b.savedAt, a.savedAt));
+        return result;
+    }
+
+    static string SaveDirectoryPath() => Path.Combine(Application.persistentDataPath, SaveDirectoryName);
+    static string SavePath(string saveId) => Path.Combine(SaveDirectoryPath(), SaveFilePrefix + saveId + SaveFileSuffix);
+    static void WriteSave(SaveData data)
+    {
+        Directory.CreateDirectory(SaveDirectoryPath());
+        if (!IsSafeSaveId(data.saveId)) throw new InvalidOperationException("Invalid save identifier.");
+        string path = SavePath(data.saveId);
+        string temporaryPath = path + ".tmp";
+        File.WriteAllText(temporaryPath, JsonUtility.ToJson(data, true));
+        if (File.Exists(path)) File.Replace(temporaryPath, path, null);
+        else File.Move(temporaryPath, path);
+    }
+
+    void MigrateLegacySlotSaves()
+    {
+        // The previous build stored three JSON snapshots inside PlayerPrefs.
+        // Import them once, then leave the old keys untouched so this migration
+        // is recoverable if a player rolls back to an older build.
+        for (int oldSlot = 0; oldSlot < 3; oldSlot++)
+        {
+            string legacyJson = PlayerPrefs.GetString(LegacySlotKeyPrefix + oldSlot, "");
+            if (string.IsNullOrEmpty(legacyJson)) continue;
+            try
+            {
+                SaveData data = JsonUtility.FromJson<SaveData>(legacyJson);
+                if (!data.exists) continue;
+                string id = string.IsNullOrEmpty(data.saveId) ? $"migrated-slot-{oldSlot + 1}" : data.saveId;
+                data.saveId = id;
+                if (string.IsNullOrEmpty(data.displayName)) data.displayName = $"SAVE {oldSlot + 1}";
+                if (!IsSafeSaveId(id)) id = $"migrated-slot-{oldSlot + 1}";
+                data.saveId = id;
+                if (!File.Exists(SavePath(id))) WriteSave(data);
+                if (string.IsNullOrEmpty(activeSaveId) && oldSlot == PlayerPrefs.GetInt("Session.ActiveSlot", -1))
+                    activeSaveId = id;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError($"Could not migrate legacy save {oldSlot}: {exception.Message}");
+            }
+        }
+        if (!string.IsNullOrEmpty(activeSaveId))
+        {
+            PlayerPrefs.SetString(ActiveSaveKey, activeSaveId);
+            PlayerPrefs.Save();
+        }
+    }
+
+    static bool IsSafeSaveId(string saveId)
+    {
+        if (string.IsNullOrEmpty(saveId) || saveId.Length > 80) return false;
+        foreach (char character in saveId)
+            if (!(char.IsLetterOrDigit(character) || character == '-' || character == '_')) return false;
+        return true;
+    }
     static void RestoreLegacyStacks(ItemInventory.Container container, InventoryItemId item, int[] values)
     {
         if (values == null) return;
@@ -445,8 +564,6 @@ public sealed class GameSessionFlow : MonoBehaviour
             ItemInventory.SetStack(ItemInventory.Container.HomeChest, chestSlot, InventoryItemId.Axe, 1);
         ItemInventory.EnsureStarterAxe();
     }
-    static float ParseFloat(string value, float fallback)
-        => float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float result) ? result : fallback;
     static bool HasLegacyGameState()
         => PlayerPrefs.HasKey(TownHubController.GoldKey)
             || PlayerPrefs.HasKey(ExpeditionPlayerHealth.HealthKey)
@@ -456,6 +573,7 @@ public sealed class GameSessionFlow : MonoBehaviour
     {
         VillageTime.ResetSavedClock();
         ItemInventory.ResetSavedState();
+        CurrentExpeditionLoot.ResetSavedState();
         string[] keys = { TownHubController.GoldKey, TownHubController.PendingSecuredGoldKey, ExpeditionPlayerHealth.HealthKey,
             ExpeditionPlayerEnergy.EnergyKey,
             ExpeditionPlayerHealth.InjuryKey, PlayerProgression.ReinforcedMeleeKey, ExpeditionRunProgression.CompletedRunsKey,

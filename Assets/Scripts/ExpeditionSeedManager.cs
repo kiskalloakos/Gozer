@@ -12,7 +12,7 @@ public static class ExpeditionSeedManager
 
     static bool commandLineSeedConsumed;
 
-    public static int LastSeed => PlayerPrefs.GetInt(LastSeedKey, 0);
+    public static int LastSeed => GameState.Active != null ? GameState.Active.lastSeed : PlayerPrefs.GetInt(LastSeedKey, 0);
     public static bool HasPendingSeed => PlayerPrefs.GetInt(HasPendingSeedKey, 0) == 1;
 
     public static void QueueSeed(int seed)
@@ -73,7 +73,9 @@ public static class ExpeditionSeedManager
             source = ExpeditionSeedSource.NewRun;
         }
 
-        PlayerPrefs.SetInt(LastSeedKey, seed);
+        GameState.InstallFromRuntime();
+        GameState.Active.lastSeed = seed;
+        PlayerPrefs.SetInt(LastSeedKey, seed); // retained as a one-time compatibility mirror for older tools
         PlayerPrefs.Save();
         ExpeditionRunIdentity.Begin(seed, source, ExpeditionRunProgression.ThreatLevel, dailyDate);
         Debug.Log($"EXPEDITION_SEED={seed} ({source})");

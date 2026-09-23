@@ -68,7 +68,7 @@ The current local build now contains the first playable version of the town-to-e
 - Click the workbench inside the player home to purchase the one-time Reinforced Melee Weapon upgrade for 8 Gold.
 - Open the animated storage chest beside the Player Home workbench to view its pixel-art inventory panel over a dimmed, paused room; left-click to pick up or place a full Gold stack, right-click to take half or place one, and right-drag to distribute one Gold into each visited slot.
 - Permanently increase melee damage from 1 to 2 after purchasing the workbench upgrade, reducing the current enemy from three required hits to two.
-- Begin level-1 expeditions with 16 enemies and increase the initial population to 24 after reaching melee level 2; successful procedural runs add two enemies per threat increase.
+- Begin the fixed tutorial expedition with 16 enemies; after a successful extraction, seeded expeditions begin at a higher population and continue scaling with threat.
 - Receive clear workbench feedback when the upgrade is purchased, unaffordable, or already owned.
 - Click the infirmary for treatment when health is missing or the player is injured.
 - Spend 3 Gold at the infirmary to clear the injury and restore all five hearts.
@@ -80,8 +80,8 @@ The current local build now contains the first playable version of the town-to-e
 #### Expedition field
 
 - Travel through the town expedition gate into a larger nighttime field.
-- Enter the original fixed 64 x 48 test field while using the base melee weapon at melee level 1.
-- After purchasing the Reinforced Melee Weapon, generate a fresh 120 x 90 level-2 field every time the expedition scene is entered, including multiple expeditions during the same game launch.
+- Enter the original fixed 64 x 48 field for the first expedition, regardless of weapon level.
+- After successfully extracting from the tutorial, generate a fresh 120 x 90 field every time the expedition scene is entered, including multiple expeditions during the same game launch.
 - Randomize the level-2 player spawn, ground pattern, forest placement, enemy positions, and extraction location from a new runtime seed for each expedition.
 - Save and log every procedural expedition seed, show it during loading, and reproduce an exact layout from a requested seed through code or `-expedition-seed=<number>`.
 - Build a deterministic multi-segment route before placing scenery, reserve 1.65 world units of clearance around it, validate connectivity on a 0.5-unit flood-fill grid, and retry invalid candidates deterministically up to 20 times.
@@ -101,20 +101,20 @@ The current local build now contains the first playable version of the town-to-e
 - Read an enemy's alert, pursuit, attack windup, and recovery states through color, movement, and warning indicators.
 - Take half a heart of damage from a successful enemy attack.
 - Receive brief invulnerability and knockback after taking damage, preventing instant repeated hits.
-- Kill a baseline enemy with three normal melee hits or two reinforced-melee hits; enemy health gains one point after every four successful level-2 runs.
+- Kill a baseline enemy with three normal melee hits or two reinforced-melee hits; enemy health gains one point after every four successful runs.
 - Make a defeated enemy drop one glowing expedition-supply pickup.
 - Walk over dropped loot to add it to an unsecured Gold stack in the first available player-inventory slot.
 - Keep newly carried expedition Gold distinct from secured stacks; successful extraction secures it in the player inventory without moving or merging chest Gold, while defeat removes only the unsecured portion.
 - Find the physical extraction point hidden among the trees.
 - Begin a ten-second extraction countdown by entering the extraction zone.
 - Alert all surviving enemies when extraction begins, causing the activation to create danger.
-- Spawn one fresh off-camera reinforcement when extraction begins at melee level 1. Level 2 begins with two and adds another after every second successful procedural run, up to six additional reinforcements.
+- Spawn one fresh off-camera reinforcement during the tutorial. Seeded expeditions begin with two and add another after every second successful run, up to six additional reinforcements.
 - Spawn extraction reinforcements only once per expedition, even if extraction is cancelled and restarted.
 - Cancel extraction by leaving the zone.
 - Cancel extraction by attacking; after attacking, the player must leave and re-enter the zone to try again.
 - Successfully extract to secure all carried loot, convert it into Gold, and return to TownHub.
-- Increase the persistent threat level after every successful level-2 expedition. The first 24 successes each add a regular enemy, every second success adds an extraction reinforcement up to six additional reinforcements, enemies continuously become faster and more perceptive with diminishing growth, enemy health increases every four successes, and visibility continuously tightens toward its minimum radius.
-- Keep the current threat unchanged after defeat, so only successful procedural runs advance the difficulty.
+- Increase the persistent threat level after every successful expedition, including the tutorial. The first 24 successes each add a regular enemy, every second success adds an extraction reinforcement up to six additional reinforcements, enemies continuously become faster and more perceptive with diminishing growth, enemy health increases every four successes, and visibility continuously tightens toward its minimum radius.
+- Keep the current threat unchanged after defeat, so only successful runs advance the difficulty.
 - Show the procedural seed and current threat level during loading, then report the newly unlocked threat level after returning successfully to town.
 - Return to town with the exact amount of health remaining after a successful expedition.
 - See how much Gold was secured after returning to town.
@@ -161,7 +161,7 @@ The procedural level-2 expedition is now larger, deterministic, reproducible, co
 - ✅ Generate the `120 x 90` level-2 arena from a saved seed with exactly 294 regular trees.
 - ✅ Generate a deterministic safe player spawn and place extraction at least 56 world units from it.
 - ✅ Apply a large, soft-edged nighttime field of view throughout the loading reveal and gameplay without obscuring gameplay UI.
-- ✅ Persistently raise the next expedition's threat after each successful procedural run while leaving difficulty unchanged after defeat.
+- ✅ Persistently raise the next expedition's threat after each successful run while leaving difficulty unchanged after defeat.
 - ✅ Preserve a clear multi-segment route from player spawn to extraction before adding forest and grove scenery.
 - ✅ Reject unreachable candidates with a conservative four-direction flood-fill and regenerate deterministically when necessary.
 - ✅ Keep extraction, trees, and grove scenery inside arena boundaries while maintaining spawn and extraction clearances.
@@ -178,13 +178,13 @@ The playable progression loop remains:
 
 `Leave town → fight → collect supplies → extract → return → spend rewards → become permanently stronger → attempt a changed expedition`
 
-The Reinforced Melee Weapon remains the first permanent reward: it costs 8 Gold, raises melee damage from 1 to 2, begins level-2 expeditions at 24 enemies, unlocks the larger procedural field, and persists between sessions. Successful level-2 runs raise the threat for subsequent expeditions. The infirmary remains a recovery cost rather than permanent progression.
+The Reinforced Melee Weapon remains the first permanent reward: it costs 8 Gold, raises melee damage from 1 to 2, and persists between sessions. Completing the fixed tutorial unlocks the larger procedural field and raises the threat for the next expedition. The infirmary remains a recovery cost rather than permanent progression.
 
 ## Persistent threat progression
 
-Threat progression begins with the first procedural level-2 expedition. Let `r` be the number of successfully completed level-2 runs stored in the save. The expedition shown as **Threat 1** has `r = 0`; completing it records `r = 1`, and the next expedition loads as **Threat 2**. Level-1 runs and defeated runs do not increase this value.
+Let `r` be the number of successfully completed expeditions stored in the save. The fixed tutorial is **Threat 1** with `r = 0`; completing it records `r = 1`, and the next expedition is seeded **Threat 2**. Defeated runs do not increase this value.
 
-| System | Current rule for a level-2 expedition |
+| System | Current rule for a seeded expedition |
 | --- | --- |
 | Threat shown to the player | `r + 1` |
 | Regular enemies | `24 + 2 × min(r, 24)` |
@@ -197,7 +197,7 @@ Threat progression begins with the first procedural level-2 expedition. Let `r` 
 
 The continuous speed, detection, attack-timing, and visibility curves use diminishing growth. This makes every successful run harder while preventing those values from becoming immediately unplayable. Enemy-count caps protect runtime performance; health can continue increasing as future weapon upgrades are introduced.
 
-The completed-run count and pending town notification persist through `PlayerPrefs`. A successful extraction records the increase immediately before returning to TownHub. TownHub consumes the pending notification once and reports the next threat level alongside secured supplies. **RPG → Reset Town Progress Now** clears both threat keys along with the rest of the save progression.
+The completed-run count and pending town notification persist in the active save. A successful extraction records the increase immediately before returning to TownHub. TownHub consumes the pending notification once and reports the next threat level alongside secured supplies. **RPG → Reset Town Progress Now** clears both threat keys along with the rest of the save progression.
 
 ### Implementation map
 
@@ -206,7 +206,7 @@ The completed-run count and pending town notification persist through `PlayerPre
 - `ExpeditionFieldOfView` creates the uniform transparent center, soft fog edge, loading-time player tracking, and threat-scaled visibility radius.
 - `ExpeditionRunProgression` owns the two persistent save values, current threat, regular-enemy bonus, and extraction-reinforcement bonus.
 - `ExpeditionDifficultyDirector` applies run-based enemy counts and stats, installs level-2 visibility, and creates extraction reinforcements.
-- `ExtractionZone` advances threat only after a successful procedural extraction; `ExpeditionLoadingSequence` displays seed and threat; `TownHubController` consumes and displays the one-time next-threat notification.
+- `ExtractionZone` advances threat after a successful extraction; `ExpeditionLoadingSequence` displays seed and threat; `TownHubController` consumes and displays the one-time next-threat notification.
 - `ExpeditionGenerationStressTest` validates deterministic layouts and connectivity; `ExpeditionRunProgressionTest` validates persistent threat behavior while preserving the user's current save values.
 
 ## Generator validation evidence
@@ -234,7 +234,7 @@ The production preview now logs total construction time, layout time, the batche
 The editor command **RPG → Tests → Validate Run Progression** verifies the persistent escalation path without permanently changing the active save. It temporarily starts from zero completed procedural runs and checks that:
 
 - a new save begins at Threat 1 with no run-based enemy bonus;
-- the first successful procedural run persists, unlocks Threat 2, and adds one regular enemy to the next run;
+- the first successful tutorial run unlocks the seeded Threat 2 field and adds one regular enemy to the next run;
 - the pending town notification reports Threat 2 exactly once;
 - the second success adds a second regular enemy and the first additional extraction reinforcement; and
 - the previous completed-run and pending-notification values are restored after the test, including when an assertion fails.
@@ -490,7 +490,7 @@ Before accepting new art or a new gameplay scene, verify:
 - [x] **Enlarge the procedural combat space.** Level 2 now generates a `120 x 90` arena with 294 regular trees while level 1 remains the fixed `64 x 48` introductory field.
 - [x] **Seed the player spawn and extraction together.** Each procedural seed reproduces its safe player spawn, route, extraction point, forest, grove, and ground pattern; extraction remains at least 56 world units from spawn.
 - [x] **Add level-2 nighttime visibility.** A uniform 6.5-unit clear circle with a soft edge follows the player, appears during the loading reveal, leaves gameplay UI readable, and tightens gradually toward 4.75 units as threat rises.
-- [x] **Escalate successful procedural runs.** Every level-2 success persists the next threat level and increases later enemy pressure, perception, speed, attack timing, health, and visibility pressure; defeat leaves threat unchanged.
+- [x] **Escalate successful runs.** Every success persists the next threat level and increases later enemy pressure, perception, speed, attack timing, health, and visibility pressure; defeat leaves threat unchanged.
 - [x] **Communicate and reset threat.** Loading displays the current threat, TownHub reports the next threat after success, and the town-progress reset clears the escalation state.
 - [x] **Validate persistent progression safely.** The editor progression test verifies the first two threat increases and restores the existing save values afterward.
 - [x] **Implement one physical extraction point.** Entering it begins a dangerous ten-second countdown, alerts enemies, and spawns reinforcements.

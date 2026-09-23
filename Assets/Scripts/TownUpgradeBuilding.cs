@@ -28,7 +28,8 @@ public class TownUpgradeBuilding : TownInteractable
 
     void Awake()
     {
-        Level = Mathf.Clamp(PlayerPrefs.GetInt(LevelKey, 1), 1, maxLevel);
+        GameState.InstallFromRuntime();
+        Level = Mathf.Clamp(IsInfirmary ? GameState.Active.infirmaryLevel : PlayerPrefs.GetInt(LevelKey, 1), 1, maxLevel);
         RefreshVisuals();
     }
 
@@ -56,6 +57,7 @@ public class TownUpgradeBuilding : TownInteractable
         }
 
         Level++;
+        if (IsInfirmary) GameState.Active.infirmaryLevel = Level;
         PlayerPrefs.SetInt(LevelKey, Level);
         PlayerPrefs.Save();
         RefreshVisuals();

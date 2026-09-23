@@ -56,8 +56,7 @@ public class ExtractionZone : MonoBehaviour
             inventory.ShowStatus("MAKE ROOM FOR GOLD", 2.5f);
             return;
         }
-        if (PlayerProgression.MeleeLevel >= 2)
-            ExpeditionRunProgression.RecordSuccessfulProceduralRun();
+        ExpeditionRunProgression.RecordSuccessfulRun();
         ExpeditionRunResult.RecordSuccess(
             securedGold,
             FindAnyObjectByType<ExpeditionPlayerHealth>()?.CurrentHealth ?? 0);

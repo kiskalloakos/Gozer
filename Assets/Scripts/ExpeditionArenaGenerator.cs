@@ -22,6 +22,7 @@ public static class ExpeditionArenaGenerator
     static Random random;
 
     public static int CurrentSeed { get; private set; }
+    public static bool IsProceduralField { get; private set; }
     public static int CurrentLayoutAttempt { get; private set; }
     public static int CurrentHalfWidth => halfWidth;
     public static int CurrentHalfHeight => halfHeight;
@@ -34,19 +35,21 @@ public static class ExpeditionArenaGenerator
     {
         bool proceduralPreviewRequested = ExpeditionSeedManager.HasPendingSeed;
         if (scene.name != ExpeditionScene ||
-            (PlayerProgression.MeleeLevel < 2 && !proceduralPreviewRequested))
+            (!ExpeditionRunProgression.HasCompletedTutorial && !proceduralPreviewRequested))
         {
             halfWidth = BaseHalfWidth;
             halfHeight = BaseHalfHeight;
             CurrentSeed = 0;
+            IsProceduralField = false;
             CurrentLayoutAttempt = 0;
             if (scene.name == ExpeditionScene)
-                ExpeditionRunIdentity.Begin(0, ExpeditionSeedSource.FixedField, 0);
+                ExpeditionRunIdentity.Begin(0, ExpeditionSeedSource.FixedField, ExpeditionRunProgression.ThreatLevel);
             return;
         }
 
         halfWidth = LevelTwoHalfWidth;
         halfHeight = LevelTwoHalfHeight;
+        IsProceduralField = true;
         if (GameObject.Find(GenerationMarker)) return;
 
         var generationTimer = System.Diagnostics.Stopwatch.StartNew();

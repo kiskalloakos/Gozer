@@ -21,14 +21,8 @@ public class ExpeditionPlayerEnergy : MonoBehaviour
 
     void Awake()
     {
-        if (!PlayerPrefs.HasKey(EnergyKey))
-        {
-            PlayerPrefs.SetFloat(EnergyKey, MaxEnergy);
-            PlayerPrefs.Save();
-        }
-
-        CurrentEnergy = Mathf.Clamp(
-            PlayerPrefs.GetFloat(EnergyKey, DefaultStartingEnergy), 0f, MaxEnergy);
+        GameState.InstallFromRuntime();
+        CurrentEnergy = Mathf.Clamp(GameState.Active.energy, 0f, MaxEnergy);
     }
 
     void Update()
@@ -59,6 +53,6 @@ public class ExpeditionPlayerEnergy : MonoBehaviour
         float next = Mathf.Clamp(value, 0f, MaxEnergy);
         if (Mathf.Abs(next - CurrentEnergy) < .0001f) return;
         CurrentEnergy = next;
-        PlayerPrefs.SetFloat(EnergyKey, CurrentEnergy);
+        GameState.Active.energy = CurrentEnergy;
     }
 }

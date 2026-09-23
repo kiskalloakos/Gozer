@@ -31,10 +31,8 @@ public sealed class VillageTime : MonoBehaviour
         if (Instance && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        string saved = PlayerPrefs.GetString(MinutesKey, "480");
-        TotalMinutes = double.TryParse(saved, System.Globalization.NumberStyles.Float,
-            System.Globalization.CultureInfo.InvariantCulture, out double minutes)
-            && !double.IsNaN(minutes) && !double.IsInfinity(minutes) && minutes >= 0 ? minutes : MorningMinute;
+        GameState.InstallFromRuntime();
+        TotalMinutes = GameState.Active.villageMinutes;
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
@@ -62,6 +60,7 @@ public sealed class VillageTime : MonoBehaviour
     {
         if (IsSleeping || !IsVillage(SceneManager.GetActiveScene().name)) return;
         TotalMinutes += Time.deltaTime * 1440d / RealSecondsPerDay;
+        GameState.Active.villageMinutes = TotalMinutes;
         saveTimer += Time.unscaledDeltaTime;
         if (saveTimer >= 5f) { Save(); saveTimer = 0f; }
     }
@@ -109,6 +108,7 @@ public sealed class VillageTime : MonoBehaviour
     {
         double midnight = System.Math.Floor(TotalMinutes / 1440d) * 1440d;
         TotalMinutes = midnight + MorningMinute + (MinuteOfDay >= MorningMinute ? 1440d : 0d);
+        GameState.Active.villageMinutes = TotalMinutes;
         PlayerPrefs.DeleteKey(ExpeditionKey);
         Save();
     }
@@ -118,6 +118,7 @@ public sealed class VillageTime : MonoBehaviour
     {
         TotalMinutes = !double.IsNaN(totalMinutes) && !double.IsInfinity(totalMinutes)
             && totalMinutes >= 0d ? totalMinutes : MorningMinute;
+        GameState.Active.villageMinutes = TotalMinutes;
         saveTimer = 0f;
     }
 

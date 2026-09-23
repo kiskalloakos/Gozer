@@ -13,6 +13,7 @@ public static class SceneTravel
             if (destinationScene == GameScene.ExpeditionField && !VillageTime.Instance.CanEnterExpedition()) return;
             VillageTime.Instance.Save();
         }
+        GameSessionFlow.SaveActiveGameNow();
         pendingSpawn = spawnPoint;
         SceneManager.sceneLoaded -= ApplyPendingSpawn;
         SceneManager.sceneLoaded += ApplyPendingSpawn;

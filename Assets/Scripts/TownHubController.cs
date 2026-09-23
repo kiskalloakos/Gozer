@@ -30,23 +30,21 @@ public class TownHubController : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        // Town is the safe return point; unsecured loot can only exist during a run.
+        if (CurrentExpeditionLoot.HasAny) CurrentExpeditionLoot.Lose();
         ItemInventory.EnsureStarterAxe();
         RemoveRetiredBuildings();
         // Ignore the old serialized 18-gold prototype value for new games.
         startingGold = DefaultStartingGold;
-        if (!PlayerPrefs.HasKey(GoldKey))
-            PlayerPrefs.SetInt(GoldKey, startingGold);
+        GameState.InstallFromRuntime();
+        if (ItemInventory.GetTotal(InventoryItemId.Gold) == 0 && GameState.Active.gold == 0)
+            ItemInventory.AddItem(ItemInventory.Container.PlayerInventory, InventoryItemId.Gold, startingGold);
         Gold = ItemInventory.GetTotal(InventoryItemId.Gold);
-        IsInjured = PlayerPrefs.GetInt(ExpeditionPlayerHealth.InjuryKey, 0) == 1;
-        if (!PlayerPrefs.HasKey(ExpeditionPlayerHealth.HealthKey))
-            PlayerPrefs.SetInt(ExpeditionPlayerHealth.HealthKey,
-                IsInjured ? 0 : ExpeditionPlayerHealth.DefaultMaxHealthUnits);
-        HealthUnits = Mathf.Clamp(
-            PlayerPrefs.GetInt(ExpeditionPlayerHealth.HealthKey, ExpeditionPlayerHealth.DefaultMaxHealthUnits),
-            0, ExpeditionPlayerHealth.DefaultMaxHealthUnits);
-        int securedGold = PlayerPrefs.GetInt(PendingSecuredGoldKey, 0);
-        PlayerPrefs.DeleteKey(PendingSecuredGoldKey);
-        PlayerPrefs.Save();
+        GameState.Active.gold = Gold;
+        IsInjured = GameState.Active.injured;
+        HealthUnits = Mathf.Clamp(GameState.Active.health, 0, ExpeditionPlayerHealth.DefaultMaxHealthUnits);
+        int securedGold = GameState.Active.pendingSecuredGold;
+        GameState.Active.pendingSecuredGold = 0;
         if (ExpeditionRunResult.TryConsume(out var result))
         {
             showingRunResult = true;
@@ -93,11 +91,11 @@ public class TownHubController : MonoBehaviour
     public static void AddSecuredGold(int amount)
     {
         if (amount <= 0) return;
+        GameState.InstallFromRuntime();
         ItemInventory.AddItem(ItemInventory.Container.PlayerInventory, InventoryItemId.Gold, amount,
             preferNewSlot: true);
-        PlayerPrefs.SetInt(PendingSecuredGoldKey,
-            PlayerPrefs.GetInt(PendingSecuredGoldKey, 0) + amount);
-        PlayerPrefs.Save();
+        GameState.Active.pendingSecuredGold += amount;
+        GameState.Active.gold = ItemInventory.GetTotal(InventoryItemId.Gold);
         if (Instance) Instance.Gold = GetGoldBalance();
     }
 
@@ -117,9 +115,8 @@ public class TownHubController : MonoBehaviour
 
         HealthUnits = ExpeditionPlayerHealth.DefaultMaxHealthUnits;
         IsInjured = false;
-        PlayerPrefs.SetInt(ExpeditionPlayerHealth.HealthKey, HealthUnits);
-        PlayerPrefs.SetInt(ExpeditionPlayerHealth.InjuryKey, 0);
-        PlayerPrefs.Save();
+        GameState.Active.health = HealthUnits;
+        GameState.Active.injured = false;
         ShowNotice($"Treatment complete — health restored to {ExpeditionPlayerHealth.DefaultMaxHearts} hearts.", 4.5f);
     }
 

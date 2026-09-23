@@ -67,7 +67,7 @@ public sealed class WorkbenchCraftingUI : MonoBehaviour
     void Close()
     {
         if (!panelOpen || crafting) return;
-        itemCursor.ReturnHeld(GetHUD());
+        itemCursor.ReturnHeld();
         rightDragging = false;
         rightDragVisited.Clear();
         panelOpen = false;
@@ -221,7 +221,7 @@ public sealed class WorkbenchCraftingUI : MonoBehaviour
             }
             else if (overPlayerSlot && currentEvent.button == 0)
             {
-                itemCursor.LeftClick(ItemInventory.Container.PlayerInventory, playerSlot, GetHUD());
+                itemCursor.LeftClick(ItemInventory.Container.PlayerInventory, playerSlot);
                 currentEvent.Use();
             }
             else if (overPlayerSlot && currentEvent.button == 1)
@@ -229,7 +229,7 @@ public sealed class WorkbenchCraftingUI : MonoBehaviour
                 rightDragVisited.Clear();
                 rightDragVisited.Add(playerSlot);
                 rightDragging = true;
-                itemCursor.RightClick(ItemInventory.Container.PlayerInventory, playerSlot, GetHUD());
+                itemCursor.RightClick(ItemInventory.Container.PlayerInventory, playerSlot);
                 currentEvent.Use();
             }
             else if ((playerPanel.Contains(currentEvent.mousePosition)
@@ -246,7 +246,7 @@ public sealed class WorkbenchCraftingUI : MonoBehaviour
         else if (currentEvent.type == EventType.MouseDrag && currentEvent.button == 1 && rightDragging)
         {
             if (overPlayerSlot && rightDragVisited.Add(playerSlot) && itemCursor.IsHolding)
-                itemCursor.RightClick(ItemInventory.Container.PlayerInventory, playerSlot, GetHUD());
+                itemCursor.RightClick(ItemInventory.Container.PlayerInventory, playerSlot);
             currentEvent.Use();
         }
         else if (currentEvent.type == EventType.MouseUp && currentEvent.button == 1 && rightDragging)
@@ -335,7 +335,7 @@ public sealed class WorkbenchCraftingUI : MonoBehaviour
     void OnDisable()
     {
         StopAllCoroutines();
-        itemCursor.ReturnHeld(GetHUD());
+        itemCursor.ReturnHeld();
         rightDragging = false;
         rightDragVisited.Clear();
         panelOpen = false;

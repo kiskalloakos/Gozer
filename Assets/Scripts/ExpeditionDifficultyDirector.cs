@@ -35,9 +35,9 @@ public static class ExpeditionDifficultyDirector
             ExpeditionArenaGenerator.CurrentHalfHeight,
             ExpeditionArenaGenerator.CurrentSeed);
 
-        bool isLevelTwo = PlayerProgression.MeleeLevel >= 2;
-        int completedRuns = isLevelTwo ? ExpeditionRunProgression.CompletedRuns : 0;
-        if (isLevelTwo)
+        bool isProcedural = ExpeditionArenaGenerator.IsProceduralField;
+        int completedRuns = isProcedural ? ExpeditionRunProgression.CompletedRuns : 0;
+        if (isProcedural)
             ExpeditionFieldOfView.Install(
                 loadingPlayer ? loadingPlayer.transform : null,
                 completedRuns,
@@ -52,11 +52,13 @@ public static class ExpeditionDifficultyDirector
         var player = Object.FindAnyObjectByType<ExpeditionPlayerHealth>();
         var extraction = Object.FindAnyObjectByType<ExtractionZone>();
 
-        int levelTwoAdditionalEnemies = isLevelTwo
+        int levelTwoAdditionalEnemies = isProcedural
             ? LevelTwoExtraEnemies + ExpeditionRunProgression.RegularEnemyBonus
             : 0;
-        int extraEnemyCount = enemies.Length * (RegularEnemyPopulationMultiplier - 1)
-            + levelTwoAdditionalEnemies * RegularEnemyPopulationMultiplier;
+        int extraEnemyCount = isProcedural
+            ? enemies.Length * (RegularEnemyPopulationMultiplier - 1)
+                + levelTwoAdditionalEnemies * RegularEnemyPopulationMultiplier
+            : 0;
         for (int i = 0; i < extraEnemyCount; i++)
         {
             Vector2 position = ExpeditionArenaGenerator.FindOpenPosition(player ? player.transform : null,
@@ -72,7 +74,7 @@ public static class ExpeditionDifficultyDirector
         foreach (var enemy in Object.FindObjectsByType<WildernessEnemy>())
         {
             enemy.ApplyThreatHealth(ExpeditionRunProgression.CompletedRuns);
-            if (isLevelTwo)
+            if (isProcedural)
                 enemy.ApplyRunDifficulty(completedRuns);
         }
     }
@@ -86,7 +88,7 @@ public static class ExpeditionDifficultyDirector
         var enemies = Object.FindObjectsByType<WildernessEnemy>();
         if (enemies.Length == 0) return;
 
-        int count = PlayerProgression.MeleeLevel >= 2
+        int count = ExpeditionArenaGenerator.IsProceduralField
             ? 2 + ExpeditionRunProgression.ExtractionReinforcementBonus
             : 1;
         var template = enemies[0];

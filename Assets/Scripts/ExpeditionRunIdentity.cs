@@ -49,6 +49,7 @@ public struct ExpeditionRunIdentity
         };
         HasCurrent = true;
         Persist();
+        if (GameState.Active != null) GameState.Active.expeditionRunIdentity = JsonUtility.ToJson(Current);
         Debug.Log($"EXPEDITION_RUN seed={seed} source={Current.source} generator={Current.generatorVersion} "
             + $"threat={Current.threatLevel} daily={Current.dailyDate}");
     }
@@ -62,6 +63,7 @@ public struct ExpeditionRunIdentity
         identity.threatLevel = Mathf.Max(0, threatLevel);
         Current = identity;
         Persist();
+        if (GameState.Active != null) GameState.Active.expeditionRunIdentity = JsonUtility.ToJson(Current);
         Debug.Log($"EXPEDITION_LAYOUT seed={Current.requestedSeed} layoutSeed={layoutSeed} "
             + $"attempt={layoutAttempt} generator={Current.generatorVersion}");
     }
@@ -75,6 +77,7 @@ public struct ExpeditionRunIdentity
             HasCurrent = Current.schemaVersion > 0;
             if (HasCurrent) Persist();
             else Clear();
+            if (GameState.Active != null) GameState.Active.expeditionRunIdentity = HasCurrent ? JsonUtility.ToJson(Current) : "";
         }
         catch (Exception exception)
         {
@@ -88,6 +91,7 @@ public struct ExpeditionRunIdentity
         HasCurrent = false;
         Current = default;
         PlayerPrefs.DeleteKey(PlayerPrefsKey);
+        if (GameState.Active != null) GameState.Active.expeditionRunIdentity = "";
     }
 
     static void Persist()

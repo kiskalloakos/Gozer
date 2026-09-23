@@ -33,6 +33,16 @@ public struct ItemStack
 /// </summary>
 public static class ItemInventory
 {
+    static readonly InventoryItemId[] ToolIds =
+    {
+        InventoryItemId.Axe,
+        InventoryItemId.Pickaxe,
+        InventoryItemId.Sword,
+        InventoryItemId.Shovel
+    };
+
+    public static IReadOnlyList<InventoryItemId> ToolItemIds => ToolIds;
+
     public enum Container
     {
         PlayerInventory = 0,
@@ -87,6 +97,21 @@ public static class ItemInventory
             slots[slot] = values != null && slot < values.Length
                 ? Normalize(values[slot]) : new ItemStack();
         SaveAll();
+    }
+
+    public static void WriteBothSlots(ItemStack[] player, ItemStack[] chest)
+    {
+        EnsureLoaded();
+        CopySlots(playerSlots, player);
+        CopySlots(chestSlots, chest);
+        SaveAll();
+    }
+
+    static void CopySlots(List<ItemStack> destination, ItemStack[] values)
+    {
+        for (int slot = 0; slot < destination.Count; slot++)
+            destination[slot] = values != null && slot < values.Length
+                ? Normalize(values[slot]) : new ItemStack();
     }
 
     public static InventoryItemId GetItem(Container container, int slot)
@@ -197,10 +222,7 @@ public static class ItemInventory
         => GetTotal(Container.PlayerInventory, item) + GetTotal(Container.HomeChest, item);
 
     public static bool IsTool(InventoryItemId item)
-        => item == InventoryItemId.Axe
-            || item == InventoryItemId.Pickaxe
-            || item == InventoryItemId.Sword
-            || item == InventoryItemId.Shovel;
+        => Array.IndexOf(ToolIds, item) >= 0;
 
     public static string GetDisplayName(InventoryItemId item)
         => item == InventoryItemId.Axe ? "WOODEN AXE"
@@ -240,6 +262,22 @@ public static class ItemInventory
         if (FindItemSlot(Container.PlayerInventory, InventoryItemId.Axe) >= 0
             || FindItemSlot(Container.HomeChest, InventoryItemId.Axe) >= 0) return;
         AddItem(Container.HomeChest, InventoryItemId.Axe, 1);
+    }
+
+    public static void EnsureStarterTools()
+    {
+        EnsureLoaded();
+        EnsureStarterAxe();
+        EnsureStarterTool(InventoryItemId.Pickaxe);
+        EnsureStarterTool(InventoryItemId.Sword);
+        EnsureStarterTool(InventoryItemId.Shovel);
+    }
+
+    static void EnsureStarterTool(InventoryItemId item)
+    {
+        if (FindItemSlot(Container.PlayerInventory, item) >= 0
+            || FindItemSlot(Container.HomeChest, item) >= 0) return;
+        AddItem(Container.HomeChest, item, 1);
     }
 
     public static void ResetSavedState()
@@ -375,6 +413,12 @@ public static class ItemInventory
         PlayerPrefs.SetInt(VersionKey, CurrentVersion);
         PlayerPrefs.SetInt("Town.Supplies", GetTotal(InventoryItemId.Gold));
         PlayerPrefs.SetInt("Resource.Wood", GetTotal(InventoryItemId.Wood));
+        if (GameState.Active != null)
+        {
+            GameState.Active.gold = GetTotal(InventoryItemId.Gold);
+            GameState.Active.playerItems = playerSlots.ToArray();
+            GameState.Active.chestItems = chestSlots.ToArray();
+        }
         PlayerPrefs.Save();
     }
 

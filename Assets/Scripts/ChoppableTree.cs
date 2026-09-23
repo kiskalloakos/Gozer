@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 public sealed class ChoppableTree : MonoBehaviour
 {
     const string RegrowDayPrefix = "Tree.RegrowDay.";
+    const string RegrowGenerationPrefix = "Tree.RegrowGeneration.";
     const string TownScene = "TownHub";
     const string LogTexturePath = "UI/cut out tree";
 
@@ -66,6 +67,16 @@ public sealed class ChoppableTree : MonoBehaviour
             PlayerPrefs.Save();
         }
         return true;
+    }
+
+    public static void StartNewSave()
+    {
+        string saveId = GameSessionFlow.ActiveSaveId;
+        if (string.IsNullOrEmpty(saveId)) return;
+
+        string key = GenerationKey(saveId);
+        PlayerPrefs.SetInt(key, PlayerPrefs.GetInt(key, 0) + 1);
+        PlayerPrefs.Save();
     }
 
     /// <summary>Resets a pooled expedition tree when the generated forest reuses it.</summary>
@@ -134,9 +145,19 @@ public sealed class ChoppableTree : MonoBehaviour
         => SceneManager.GetActiveScene().name == TownScene;
 
     string RegrowthKey()
-        => $"{RegrowDayPrefix}{SceneManager.GetActiveScene().name}.{name}."
+        => $"{RegrowDayPrefix}{GameSessionFlow.ActiveSaveId}.{SavedGeneration()}."
+            + $"{SceneManager.GetActiveScene().name}.{name}."
             + $"{Mathf.RoundToInt(transform.position.x * 100f)}."
             + Mathf.RoundToInt(transform.position.y * 100f);
+
+    string GenerationKey()
+        => GenerationKey(GameSessionFlow.ActiveSaveId);
+
+    static string GenerationKey(string saveId)
+        => $"{RegrowGenerationPrefix}{saveId}";
+
+    int SavedGeneration()
+        => PlayerPrefs.GetInt(GenerationKey(), 0);
 
     int SavedRegrowDay()
         => PlayerPrefs.GetInt(RegrowthKey(), 0);

@@ -29,13 +29,8 @@ public class ExpeditionPlayerHealth : MonoBehaviour
 
     void Awake()
     {
-        if (!PlayerPrefs.HasKey(HealthKey))
-        {
-            bool previouslyInjured = PlayerPrefs.GetInt(InjuryKey, 0) == 1;
-            PlayerPrefs.SetInt(HealthKey, previouslyInjured ? 0 : MaxHealthUnits);
-            PlayerPrefs.Save();
-        }
-        CurrentHealth = Mathf.Clamp(PlayerPrefs.GetInt(HealthKey, MaxHealthUnits), 0, MaxHealthUnits);
+        GameState.InstallFromRuntime();
+        CurrentHealth = Mathf.Clamp(GameState.Active.health, 0, MaxHealthUnits);
         visual = GetComponentInChildren<SpriteRenderer>();
         movement = GetComponent<TownPlayerController>();
         combat = GetComponent<ExpeditionPlayerCombat>();
@@ -53,8 +48,7 @@ public class ExpeditionPlayerHealth : MonoBehaviour
         if (amount <= 0 || IsInvulnerable || IsDefeated) return;
 
         CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
-        PlayerPrefs.SetInt(HealthKey, CurrentHealth);
-        PlayerPrefs.Save();
+        GameState.Active.health = CurrentHealth;
         invulnerableUntil = Time.time + invulnerabilitySeconds;
         ApplyKnockback(attackerPosition);
 
@@ -74,7 +68,7 @@ public class ExpeditionPlayerHealth : MonoBehaviour
     {
         IsDefeated = true;
         ItemStack[] carriedItems = ItemInventory.ReadSlots(ItemInventory.Container.PlayerInventory);
-        int lostGold = inventory ? inventory.CarriedLoot : 0;
+        int lostGold = CurrentExpeditionLoot.Total;
         int lostItemCount = 0;
         foreach (ItemStack stack in carriedItems)
         {
@@ -86,14 +80,13 @@ public class ExpeditionPlayerHealth : MonoBehaviour
         // lost on death. Home-chest storage stays safe in town.
         ItemInventory.WriteSlots(ItemInventory.Container.PlayerInventory, null);
         ExpeditionRunResult.RecordDefeat(lostGold, CurrentHealth, lostItemCount);
-        if (inventory) inventory.LoseLoot();
+        CurrentExpeditionLoot.Lose();
         if (movement) movement.enabled = false;
         if (combat) combat.enabled = false;
         if (visual) visual.enabled = true;
 
-        PlayerPrefs.SetInt(InjuryKey, 1);
-        PlayerPrefs.SetInt(HealthKey, 0);
-        PlayerPrefs.Save();
+        GameState.Active.injured = true;
+        GameState.Active.health = 0;
         yield return new WaitForSeconds(1.1f);
         SceneTravel.Load(GameScene.TownHub, SceneSpawnPoint.TownExpeditionGate);
     }

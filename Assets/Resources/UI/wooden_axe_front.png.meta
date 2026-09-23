@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 37083c58f672c4fdeb0916a053e9c8ce
+guid: 3ebbd09ee3d4e46bc9e6a782c6d58d6d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8959118705387878318
-    second: pickaxe_0
+      213: -3637855833019967143
+    second: wooden_axe_front_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -75,7 +75,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: pickaxe_0
+      name: wooden_axe_front_0
       rect:
         serializedVersion: 2
-        x: 2
-        y: 2
-        width: 16
-        height: 16
+        x: 0
+        y: 0
+        width: 20
+        height: 22
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ea7b33fbefe255c70800000000000000
-      internalID: 8959118705387878318
+      spriteID: 95913c0e46db38dc0800000000000000
+      internalID: -3637855833019967143
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      pickaxe_0: 8959118705387878318
+      wooden_axe_front_0: -3637855833019967143
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
