@@ -551,6 +551,9 @@ Before accepting new art or a new gameplay scene, verify:
 ## VISUAL
 
 
+## EXPEDITION
+
+
 - [x] swoosh effect for melee attacks '/Users/kiskalloakos/Documents/Pixel Art Assets/Thrust'
 - [x] first enemy looks '/Users/kiskalloakos/Documents/Pixel Art Assets/Tiny RPG Character Asset Pack 02 -Free Demon_A&Blood Monster_A/Characters(100x100 split)/Demon_A/Demon_A'
 - [x] inventory (either one) is not centered
@@ -562,8 +565,15 @@ Before accepting new art or a new gameplay scene, verify:
 - [ ] meelee hand attack will be used for the sword attacks, cause it's "forward"
 - [ ] wooden tools: movement in all 4 directions
 - [ ] guns
+
+
+## TOWN
+
+
+- [ ] we could give it, gradually, a modern-civilization vibe with SOLAR PANELS UPGRADES, WINDMILLS, etc - it's like "I bring valuable resources IN the town, so that "one day we can escape" but that day never comes (?)
 - [ ] Add more town props and functional dressing after the active town layout is settled.
 - [ ] Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.
+
 
 
 ## AUDITORY
