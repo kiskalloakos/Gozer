@@ -507,10 +507,10 @@ Before accepting new art or a new gameplay scene, verify:
 - [x] **Preparation and loadouts.** Let the player choose weapons, consumables, tools, destination, and risk level before leaving town.
 - [x] **trees should also regrow with time**
 
-## TO-DO
+# TO-DO
 
 
-### TOWN
+## TOWN
 
 
 - [ ] **FARMING SYSTEM, CROPS**
@@ -522,7 +522,7 @@ Before accepting new art or a new gameplay scene, verify:
 
 
 
-# EXPEDITION
+## EXPEDITION
 
 
 - [ ] **Meaningfully different loot.** Add common, valuable, and contaminated resources plus items that create inventory and extraction decisions.
@@ -540,7 +540,7 @@ Before accepting new art or a new gameplay scene, verify:
 - [ ] Dash ? Sprint with fatigue?
 
 
-### GENERAL
+## GENERAL
 
 - [ ] Co-op implementation.
 
@@ -557,6 +557,9 @@ Before accepting new art or a new gameplay scene, verify:
 - [x] we need numbers 1-4 on the bot navbar, and also display those numbers in inventory, and be able to switch between those numbers with scroll-wheel and also numbers on keyboard
 - [x] attacking MEELEE animation for Player
 - [x] swords
+- [ ] simplify walking animations for main character
+- [ ] redo attack animations (both meelee and with tool in hand)
+- [ ] meelee hand attack will be used for the sword attacks, cause it's "forward"
 - [ ] wooden tools: movement in all 4 directions
 - [ ] guns
 - [ ] Add more town props and functional dressing after the active town layout is settled.
