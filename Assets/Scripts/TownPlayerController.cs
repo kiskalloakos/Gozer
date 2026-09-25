@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -41,7 +42,7 @@ public class TownPlayerController : MonoBehaviour
             CurrentAnimationFrameIndex = walking
                 ? Mathf.Clamp(frameIndex, 0, frames.Length - 1)
                 : Mathf.Min(IdleFrameIndex(CurrentFacing), frames.Length - 1);
-            visual.sprite = frames[SourceWalkFrameIndex(CurrentFacing, CurrentAnimationFrameIndex, frames.Length)];
+            visual.sprite = frames[CurrentAnimationFrameIndex];
         }
         visual.flipX = false;
         visual.sortingOrder = Mathf.RoundToInt(-transform.position.y * 100f);
@@ -66,10 +67,12 @@ public class TownPlayerController : MonoBehaviour
     private float animationClock;
     private bool wasMoving;
     private Sprite[][] meleeAttackFrames;
+    private bool ownsMeleeAttackFrames;
     private FacingDirection meleeAttackDirection;
     private int meleeAttackFrame;
     private float nextMeleeAttackFrameTime;
     private bool playingMeleeAttack;
+    private Action<int> meleeAttackFrameStarted;
 
     void Awake()
     {
@@ -84,6 +87,7 @@ public class TownPlayerController : MonoBehaviour
             meleeAttackSheet = Resources.Load<Texture2D>("Player/melee_attacks");
         if (meleeAttackSheet) meleeAttackSheet.filterMode = FilterMode.Point;
         meleeAttackFrames = CreateMeleeAttackFrames(meleeAttackSheet);
+        ownsMeleeAttackFrames = true;
     }
 
     void Update()
@@ -131,7 +135,7 @@ public class TownPlayerController : MonoBehaviour
                     else
                         animationClock += Time.deltaTime;
                     CurrentAnimationFrameIndex = Mathf.FloorToInt(animationClock * walkFramesPerSecond) % frames.Length;
-                    visual.sprite = frames[SourceWalkFrameIndex(CurrentFacing, CurrentAnimationFrameIndex, frames.Length)];
+                    visual.sprite = frames[CurrentAnimationFrameIndex];
                 }
                 wasMoving = true;
             }
@@ -143,7 +147,7 @@ public class TownPlayerController : MonoBehaviour
                 if (frames != null && frames.Length > 0)
                 {
                     CurrentAnimationFrameIndex = Mathf.Min(IdleFrameIndex(CurrentFacing), frames.Length - 1);
-                    visual.sprite = frames[SourceWalkFrameIndex(CurrentFacing, CurrentAnimationFrameIndex, frames.Length)];
+                    visual.sprite = frames[CurrentAnimationFrameIndex];
                 }
             }
             visual.flipX = false;
@@ -175,14 +179,37 @@ public class TownPlayerController : MonoBehaviour
 
     public void PlayMeleeAttack(Vector2 direction, Texture2D sheet, int frameWidth,
         int frameHeight, int frameCount, float framesPerSecond,
-        int[] downOrder, int[] rightOrder, int[] upOrder, int[] leftOrder)
+        int[] downOrder, int[] rightOrder, int[] upOrder, int[] leftOrder,
+        Action<int> onFrameStarted = null)
     {
         if (sheet)
         {
             DestroyMeleeAttackFrames();
             meleeAttackFrames = CreateMeleeAttackFrames(sheet, frameWidth, frameHeight, frameCount,
                 downOrder, rightOrder, upOrder, leftOrder);
+            ownsMeleeAttackFrames = true;
         }
+        BeginMeleeAttack(direction, framesPerSecond, onFrameStarted);
+    }
+
+    public void PlayMeleeAttack(Vector2 direction, Sprite[] downFrames, Sprite[] rightFrames,
+        Sprite[] upFrames, Sprite[] leftFrames, float framesPerSecond,
+        Action<int> onFrameStarted = null)
+    {
+        DestroyMeleeAttackFrames();
+        meleeAttackFrames = new[]
+        {
+            downFrames ?? System.Array.Empty<Sprite>(),
+            rightFrames ?? System.Array.Empty<Sprite>(),
+            upFrames ?? System.Array.Empty<Sprite>(),
+            leftFrames ?? System.Array.Empty<Sprite>()
+        };
+        ownsMeleeAttackFrames = false;
+        BeginMeleeAttack(direction, framesPerSecond, onFrameStarted);
+    }
+
+    void BeginMeleeAttack(Vector2 direction, float framesPerSecond, Action<int> onFrameStarted)
+    {
         if (meleeAttackFrames == null || meleeAttackFrames.Length == 0) return;
         meleeAttackFramesPerSecond = Mathf.Max(.01f, framesPerSecond);
         meleeAttackDirection = DirectionFromVector(direction);
@@ -194,10 +221,16 @@ public class TownPlayerController : MonoBehaviour
         // frame interval before AdvanceMeleeAttack moves on to frame 1.
         nextMeleeAttackFrameTime = Time.time + 1f / meleeAttackFramesPerSecond;
         playingMeleeAttack = true;
+        meleeAttackFrameStarted = onFrameStarted;
         if (visual && meleeAttackFrames[(int)meleeAttackDirection].Length > 0)
         {
             visual.sprite = meleeAttackFrames[(int)meleeAttackDirection][0];
             meleeAttackFrame = 1;
+            meleeAttackFrameStarted?.Invoke(0);
+        }
+        else
+        {
+            meleeAttackFrameStarted = null;
         }
     }
 
@@ -207,12 +240,14 @@ public class TownPlayerController : MonoBehaviour
         if (frames == null || frames.Length == 0)
         {
             playingMeleeAttack = false;
+            meleeAttackFrameStarted = null;
             return;
         }
         if (Time.time < nextMeleeAttackFrameTime) return;
         if (meleeAttackFrame >= frames.Length)
         {
             playingMeleeAttack = false;
+            meleeAttackFrameStarted = null;
             animationClock = 0f;
             wasMoving = false;
             return;
@@ -220,6 +255,7 @@ public class TownPlayerController : MonoBehaviour
         CurrentMeleeAttackFrameIndex = meleeAttackFrame;
         visual.sprite = frames[meleeAttackFrame++];
         nextMeleeAttackFrameTime = Time.time + 1f / meleeAttackFramesPerSecond;
+        meleeAttackFrameStarted?.Invoke(CurrentMeleeAttackFrameIndex);
     }
 
     static FacingDirection DirectionFromVector(Vector2 direction)
@@ -275,12 +311,15 @@ public class TownPlayerController : MonoBehaviour
 
     void DestroyMeleeAttackFrames()
     {
+        meleeAttackFrameStarted = null;
         if (meleeAttackFrames == null) return;
-        foreach (var direction in meleeAttackFrames)
-            if (direction != null)
-                foreach (var frame in direction)
-                    if (frame) Destroy(frame);
+        if (ownsMeleeAttackFrames)
+            foreach (var direction in meleeAttackFrames)
+                if (direction != null)
+                    foreach (var frame in direction)
+                        if (frame) Destroy(frame);
         meleeAttackFrames = null;
+        ownsMeleeAttackFrames = false;
     }
 
     Sprite[] FramesFor(FacingDirection direction)
@@ -303,21 +342,4 @@ public class TownPlayerController : MonoBehaviour
         return 1;
     }
 
-    static int SourceWalkFrameIndex(FacingDirection direction, int logicalFrame, int frameCount)
-    {
-        // The left row contains the same poses as the right row, but its
-        // authored columns are [walk, idle, walk, idle]. Reorder the pairwise
-        // phases to present [idle, walk, idle, walk] like the other directions.
-        if (direction == FacingDirection.Left && frameCount >= 4)
-        {
-            switch (logicalFrame)
-            {
-                case 0: return 1;
-                case 1: return 0;
-                case 2: return 3;
-                case 3: return 2;
-            }
-        }
-        return Mathf.Clamp(logicalFrame, 0, frameCount - 1);
-    }
 }

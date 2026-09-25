@@ -6,6 +6,10 @@ using UnityEngine;
 [DefaultExecutionOrder(1000)]
 public class ExpeditionPlayerCombat : MonoBehaviour
 {
+    // Zero-based animation index: 2 means the third displayed attack frame.
+    // Change this one value to move all melee impacts to another frame.
+    const int DamageFrameIndex = 2;
+
     [Serializable]
     public sealed class ToolCombatProfile
     {
@@ -19,6 +23,11 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         [Min(0f)] public float energyCost = 1f;
         [Header("Character use animation (4 rows: down, right, up, left)")]
         public Texture2D characterAttackSheet;
+        [Tooltip("Optional custom-cut attack sprites in animation order, populated from the combat sheet's Sprite Editor slices.")]
+        public Sprite[] downCharacterAttackSprites;
+        public Sprite[] rightCharacterAttackSprites;
+        public Sprite[] upCharacterAttackSprites;
+        public Sprite[] leftCharacterAttackSprites;
         [Min(1)] public int characterFrameWidth = 16;
         [Min(1)] public int characterFrameHeight = 32;
         [Min(1)] public int characterFrameCount = 3;
@@ -71,6 +80,11 @@ public class ExpeditionPlayerCombat : MonoBehaviour
     GameObject activeSwoosh;
     GameObject previewSwooshObject;
     SpriteRenderer previewSwooshRenderer;
+    ToolCombatProfile pendingAttackProfile;
+    Vector2 pendingAttackDirection;
+    InventoryItemId pendingAttackTool;
+    int pendingAttackDamage;
+    bool pendingAttack;
     Sprite previewCharacterSprite;
     Sprite previewSwooshSprite;
     Texture2D previewCharacterSheet;
@@ -152,7 +166,13 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         if (profile == null) return;
 
         movementController.SetEditorPreviewAnimation(previewAttackFacing, false, 0);
-        if (profile.characterAttackSheet && profile.characterFrameWidth > 0
+        Sprite[] authoredFrames = CharacterAttackFramesFor(profile, previewAttackFacing);
+        if (authoredFrames != null && authoredFrames.Length > 0)
+        {
+            int frame = Mathf.Clamp(previewCharacterFrame, 0, authoredFrames.Length - 1);
+            if (movementController.visual) movementController.visual.sprite = authoredFrames[frame];
+        }
+        else if (profile.characterAttackSheet && profile.characterFrameWidth > 0
             && profile.characterFrameHeight > 0 && profile.characterFrameCount > 0)
         {
             int rows = profile.characterAttackSheet.height / profile.characterFrameHeight;
@@ -336,6 +356,19 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         return Mathf.Clamp(order[logicalFrame], 0, frameCount - 1);
     }
 
+    static Sprite[] CharacterAttackFramesFor(ToolCombatProfile profile,
+        TownPlayerController.FacingDirection facing)
+    {
+        if (profile == null) return null;
+        return facing switch
+        {
+            TownPlayerController.FacingDirection.Right => profile.rightCharacterAttackSprites,
+            TownPlayerController.FacingDirection.Up => profile.upCharacterAttackSprites,
+            TownPlayerController.FacingDirection.Left => profile.leftCharacterAttackSprites,
+            _ => profile.downCharacterAttackSprites
+        };
+    }
+
     ToolCombatProfile FindProfile(InventoryItemId item)
     {
         if (toolProfiles != null)
@@ -348,6 +381,15 @@ public class ExpeditionPlayerCombat : MonoBehaviour
     {
         ToolCombatProfile profile = FindProfile(item);
         if (profile == null) return 0;
+        Sprite[][] authoredFrames = new[]
+        {
+            profile.downCharacterAttackSprites, profile.rightCharacterAttackSprites,
+            profile.upCharacterAttackSprites, profile.leftCharacterAttackSprites
+        };
+        int authoredCount = 0;
+        foreach (var frames in authoredFrames)
+            if (frames != null) authoredCount = Mathf.Max(authoredCount, frames.Length);
+        if (authoredCount > 0) return authoredCount;
         int count = Mathf.Max(1, profile.characterFrameCount);
         if (profile.characterAttackSheet && profile.characterFrameWidth > 0)
             count = Mathf.Min(count, profile.characterAttackSheet.width / profile.characterFrameWidth);
@@ -380,41 +422,131 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         // start an attack when the cursor is behind the character.
         if (Vector2.Dot(direction, facing) < 0f) return;
 
-        ChoppableTree treeTarget = null;
+        // Resolve the swing against the live scene when its impact frame starts.
+        // Misses therefore do not consume energy.
+        nextAttackTime = Time.time + combatProfile.attackCooldown;
+        Attacked?.Invoke();
+
+        pendingAttackProfile = combatProfile;
+        pendingAttackDirection = direction;
+        pendingAttackTool = equippedItem;
+        pendingAttackDamage = damage + combatProfile.damageBonus;
+        pendingAttack = true;
+
+        if (movementController)
+        {
+            bool hasCustomSprites = combatProfile.downCharacterAttackSprites?.Length > 0
+                || combatProfile.rightCharacterAttackSprites?.Length > 0
+                || combatProfile.upCharacterAttackSprites?.Length > 0
+                || combatProfile.leftCharacterAttackSprites?.Length > 0;
+            if (hasCustomSprites)
+                movementController.PlayMeleeAttack(direction,
+                    combatProfile.downCharacterAttackSprites, combatProfile.rightCharacterAttackSprites,
+                    combatProfile.upCharacterAttackSprites, combatProfile.leftCharacterAttackSprites,
+                    combatProfile.characterFramesPerSecond, OnMeleeAttackFrameStarted);
+            else
+                movementController.PlayMeleeAttack(direction,
+                    combatProfile.characterAttackSheet, combatProfile.characterFrameWidth,
+                    combatProfile.characterFrameHeight, combatProfile.characterFrameCount,
+                    combatProfile.characterFramesPerSecond, combatProfile.downAttackFrameOrder,
+                    combatProfile.rightAttackFrameOrder, combatProfile.upAttackFrameOrder,
+                    combatProfile.leftAttackFrameOrder, OnMeleeAttackFrameStarted);
+        }
+        else if (pendingAttack)
+            ResolvePendingAttackHit();
+        Vector2 visualOrigin = (Vector2)transform.position + Vector2.up * combatProfile.swooshHeightAboveFeet;
+        ShowSwoosh(visualOrigin + direction * .1f, direction, combatProfile);
+    }
+
+    void OnMeleeAttackFrameStarted(int frameIndex)
+    {
+        if (pendingAttack && frameIndex >= DamageFrameIndex)
+            ResolvePendingAttackHit();
+    }
+
+    void ResolvePendingAttackHit()
+    {
+        if (!pendingAttack) return;
+
+        pendingAttack = false;
+        ToolCombatProfile profile = pendingAttackProfile;
+        Vector2 direction = pendingAttackDirection;
+        InventoryItemId equippedItem = pendingAttackTool;
+        int attackDamage = pendingAttackDamage;
+        pendingAttackProfile = null;
+
+        if (profile == null) return;
+        FindAttackTargets(direction, profile, out ChoppableTree tree,
+            out WildernessEnemy target, out WildernessEnemy secondTarget);
+
+        // Trees are resource nodes; only the equipped axe can chop them.
+        if (tree && equippedItem != InventoryItemId.Axe) return;
+        if (!tree && !target) return;
+
+        if (energy && !energy.TryConsume(profile.energyCost))
+        {
+            FindAnyObjectByType<ExpeditionHUD>()?.ShowStatus("NOT ENOUGH ENERGY");
+            return;
+        }
+
+        bool hitLanded;
+        if (tree)
+        {
+            hitLanded = tree.TryChop(equippedItem);
+        }
+        else
+        {
+            hitLanded = target.TakeDamage(attackDamage, transform.position, profile.knockbackDistance);
+            if (secondTarget && equippedItem == InventoryItemId.Sword)
+                hitLanded |= secondTarget.TakeDamage(attackDamage, transform.position,
+                    profile.knockbackDistance);
+        }
+
+        // A target can become unavailable during the wind-up. Refund the
+        // impact-time charge if its hit handler reports that nothing landed.
+        if (!hitLanded && energy) energy.Restore(profile.energyCost);
+    }
+
+    void FindAttackTargets(Vector2 direction, ToolCombatProfile profile,
+        out ChoppableTree treeTarget, out WildernessEnemy target, out WildernessEnemy secondTarget)
+    {
+        treeTarget = null;
+        target = null;
+        secondTarget = null;
         float nearestTree = float.PositiveInfinity;
         float nearestObstacle = float.PositiveInfinity;
         var enemyDistances = new Dictionary<WildernessEnemy, float>();
-        foreach (var hit in Physics2D.CircleCastAll(transform.position, combatProfile.attackRadius * .5f,
-                     direction, combatProfile.attackRange + combatProfile.attackRadius * .5f))
+        foreach (var hit in Physics2D.CircleCastAll(transform.position, profile.attackRadius * .5f,
+                     direction, profile.attackRange + profile.attackRadius * .5f))
         {
             if (!hit.collider || hit.collider.transform == transform
                 || hit.collider.transform.IsChildOf(transform)) continue;
-            var tree = hit.collider ? hit.collider.transform.GetComponentInParent<ChoppableTree>() : null;
-            var enemy = hit.collider ? hit.collider.transform.GetComponentInParent<WildernessEnemy>() : null;
+            var tree = hit.collider.transform.GetComponentInParent<ChoppableTree>();
+            var enemy = hit.collider.transform.GetComponentInParent<WildernessEnemy>();
             if (!tree && !enemy)
             {
                 if (!hit.collider.isTrigger) nearestObstacle = Mathf.Min(nearestObstacle, hit.distance);
                 continue;
             }
+
             Vector2 targetPosition = tree ? (Vector2)tree.transform.position : (Vector2)enemy.transform.position;
             if (Vector2.Dot(targetPosition - (Vector2)transform.position, direction) <= 0f
                 || hit.distance >= nearestObstacle) continue;
             if (tree)
             {
-                if (hit.distance >= nearestTree) continue;
-                treeTarget = tree;
-                nearestTree = hit.distance;
+                if (hit.distance < nearestTree)
+                {
+                    treeTarget = tree;
+                    nearestTree = hit.distance;
+                }
             }
             else if (!enemyDistances.TryGetValue(enemy, out float previousDistance)
                      || hit.distance < previousDistance)
                 enemyDistances[enemy] = hit.distance;
         }
 
-        // The cast can include the player and several overlapping colliders.
-        // Only a solid collider before a target blocks the swing.
+        // A solid collider before a target blocks the swing.
         if (nearestObstacle < nearestTree) treeTarget = null;
-        WildernessEnemy target = null;
-        WildernessEnemy secondTarget = null;
         float nearestEnemy = float.PositiveInfinity;
         float secondNearestEnemy = float.PositiveInfinity;
         foreach (var pair in enemyDistances)
@@ -433,43 +565,15 @@ public class ExpeditionPlayerCombat : MonoBehaviour
                 secondNearestEnemy = pair.Value;
             }
         }
-        if (treeTarget && nearestTree <= nearestEnemy) { target = null; secondTarget = null; }
-        else treeTarget = null;
 
-        // Trees are resource nodes, not enemies. They can only be chopped with
-        // the axe currently equipped in the active quickbar slot. Owning an
-        // axe somewhere else in the bag must not make a sword chop trees.
-        if (treeTarget && equippedItem != InventoryItemId.Axe) return;
-
-        if ((treeTarget || target) && energy && !energy.TryConsume(combatProfile.energyCost))
+        if (treeTarget && nearestTree <= nearestEnemy)
         {
-            if (hud) hud.ShowStatus("NOT ENOUGH ENERGY");
-            return;
+            target = null;
+            secondTarget = null;
         }
-
-        // Starting a swing is independent of its result: empty swings keep
-        // their animation and cooldown without charging energy.
-        nextAttackTime = Time.time + combatProfile.attackCooldown;
-        Attacked?.Invoke();
-
-        if (movementController) movementController.PlayMeleeAttack(direction,
-            combatProfile.characterAttackSheet, combatProfile.characterFrameWidth,
-            combatProfile.characterFrameHeight, combatProfile.characterFrameCount,
-            combatProfile.characterFramesPerSecond, combatProfile.downAttackFrameOrder,
-            combatProfile.rightAttackFrameOrder, combatProfile.upAttackFrameOrder,
-            combatProfile.leftAttackFrameOrder);
-        Vector2 visualOrigin = (Vector2)transform.position + Vector2.up * combatProfile.swooshHeightAboveFeet;
-        ShowSwoosh(visualOrigin + direction * .1f, direction, combatProfile);
-
-        // The sword can strike two distinct enemies in the aimed sweep.
-        if (treeTarget) treeTarget.TryChop(equippedItem);
-        else if (target)
+        else
         {
-            bool swordEquipped = equippedItem == InventoryItemId.Sword;
-            int attackDamage = damage + combatProfile.damageBonus;
-            target.TakeDamage(attackDamage, transform.position, combatProfile.knockbackDistance);
-            if (secondTarget && swordEquipped)
-                secondTarget.TakeDamage(attackDamage, transform.position, combatProfile.knockbackDistance);
+            treeTarget = null;
         }
     }
 

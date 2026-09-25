@@ -1,55 +1,55 @@
 fileFormatVersion: 2
-guid: 5ea97b58e29354edfafc2af8dacf1ff8
+guid: 96d8d4b4fffbb40e29be11fc83f61d43
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7805418014510191585
-    second: TownCharacterSheetNew_0
+      213: 3026455930243459848
+    second: TownCharacterSheetOld_0
   - first:
-      213: -1572116122816728944
-    second: TownCharacterSheetNew_1
+      213: -1886657167568371885
+    second: TownCharacterSheetOld_1
   - first:
-      213: -7755925327611668203
-    second: TownCharacterSheetNew_2
+      213: 930050914863288351
+    second: TownCharacterSheetOld_2
   - first:
-      213: 3113711219590048778
-    second: TownCharacterSheetNew_3
+      213: -5283027002818223441
+    second: TownCharacterSheetOld_3
   - first:
-      213: 318926071242589422
-    second: TownCharacterSheetNew_4
+      213: -8115466225684695271
+    second: TownCharacterSheetOld_4
   - first:
-      213: 796290764095878322
-    second: TownCharacterSheetNew_5
+      213: -6931168120264908751
+    second: TownCharacterSheetOld_5
   - first:
-      213: 1271672922209033692
-    second: TownCharacterSheetNew_6
+      213: 6858908360351017156
+    second: TownCharacterSheetOld_6
   - first:
-      213: 1738578769412590579
-    second: TownCharacterSheetNew_7
+      213: 4303907686828702265
+    second: TownCharacterSheetOld_7
   - first:
-      213: -1649817046271023957
-    second: TownCharacterSheetNew_8
+      213: 7973543980609119091
+    second: TownCharacterSheetOld_8
   - first:
-      213: 8013847208467749571
-    second: TownCharacterSheetNew_9
+      213: 132001564732948591
+    second: TownCharacterSheetOld_9
   - first:
-      213: 3836064163121943441
-    second: TownCharacterSheetNew_10
+      213: -6789687660304749104
+    second: TownCharacterSheetOld_10
   - first:
-      213: 3377189029060367622
-    second: TownCharacterSheetNew_11
+      213: 9116237819556735366
+    second: TownCharacterSheetOld_11
   - first:
-      213: -367548828951926798
-    second: TownCharacterSheetNew_12
+      213: 6747868782092902447
+    second: TownCharacterSheetOld_12
   - first:
-      213: -690615371159758186
-    second: TownCharacterSheetNew_13
+      213: 7505454554633949504
+    second: TownCharacterSheetOld_13
   - first:
-      213: -7984089055581682449
-    second: TownCharacterSheetNew_14
+      213: -5891765483287220998
+    second: TownCharacterSheetOld_14
   - first:
-      213: -5708897214726692935
-    second: TownCharacterSheetNew_15
+      213: -9091153197954017320
+    second: TownCharacterSheetOld_15
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -158,10 +158,10 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: TownCharacterSheetNew_0
+      name: TownCharacterSheetOld_0
       rect:
         serializedVersion: 2
-        x: 1
+        x: 0
         y: 97
         width: 17
         height: 30
@@ -173,19 +173,19 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1e3905e445a625c60800000000000000
-      internalID: 7805418014510191585
+      spriteID: 80b298a32a1200a20800000000000000
+      internalID: 3026455930243459848
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TownCharacterSheetNew_1
+      name: TownCharacterSheetOld_1
       rect:
         serializedVersion: 2
-        x: 19
+        x: 18
         y: 97
-        width: 13
+        width: 14
         height: 29
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -195,14 +195,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 09038d937b8be2ae0800000000000000
-      internalID: -1572116122816728944
+      spriteID: 35f74225d4f31d5e0800000000000000
+      internalID: -1886657167568371885
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TownCharacterSheetNew_2
+      name: TownCharacterSheetOld_2
       rect:
         serializedVersion: 2
         x: 32
@@ -217,19 +217,19 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5195047d10b6d5490800000000000000
-      internalID: -7755925327611668203
+      spriteID: f101473216438ec00800000000000000
+      internalID: 930050914863288351
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TownCharacterSheetNew_3
+      name: TownCharacterSheetOld_3
       rect:
         serializedVersion: 2
-        x: 49
+        x: 50
         y: 97
-        width: 13
+        width: 14
         height: 29
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -239,19 +239,19 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: a0c20d86bdf163b20800000000000000
-      internalID: 3113711219590048778
+      spriteID: fa2293e7eeaeea6b0800000000000000
+      internalID: -5283027002818223441
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TownCharacterSheetNew_4
+      name: TownCharacterSheetOld_4
       rect:
         serializedVersion: 2
-        x: 2
+        x: 1
         y: 65
-        width: 13
+        width: 14
         height: 30
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -261,61 +261,17 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ee48602729d0d6400800000000000000
-      internalID: 318926071242589422
+      spriteID: 917326f1772106f80800000000000000
+      internalID: -8115466225684695271
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TownCharacterSheetNew_5
+      name: TownCharacterSheetOld_5
       rect:
         serializedVersion: 2
-        x: 17
-        y: 65
-        width: 15
-        height: 29
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 2b4fbd32b3efc0b00800000000000000
-      internalID: 796290764095878322
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: TownCharacterSheetNew_6
-      rect:
-        serializedVersion: 2
-        x: 33
-        y: 65
-        width: 13
-        height: 30
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: cdd90cef8c3e5a110800000000000000
-      internalID: 1271672922209033692
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: TownCharacterSheetNew_7
-      rect:
-        serializedVersion: 2
-        x: 46
+        x: 16
         y: 65
         width: 16
         height: 29
@@ -327,19 +283,63 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 3fb8fdced2ca02810800000000000000
-      internalID: 1738578769412590579
+      spriteID: 1302919415b8fcf90800000000000000
+      internalID: -6931168120264908751
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TownCharacterSheetNew_8
+      name: TownCharacterSheetOld_6
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 65
+        width: 14
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c8edad40dcbf2f50800000000000000
+      internalID: 6858908360351017156
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TownCharacterSheetOld_7
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 65
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93a7f73fc3d8abb30800000000000000
+      internalID: 4303907686828702265
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TownCharacterSheetOld_8
       rect:
         serializedVersion: 2
         x: 0
         y: 33
-        width: 18
+        width: 17
         height: 31
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -349,17 +349,17 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ba4a1a4332caa19e0800000000000000
-      internalID: -1649817046271023957
+      spriteID: 37329253108b7ae60800000000000000
+      internalID: 7973543980609119091
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TownCharacterSheetNew_9
+      name: TownCharacterSheetOld_9
       rect:
         serializedVersion: 2
-        x: 18
+        x: 16
         y: 33
         width: 15
         height: 30
@@ -371,17 +371,17 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 3cad9f0b397e63f60800000000000000
-      internalID: 8013847208467749571
+      spriteID: f6004b749b6f4d100800000000000000
+      internalID: 132001564732948591
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TownCharacterSheetNew_10
+      name: TownCharacterSheetOld_10
       rect:
         serializedVersion: 2
-        x: 32
+        x: 31
         y: 33
         width: 18
         height: 31
@@ -393,14 +393,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1935d7238007c3530800000000000000
-      internalID: 3836064163121943441
+      spriteID: 0ddaea7db0f26c1a0800000000000000
+      internalID: -6789687660304749104
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TownCharacterSheetNew_11
+      name: TownCharacterSheetOld_11
       rect:
         serializedVersion: 2
         x: 49
@@ -415,19 +415,41 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6055d70678f2ede20800000000000000
-      internalID: 3377189029060367622
+      spriteID: 68929aa3ff1638e70800000000000000
+      internalID: 9116237819556735366
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TownCharacterSheetNew_12
+      name: TownCharacterSheetOld_12
       rect:
         serializedVersion: 2
-        x: 3
+        x: 0
         y: 1
-        width: 13
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f206893d7ee35ad50800000000000000
+      internalID: 6747868782092902447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: TownCharacterSheetOld_13
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 1
+        width: 14
         height: 30
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -437,17 +459,17 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2f7a5b4994436eaf0800000000000000
-      internalID: -367548828951926798
+      spriteID: 0415bced62bb82860800000000000000
+      internalID: 7505454554633949504
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TownCharacterSheetNew_13
+      name: TownCharacterSheetOld_14
       rect:
         serializedVersion: 2
-        x: 18
+        x: 32
         y: 1
         width: 16
         height: 29
@@ -459,19 +481,19 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 69a199d9af07a66f0800000000000000
-      internalID: -690615371159758186
+      spriteID: afce1c4428e3c3ea0800000000000000
+      internalID: -5891765483287220998
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: TownCharacterSheetNew_14
+      name: TownCharacterSheetOld_15
       rect:
         serializedVersion: 2
-        x: 34
+        x: 49
         y: 1
-        width: 13
+        width: 14
         height: 30
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -481,30 +503,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: fe448f23e41d23190800000000000000
-      internalID: -7984089055581682449
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: TownCharacterSheetNew_15
-      rect:
-        serializedVersion: 2
-        x: 48
-        y: 1
-        width: 15
-        height: 29
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 9bf9ff0fa3ce5c0b0800000000000000
-      internalID: -5708897214726692935
+      spriteID: 8d75b4d555cb5d180800000000000000
+      internalID: -9091153197954017320
       vertices: []
       indices: 
       edges: []
@@ -523,22 +523,22 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      TownCharacterSheetNew_0: 7805418014510191585
-      TownCharacterSheetNew_1: -1572116122816728944
-      TownCharacterSheetNew_10: 3836064163121943441
-      TownCharacterSheetNew_11: 3377189029060367622
-      TownCharacterSheetNew_12: -367548828951926798
-      TownCharacterSheetNew_13: -690615371159758186
-      TownCharacterSheetNew_14: -7984089055581682449
-      TownCharacterSheetNew_15: -5708897214726692935
-      TownCharacterSheetNew_2: -7755925327611668203
-      TownCharacterSheetNew_3: 3113711219590048778
-      TownCharacterSheetNew_4: 318926071242589422
-      TownCharacterSheetNew_5: 796290764095878322
-      TownCharacterSheetNew_6: 1271672922209033692
-      TownCharacterSheetNew_7: 1738578769412590579
-      TownCharacterSheetNew_8: -1649817046271023957
-      TownCharacterSheetNew_9: 8013847208467749571
+      TownCharacterSheetOld_0: 3026455930243459848
+      TownCharacterSheetOld_1: -1886657167568371885
+      TownCharacterSheetOld_10: -6789687660304749104
+      TownCharacterSheetOld_11: 9116237819556735366
+      TownCharacterSheetOld_12: 6747868782092902447
+      TownCharacterSheetOld_13: 7505454554633949504
+      TownCharacterSheetOld_14: -5891765483287220998
+      TownCharacterSheetOld_15: -9091153197954017320
+      TownCharacterSheetOld_2: 930050914863288351
+      TownCharacterSheetOld_3: -5283027002818223441
+      TownCharacterSheetOld_4: -8115466225684695271
+      TownCharacterSheetOld_5: -6931168120264908751
+      TownCharacterSheetOld_6: 6858908360351017156
+      TownCharacterSheetOld_7: 4303907686828702265
+      TownCharacterSheetOld_8: 7973543980609119091
+      TownCharacterSheetOld_9: 132001564732948591
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

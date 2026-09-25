@@ -571,8 +571,8 @@ Before accepting new art or a new gameplay scene, verify:
 - [x] attacking MEELEE animation for Player
 - [x] swords
 - [x] simplify walking animations for main character
-- [ ] redo attack animations (both meelee and with tool in hand) - OR MAKE IT INTO **ONE**
-- [ ] draw wooden tool movement in all 4 directions
+- [x] redo attack animations (both meelee and with tool in hand) - OR MAKE IT INTO **ONE**
+- [x] draw wooden tool movement in all 4 directions
 - [ ] next-level weapons and guns
 
 

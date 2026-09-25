@@ -1,0 +1,521 @@
+fileFormatVersion: 2
+guid: 3ad4e3c6e2dad47848ef5b3a6bdbe8f9
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 5827544815517703284
+    second: TownCharacterSheetCombat_0
+  - first:
+      213: -7643752658138860164
+    second: TownCharacterSheetCombat_1
+  - first:
+      213: 9220650956936280099
+    second: TownCharacterSheetCombat_2
+  - first:
+      213: -5849851729716090356
+    second: TownCharacterSheetCombat_3
+  - first:
+      213: -8420423333720152145
+    second: TownCharacterSheetCombat_4
+  - first:
+      213: 6081342410914158624
+    second: TownCharacterSheetCombat_5
+  - first:
+      213: -1199663356351432256
+    second: TownCharacterSheetCombat_6
+  - first:
+      213: 6030237612581398470
+    second: TownCharacterSheetCombat_7
+  - first:
+      213: 1467102266139743214
+    second: TownCharacterSheetCombat_8
+  - first:
+      213: -6073198785745743179
+    second: TownCharacterSheetCombat_9
+  - first:
+      213: 2022220943695947042
+    second: TownCharacterSheetCombat_10
+  - first:
+      213: -5407712365283780535
+    second: TownCharacterSheetCombat_11
+  - first:
+      213: -7704654825047912429
+    second: TownCharacterSheetCombat_12
+  - first:
+      213: 3469223329860960502
+    second: TownCharacterSheetCombat_13
+  - first:
+      213: 3772664024896036082
+    second: TownCharacterSheetCombat_14
+  - first:
+      213: 8290729460329609632
+    second: TownCharacterSheetCombat_15
+  - first:
+      213: -8979426139124955456
+    second: town_character_combat_down_0
+  - first:
+      213: -3708698844897575297
+    second: town_character_combat_down_1
+  - first:
+      213: -1594395225216948916
+    second: town_character_combat_down_2
+  - first:
+      213: -5222195012786227282
+    second: town_character_combat_down_3
+  - first:
+      213: -5864008030047665759
+    second: town_character_combat_right_0
+  - first:
+      213: 8005883902941988473
+    second: town_character_combat_right_1
+  - first:
+      213: -8821943506736337158
+    second: town_character_combat_right_2
+  - first:
+      213: -7438368076493918462
+    second: town_character_combat_right_3
+  - first:
+      213: -7945810976792376997
+    second: town_character_combat_up_0
+  - first:
+      213: -8690537205606461320
+    second: town_character_combat_up_1
+  - first:
+      213: -2425071055691057009
+    second: town_character_combat_up_2
+  - first:
+      213: -6949652756793758964
+    second: town_character_combat_up_3
+  - first:
+      213: -7259207275109653889
+    second: town_character_combat_left_0
+  - first:
+      213: -6450956530474660428
+    second: town_character_combat_left_1
+  - first:
+      213: 2349643336113363333
+    second: town_character_combat_left_2
+  - first:
+      213: 612531340591896453
+    second: town_character_combat_left_3
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: town_character_combat_down_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 96
+        width: 21
+        height: 32
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 357333747a0854ac58e7732e109e415d
+      internalID: 794403280
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: town_character_combat_down_1
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 96
+        width: 21
+        height: 32
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 263e15597f7dd4cd5a6c8e280e111669
+      internalID: 20090364
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: town_character_combat_down_2
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 96
+        width: 21
+        height: 32
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 837dc802a111448ba91c1ce657c88b0e
+      internalID: 554938421
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: town_character_combat_right_0
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 64
+        width: 21
+        height: 32
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e905872c3d72c455e865da8511905ad5
+      internalID: -5864008030047665759
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: town_character_combat_right_1
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 64
+        width: 21
+        height: 32
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: db96f8321d0f243888495ae1eacce690
+      internalID: 8005883902941988473
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: town_character_combat_right_2
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 64
+        width: 21
+        height: 32
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7ef6b2179ddd04a0ab77b3dd7a0e0cae
+      internalID: -8821943506736337158
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: town_character_combat_up_0
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 32
+        width: 20
+        height: 32
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 25eb8149d83d64d108eb18bacabc26bb
+      internalID: -7945810976792376997
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: town_character_combat_up_1
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 32
+        width: 21
+        height: 32
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 515112950767f4dc38a89f718acb52cd
+      internalID: -8690537205606461320
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: town_character_combat_up_2
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 32
+        width: 20
+        height: 32
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 18a0a8448141744068d42d8421fcc087
+      internalID: -2425071055691057009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: town_character_combat_left_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 21
+        height: 32
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9811f4451c2c6446d9477a8dd58241d7
+      internalID: -7259207275109653889
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: town_character_combat_left_1
+      rect:
+        serializedVersion: 2
+        x: 21
+        y: 0
+        width: 21
+        height: 32
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7e38a7a104e4a4ccd9ea5c6340e06105
+      internalID: -6450956530474660428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: town_character_combat_left_2
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 0
+        width: 20
+        height: 32
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4f41b8eb273894570a3f50867dd24114
+      internalID: 2349643336113363333
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: ae64b25da828644d39f45e4de31590fa
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      TownCharacterSheetCombat_1: -7643752658138860164
+      TownCharacterSheetCombat_10: 2022220943695947042
+      TownCharacterSheetCombat_11: -5407712365283780535
+      TownCharacterSheetCombat_12: -7704654825047912429
+      TownCharacterSheetCombat_13: 3469223329860960502
+      TownCharacterSheetCombat_14: 3772664024896036082
+      TownCharacterSheetCombat_15: 8290729460329609632
+      TownCharacterSheetCombat_2: 9220650956936280099
+      TownCharacterSheetCombat_3: -5849851729716090356
+      TownCharacterSheetCombat_4: -8420423333720152145
+      TownCharacterSheetCombat_5: 6081342410914158624
+      TownCharacterSheetCombat_6: -1199663356351432256
+      TownCharacterSheetCombat_7: 6030237612581398470
+      TownCharacterSheetCombat_8: 1467102266139743214
+      TownCharacterSheetCombat_9: -6073198785745743179
+      town_character_combat_down_0: 794403280
+      town_character_combat_down_1: 20090364
+      town_character_combat_down_2: 554938421
+      town_character_combat_down_3: -5222195012786227282
+      town_character_combat_left_0: -7259207275109653889
+      town_character_combat_left_1: -6450956530474660428
+      town_character_combat_left_2: 2349643336113363333
+      town_character_combat_left_3: 612531340591896453
+      town_character_combat_right_0: -5864008030047665759
+      town_character_combat_right_1: 8005883902941988473
+      town_character_combat_right_2: -8821943506736337158
+      town_character_combat_right_3: -7438368076493918462
+      town_character_combat_up_0: -7945810976792376997
+      town_character_combat_up_1: -8690537205606461320
+      town_character_combat_up_2: -2425071055691057009
+      town_character_combat_up_3: -6949652756793758964
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

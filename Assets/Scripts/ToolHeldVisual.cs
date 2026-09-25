@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-/// <summary>Displays the currently equipped tool with an editable visual profile per item.</summary>
+/// <summary>Displays the active tool only while its use animation is playing.</summary>
 [RequireComponent(typeof(TownPlayerController))]
 [ExecuteAlways]
 public sealed class ToolHeldVisual : MonoBehaviour
@@ -122,6 +122,11 @@ public sealed class ToolHeldVisual : MonoBehaviour
         EnsureProfileOffsetCounts();
         EnsureHeldVisual();
         LoadToolSprites(toolToConfigure, true);
+    }
+
+    void OnDisable()
+    {
+        if (heldVisual) heldVisual.enabled = false;
     }
 
     void OnValidate()
@@ -310,6 +315,9 @@ public sealed class ToolHeldVisual : MonoBehaviour
         }
         heldVisual = heldObject.GetComponent<SpriteRenderer>();
         if (!heldVisual) heldVisual = heldObject.gameObject.AddComponent<SpriteRenderer>();
+        // A serialized renderer must not flash onscreen while runtime state is
+        // still being initialized. The edit-mode preview enables it explicitly.
+        heldVisual.enabled = false;
     }
 
     void LoadToolSprites(InventoryItemId item, bool force = false)
@@ -331,7 +339,12 @@ public sealed class ToolHeldVisual : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!heldVisual || !movement) return;
+        if (!heldVisual) return;
+        if (!movement)
+        {
+            heldVisual.enabled = false;
+            return;
+        }
 
         if (!Application.isPlaying)
         {
@@ -372,7 +385,9 @@ public sealed class ToolHeldVisual : MonoBehaviour
         bool preview, Sprite sprite, bool walking, int frameIndex, int attackFrameIndex = -1)
     {
         if (!heldVisual) return;
-        heldVisual.enabled = profile != null && (preview ? showEditModePreview : sprite != null);
+        heldVisual.enabled = profile != null && (preview
+            ? showEditModePreview
+            : sprite != null && movement && movement.IsPlayingMeleeAttack);
         if (!heldVisual.enabled) return;
 
         heldVisual.sprite = preview ? SpriteForFacing(facing) : sprite;
