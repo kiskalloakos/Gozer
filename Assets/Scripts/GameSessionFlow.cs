@@ -48,7 +48,6 @@ public sealed class GameSessionFlow : MonoBehaviour
         public int[] playerGold;
         public int[] chestGold;
         public int injured;
-        public int meleeUpgrade;
         public int infirmaryLevel;
         public int lastSeed;
         public string expeditionRunIdentity;
@@ -88,7 +87,7 @@ public sealed class GameSessionFlow : MonoBehaviour
         // one migrated save from the old unscoped PlayerPrefs data.
         if (string.IsNullOrEmpty(activeSaveId) && HasLegacyGameState())
         {
-            ItemInventory.GetTotal(InventoryItemId.Gold); // complete legacy item migration before snapshotting
+            ItemInventory.GetSecuredGoldTotal(); // complete legacy item migration before snapshotting
             activeSaveId = Guid.NewGuid().ToString("N");
             PlayerPrefs.SetString(ActiveSaveKey, activeSaveId);
             SaveActiveGame();
@@ -326,7 +325,7 @@ public sealed class GameSessionFlow : MonoBehaviour
         GameState.Replace(GameState.FromLegacyPrefs());
         activeSaveId = saveId;
         ChoppableTree.StartNewSave();
-        ItemInventory.EnsureStarterTools();
+        ItemInventory.SetStarterToolsForNewGame();
         PlayerPrefs.SetString(ActiveSaveKey, activeSaveId);
         PlayerPrefs.Save();
         SceneManager.LoadScene(GameSceneCatalog.Name(GameScene.TownHub));
@@ -346,9 +345,13 @@ public sealed class GameSessionFlow : MonoBehaviour
     void SaveActiveGame()
     {
         if (string.IsNullOrEmpty(activeSaveId)) return;
+        if (!InventoryStackCursor.ReturnAllHeld())
+        {
+            Debug.LogError("Cannot save while an inventory cursor stack has no return slot.");
+            return;
+        }
         GameState.InstallFromRuntime();
-        ItemInventory.EnsureStarterAxe();
-        GameState.Active.gold = ItemInventory.GetTotal(InventoryItemId.Gold);
+        GameState.Active.gold = ItemInventory.GetSecuredGoldTotal();
         GameState.Active.playerItems = ItemInventory.ReadSlots(ItemInventory.Container.PlayerInventory);
         GameState.Active.chestItems = ItemInventory.ReadSlots(ItemInventory.Container.HomeChest);
         var data = new SaveData
@@ -357,7 +360,7 @@ public sealed class GameSessionFlow : MonoBehaviour
             saveId = activeSaveId,
             displayName = string.IsNullOrEmpty(activeSaveId) ? "SAVE" : $"SAVE {activeSaveId.Substring(0, 6).ToUpperInvariant()}",
             savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
-            gold = ItemInventory.GetTotal(InventoryItemId.Gold),
+            gold = ItemInventory.GetSecuredGoldTotal(),
             health = GameState.Active.health,
             energy = GameState.Active.energy,
             energySaved = true,
@@ -368,7 +371,6 @@ public sealed class GameSessionFlow : MonoBehaviour
             completedRuns = GameState.Active.completedRuns,
             villageMinutes = (float)GameState.Active.villageMinutes,
             injured = GameState.Active.injured ? 1 : 0,
-            meleeUpgrade = GameState.Active.meleeUpgrade,
             infirmaryLevel = GameState.Active.infirmaryLevel,
             lastSeed = GameState.Active.lastSeed,
             expeditionRunIdentity = GameState.Active.expeditionRunIdentity,
@@ -390,7 +392,6 @@ public sealed class GameSessionFlow : MonoBehaviour
             energy = data.energySaved ? data.energy : ExpeditionPlayerEnergy.DefaultStartingEnergy,
             injured = data.injured != 0,
             completedRuns = data.completedRuns,
-            meleeUpgrade = data.meleeUpgrade,
             infirmaryLevel = data.infirmaryLevel,
             lastSeed = data.lastSeed,
             villageMinutes = data.villageMinutes,
@@ -445,6 +446,7 @@ public sealed class GameSessionFlow : MonoBehaviour
                 ItemInventory.AddItem(ItemInventory.Container.PlayerInventory,
                     InventoryItemId.Gold, data.gold);
         }
+        CurrentExpeditionLoot.MigrateLegacyState(GameState.Active);
         activeSaveId = saveId;
         PlayerPrefs.SetString(ActiveSaveKey, saveId);
         PlayerPrefs.Save();
@@ -576,7 +578,7 @@ public sealed class GameSessionFlow : MonoBehaviour
         CurrentExpeditionLoot.ResetSavedState();
         string[] keys = { TownHubController.GoldKey, TownHubController.PendingSecuredGoldKey, ExpeditionPlayerHealth.HealthKey,
             ExpeditionPlayerEnergy.EnergyKey,
-            ExpeditionPlayerHealth.InjuryKey, PlayerProgression.ReinforcedMeleeKey, ExpeditionRunProgression.CompletedRunsKey,
+            ExpeditionPlayerHealth.InjuryKey, "Player.Upgrade.ReinforcedMelee", ExpeditionRunProgression.CompletedRunsKey,
             ExpeditionRunProgression.PendingThreatIncreaseKey, ExpeditionSeedManager.LastSeedKey, "Expedition.PendingSeed", "Expedition.HasPendingSeed",
             "Expedition.PendingSeedSource", "Expedition.PendingDailyDate",
             "Expedition.PendingRunResult", "Expedition.ResultSuccess", "Expedition.ResultSecuredGold", "Expedition.ResultLostGold", "Expedition.ResultLostItemCount", "Expedition.ResultHealthUnits", "Expedition.ResultNextThreat" };

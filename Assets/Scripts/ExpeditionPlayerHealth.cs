@@ -67,8 +67,10 @@ public class ExpeditionPlayerHealth : MonoBehaviour
     IEnumerator ReturnToTownInjured()
     {
         IsDefeated = true;
+        // A stack being dragged is still carried gear and must be counted and lost.
+        InventoryStackCursor.ReturnAllHeld();
         ItemStack[] carriedItems = ItemInventory.ReadSlots(ItemInventory.Container.PlayerInventory);
-        int lostGold = CurrentExpeditionLoot.Total;
+        int lostGold = 0;
         int lostItemCount = 0;
         foreach (ItemStack stack in carriedItems)
         {

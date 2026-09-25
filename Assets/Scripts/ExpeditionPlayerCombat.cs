@@ -100,7 +100,6 @@ public class ExpeditionPlayerCombat : MonoBehaviour
             return;
         energy = GetComponent<ExpeditionPlayerEnergy>();
         if (!energy) energy = gameObject.AddComponent<ExpeditionPlayerEnergy>();
-        damage = PlayerProgression.CurrentMeleeDamage;
         // Keep existing expedition scenes working without requiring a manual
         // inspector assignment after this effect is added.
         if (!swooshSheet) swooshSheet = Resources.Load<Texture2D>("Effects/melee_swoosh");
@@ -359,6 +358,8 @@ public class ExpeditionPlayerCombat : MonoBehaviour
     {
         if (!Application.isPlaying) return;
         if (GameSessionFlow.IsBlockingGameplay) return;
+        if (PlayerInventoryUI.IsOpen || HomeStorageChest.IsModalOpen
+            || WorkbenchCraftingUI.IsModalOpen) return;
         if (health && health.IsDefeated) return;
         if (!Input.GetMouseButtonDown(0)) return;
         var hud = FindAnyObjectByType<ExpeditionHUD>();
@@ -395,7 +396,7 @@ public class ExpeditionPlayerCombat : MonoBehaviour
                 if (!hit.collider.isTrigger) nearestObstacle = Mathf.Min(nearestObstacle, hit.distance);
                 continue;
             }
-            Vector2 targetPosition = tree ? (Vector2)tree.transform.position : enemy.transform.position;
+            Vector2 targetPosition = tree ? (Vector2)tree.transform.position : (Vector2)enemy.transform.position;
             if (Vector2.Dot(targetPosition - (Vector2)transform.position, direction) <= 0f
                 || hit.distance >= nearestObstacle) continue;
             if (tree)
@@ -440,6 +441,12 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         // axe somewhere else in the bag must not make a sword chop trees.
         if (treeTarget && equippedItem != InventoryItemId.Axe) return;
 
+        if ((treeTarget || target) && energy && !energy.TryConsume(combatProfile.energyCost))
+        {
+            if (hud) hud.ShowStatus("NOT ENOUGH ENERGY");
+            return;
+        }
+
         // Starting a swing is independent of its result: empty swings keep
         // their animation and cooldown without charging energy.
         nextAttackTime = Time.time + combatProfile.attackCooldown;
@@ -455,21 +462,14 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         ShowSwoosh(visualOrigin + direction * .1f, direction, combatProfile);
 
         // The sword can strike two distinct enemies in the aimed sweep.
-        bool interacted = false;
-        if (treeTarget) interacted = treeTarget.TryChop(equippedItem);
+        if (treeTarget) treeTarget.TryChop(equippedItem);
         else if (target)
         {
             bool swordEquipped = equippedItem == InventoryItemId.Sword;
             int attackDamage = damage + combatProfile.damageBonus;
-            interacted = target.TakeDamage(attackDamage, transform.position, combatProfile.knockbackDistance);
-            if (secondTarget && swordEquipped && secondTarget.TakeDamage(attackDamage,
-                    transform.position, combatProfile.knockbackDistance))
-                interacted = true;
-        }
-        if (interacted && energy && !energy.TryConsume(combatProfile.energyCost))
-        {
-            // Energy is committed only for a real interaction. If insufficient,
-            // the hit still resolves; energy cannot retroactively cancel damage.
+            target.TakeDamage(attackDamage, transform.position, combatProfile.knockbackDistance);
+            if (secondTarget && swordEquipped)
+                secondTarget.TakeDamage(attackDamage, transform.position, combatProfile.knockbackDistance);
         }
     }
 

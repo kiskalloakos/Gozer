@@ -23395,7 +23395,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db0525d5224f4429991facd0ffde5dbc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TownHubController
-  startingGold: 18
 --- !u!4 &1755586911
 Transform:
   m_ObjectHideFlags: 0
@@ -24534,14 +24533,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TownUpgradeBuilding
   facility: 0
   displayName: INFIRMARY
-  buildingId: infirmary
-  maxLevel: 3
-  baseCost: 4
-  levelBenefits:
-  - Basic first aid is available.
-  - Injuries recover faster.
-  - One serious injury can be prevented.
-  tierVisuals: []
   levelRenderer: {fileID: 219156873}
   levelSprites:
   - {fileID: 21300000, guid: a92014143a99d47ae9abc2dbe316274b, type: 3}

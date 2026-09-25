@@ -66,9 +66,9 @@ public class PlayerInventoryUI : MonoBehaviour
         {
             ItemStack stack = ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, slot);
             int amount = itemCursor.GetGoldSlotAmount(ItemInventory.Container.PlayerInventory, slot);
-            if (ItemInventory.IsTool(stack.item)) DrawTool(panel, slot, stack.item);
-            else if (stack.item == InventoryItemId.Wood) DrawWood(panel, slot, stack.amount);
-            else if (amount > 0) DrawGold(panel, slot, amount);
+            if (stack.item != InventoryItemId.Empty && stack.amount > 0)
+                DrawItemStack(panel, slot, stack.item, stack.item == InventoryItemId.Gold ? amount : stack.amount,
+                    hud ? hud.GetStackCountBounce(slot) : 0f);
             if ((stack.item != InventoryItemId.Empty || amount > 0) && Event.current != null
                 && GetSlotRect(panel, slot).Contains(Event.current.mousePosition))
                 hoveredSlot = slot;
@@ -87,11 +87,7 @@ public class PlayerInventoryUI : MonoBehaviour
         if (itemCursor.IsHolding && Event.current != null)
         {
             var dragRect = new Rect(Event.current.mousePosition.x - 25f, Event.current.mousePosition.y - 25f, 50f, 50f);
-            if (ItemInventory.IsTool(itemCursor.HeldItem)) ExpeditionHUD.DrawItemIcon(dragRect, itemCursor.HeldItem);
-            else if (itemCursor.HeldItem == InventoryItemId.Wood)
-                ExpeditionHUD.DrawWoodStack(dragRect, itemCursor.Amount);
-            else if (itemCursor.HeldItem == InventoryItemId.Gold)
-                ExpeditionHUD.DrawGoldStack(dragRect, itemCursor.Amount);
+            ExpeditionHUD.DrawItemStack(dragRect, itemCursor.HeldItem, itemCursor.Amount);
         }
 
         GUI.color = oldColor;
@@ -206,33 +202,14 @@ public class PlayerInventoryUI : MonoBehaviour
         return false;
     }
 
-    public static void DrawGold(Rect panel, int slot, int amount)
+    public static void DrawItemStack(Rect panel, int slot, InventoryItemId item, int amount,
+        float countBounce = 0f)
     {
         Rect slotRect = GetSlotRect(panel, slot);
         float inset = Mathf.Max(2f, panel.width / 110f);
-        ExpeditionHUD.DrawGoldStack(new Rect(slotRect.x + inset, slotRect.y + inset,
-            slotRect.width - inset * 2f, slotRect.height - inset * 2f), amount,
-            (slotRect.width - inset * 2f) / 50f);
-    }
-
-    public static void DrawWood(Rect panel, int slot, int amount)
-    {
-        Rect slotRect = GetSlotRect(panel, slot);
-        float inset = Mathf.Max(2f, panel.width / 110f);
-        ExpeditionHUD.DrawWoodStack(new Rect(slotRect.x + inset, slotRect.y + inset,
-            slotRect.width - inset * 2f, slotRect.height - inset * 2f), amount,
-            (slotRect.width - inset * 2f) / 50f);
-    }
-
-    public static void DrawTool(Rect panel, int slot)
-        => DrawTool(panel, slot, InventoryItemId.Axe);
-
-    public static void DrawTool(Rect panel, int slot, InventoryItemId item)
-    {
-        Rect slotRect = GetSlotRect(panel, slot);
-        float inset = Mathf.Max(2f, panel.width / 110f);
-        ExpeditionHUD.DrawItemIcon(new Rect(slotRect.x + inset, slotRect.y + inset,
-            slotRect.width - inset * 2f, slotRect.height - inset * 2f), item);
+        Rect content = new Rect(slotRect.x + inset, slotRect.y + inset,
+            slotRect.width - inset * 2f, slotRect.height - inset * 2f);
+        ExpeditionHUD.DrawItemStack(content, item, amount, content.width / 50f, countBounce);
     }
 
     public static void DrawQuickbarSlotSelection(Rect panel, ExpeditionHUD hud)

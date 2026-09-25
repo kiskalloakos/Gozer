@@ -20,6 +20,8 @@ public sealed class WoodPickup : MonoBehaviour
     Vector3 visualStartScale;
     float spawnedAt;
     float collectionStartedAt;
+    Transform blockedPlayer;
+    const float RetryDistancePadding = 1f;
 
     public static void Spawn(Vector2 position, int amount)
     {
@@ -58,6 +60,18 @@ public sealed class WoodPickup : MonoBehaviour
 
     void Update()
     {
+        if (blockedPlayer)
+        {
+            float retryDistance = AttractionRadius + RetryDistancePadding;
+            if (((Vector2)(blockedPlayer.position - transform.position)).sqrMagnitude
+                > retryDistance * retryDistance)
+            {
+                blockedPlayer = null;
+                var blockedTrigger = GetComponent<CircleCollider2D>();
+                if (blockedTrigger) blockedTrigger.enabled = true;
+            }
+        }
+
         if (!collectionTarget)
         {
             float bob = Mathf.Sin((Time.time - spawnedAt) * 4.5f) * .08f;
@@ -72,30 +86,36 @@ public sealed class WoodPickup : MonoBehaviour
         if (visual) visual.transform.localScale = Vector3.Lerp(visualStartScale, visualStartScale * .2f, eased);
         if (progress < 1f) return;
 
-        if (!ItemInventory.AddItem(ItemInventory.Container.PlayerInventory, InventoryItemId.Wood, amount))
+        if (!ItemInventory.AddPickedUpItem(ItemInventory.Container.PlayerInventory, InventoryItemId.Wood, amount))
         {
             var fullHud = collectionTarget.GetComponent<ExpeditionHUD>()
                 ? collectionTarget.GetComponent<ExpeditionHUD>()
                 : FindAnyObjectByType<ExpeditionHUD>();
             if (fullHud) fullHud.ShowStatus("WOOD INVENTORY FULL");
+            blockedPlayer = collectionTarget;
             collectionTarget = null;
+            if (visual) visual.transform.localScale = visualStartScale;
             spawnedAt = Time.time;
-            basePosition = collectionStart + Vector3.right * .55f;
+            basePosition = collectionStart;
             transform.position = basePosition;
-            var pickupTrigger = GetComponent<CircleCollider2D>();
-            if (pickupTrigger) pickupTrigger.enabled = true;
             return;
         }
         var hud = collectionTarget.GetComponent<ExpeditionHUD>()
             ? collectionTarget.GetComponent<ExpeditionHUD>()
             : FindAnyObjectByType<ExpeditionHUD>();
-        if (hud) hud.ShowStatus($"+{amount} WOOD");
+        if (hud)
+        {
+            hud.ShowStatus($"+{amount} WOOD");
+        }
         Destroy(gameObject);
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    void OnTriggerEnter2D(Collider2D other) => TryCollect(other);
+    void OnTriggerStay2D(Collider2D other) => TryCollect(other);
+
+    void TryCollect(Collider2D other)
     {
-        if (collectionTarget) return;
+        if (collectionTarget || blockedPlayer) return;
         var player = other.GetComponentInParent<TownPlayerController>();
         if (!player) return;
 

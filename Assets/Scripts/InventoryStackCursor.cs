@@ -1,8 +1,29 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>One cursor for moving any item stack between inventory panels.</summary>
 public sealed class InventoryStackCursor
 {
+    static readonly HashSet<InventoryStackCursor> heldCursors = new HashSet<InventoryStackCursor>();
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetHeldCursors() => heldCursors.Clear();
+
+    public static bool IsReserved(ItemInventory.Container container, int slot)
+    {
+        foreach (var cursor in heldCursors)
+            if (cursor.IsHolding && cursor.originContainer == container && cursor.originSlot == slot)
+                return true;
+        return false;
+    }
+
+    public static bool ReturnAllHeld()
+    {
+        var cursors = new List<InventoryStackCursor>(heldCursors);
+        foreach (var cursor in cursors) cursor.ReturnHeld();
+        return heldCursors.Count == 0;
+    }
+
     public InventoryItemId HeldItem { get; private set; }
     public int Amount => heldSecuredAmount + heldCarriedAmount;
     public bool IsHolding => HeldItem != InventoryItemId.Empty && Amount > 0;
@@ -13,12 +34,7 @@ public sealed class InventoryStackCursor
     int heldCarriedAmount;
 
     public int GetGoldSlotAmount(ItemInventory.Container container, int slot)
-    {
-        int amount = ItemInventory.GetAmount(container, slot, InventoryItemId.Gold);
-        if (container == ItemInventory.Container.PlayerInventory)
-            amount += CurrentExpeditionLoot.GetAtSlot(slot);
-        return amount;
-    }
+        => ItemInventory.GetAmount(container, slot, InventoryItemId.Gold);
 
     public void LeftClick(ItemInventory.Container container, int slot)
     {
@@ -57,26 +73,9 @@ public sealed class InventoryStackCursor
         out InventoryItemId item, out int amount)
     {
         ItemStack stack = ItemInventory.GetStack(container, slot);
-        if (stack.item != InventoryItemId.Empty && stack.amount > 0)
-        {
-            item = stack.item;
-            amount = stack.amount;
-            if (item == InventoryItemId.Gold && container == ItemInventory.Container.PlayerInventory)
-                amount += CurrentExpeditionLoot.GetAtSlot(slot);
-            return true;
-        }
-
-        if (container == ItemInventory.Container.PlayerInventory
-            && CurrentExpeditionLoot.GetAtSlot(slot) > 0)
-        {
-            item = InventoryItemId.Gold;
-            amount = CurrentExpeditionLoot.GetAtSlot(slot);
-            return true;
-        }
-
-        item = InventoryItemId.Empty;
-        amount = 0;
-        return false;
+        item = stack.item;
+        amount = stack.amount;
+        return item != InventoryItemId.Empty && amount > 0;
     }
 
     void Take(ItemInventory.Container container, int slot, InventoryItemId item, int amount)
@@ -87,41 +86,33 @@ public sealed class InventoryStackCursor
         heldSecuredAmount = 0;
         heldCarriedAmount = 0;
 
+        ItemStack source = ItemInventory.GetStack(container, slot);
+        int taken = Mathf.Min(source.amount, amount);
         if (item == InventoryItemId.Gold)
         {
-            int securedAvailable = ItemInventory.GetAmount(container, slot, item);
-            int carriedAvailable = container == ItemInventory.Container.PlayerInventory
-                ? CurrentExpeditionLoot.GetAtSlot(slot) : 0;
-            int remaining = Mathf.Min(amount, securedAvailable + carriedAvailable);
-            heldCarriedAmount = Mathf.Min(carriedAvailable, remaining);
-            heldSecuredAmount = Mathf.Min(securedAvailable, remaining - heldCarriedAmount);
-            if (heldCarriedAmount > 0)
-                CurrentExpeditionLoot.SetAtSlot(slot, carriedAvailable - heldCarriedAmount);
-            if (heldSecuredAmount > 0)
-                ItemInventory.SetStack(container, slot, item, securedAvailable - heldSecuredAmount);
+            heldCarriedAmount = Mathf.Min(source.unsecuredAmount, taken);
+            heldSecuredAmount = taken - heldCarriedAmount;
+            int remainingUnsecured = source.unsecuredAmount - heldCarriedAmount;
+            int remainingSecured = source.amount - source.unsecuredAmount - heldSecuredAmount;
+            ItemInventory.SetStack(container, slot, item, remainingSecured + remainingUnsecured,
+                remainingUnsecured);
         }
         else
         {
-            ItemStack stack = ItemInventory.GetStack(container, slot);
-            heldSecuredAmount = Mathf.Min(stack.amount, amount);
-            ItemInventory.SetStack(container, slot, item, stack.amount - heldSecuredAmount);
+            heldSecuredAmount = taken;
+            ItemInventory.SetStack(container, slot, item, source.amount - taken);
         }
 
         if (Amount <= 0) HeldItem = InventoryItemId.Empty;
+        else heldCursors.Add(this);
     }
 
     bool PlaceAll(ItemInventory.Container container, int slot)
     {
         if (!IsHolding || !ItemInventory.CanPlace(container, slot, HeldItem)) return false;
-        if (heldSecuredAmount > 0)
-            ItemInventory.AddToSlot(container, slot, HeldItem, heldSecuredAmount);
-        if (heldCarriedAmount > 0)
-        {
-            if (container == ItemInventory.Container.PlayerInventory)
-                CurrentExpeditionLoot.SetAtSlot(slot, CurrentExpeditionLoot.GetAtSlot(slot) + heldCarriedAmount);
-            else
-                ItemInventory.AddToSlot(container, slot, HeldItem, heldCarriedAmount);
-        }
+        int unsecuredAmount = container == ItemInventory.Container.PlayerInventory
+            ? heldCarriedAmount : 0;
+        ItemInventory.AddToSlot(container, slot, HeldItem, Amount, unsecuredAmount);
         ClearHeld();
         return true;
     }
@@ -131,10 +122,8 @@ public sealed class InventoryStackCursor
         if (!IsHolding || !ItemInventory.CanPlace(container, slot, HeldItem)) return false;
         if (heldCarriedAmount > 0)
         {
-            if (container == ItemInventory.Container.PlayerInventory)
-                CurrentExpeditionLoot.SetAtSlot(slot, CurrentExpeditionLoot.GetAtSlot(slot) + 1);
-            else
-                ItemInventory.AddToSlot(container, slot, HeldItem, 1);
+            int unsecuredAmount = container == ItemInventory.Container.PlayerInventory ? 1 : 0;
+            ItemInventory.AddToSlot(container, slot, HeldItem, 1, unsecuredAmount);
             heldCarriedAmount--;
         }
         else if (heldSecuredAmount > 0)
@@ -148,6 +137,7 @@ public sealed class InventoryStackCursor
 
     void ClearHeld()
     {
+        heldCursors.Remove(this);
         HeldItem = InventoryItemId.Empty;
         heldSecuredAmount = 0;
         heldCarriedAmount = 0;

@@ -10,7 +10,12 @@ public sealed class GameState
 {
     public static GameState Active { get; private set; }
 
-    public static void InstallFromRuntime() => Active ??= FromLegacyPrefs();
+    public static void InstallFromRuntime()
+    {
+        if (Active != null) return;
+        Active = FromLegacyPrefs();
+        CurrentExpeditionLoot.MigrateLegacyState(Active);
+    }
     public static void Replace(GameState state) => Active = state ?? FromLegacyPrefs();
 
     public int health = ExpeditionPlayerHealth.DefaultMaxHealthUnits;
@@ -20,7 +25,6 @@ public sealed class GameState
     public bool injured;
     public int completedRuns;
     public int pendingThreat;
-    public int meleeUpgrade;
     public int infirmaryLevel = 1;
     public int lastSeed;
     public double villageMinutes = VillageTime.MorningMinute;
@@ -32,7 +36,9 @@ public sealed class GameState
     public int resultLostItemCount;
     public int resultHealthUnits;
     public int resultNextThreat;
-    public int[] expeditionLoot = new int[ItemInventory.PlayerSlotCount];
+    // Retained only to read older save files. Runtime expedition Gold now lives
+    // in ItemStack.unsecuredAmount and this field is cleared after migration.
+    public int[] expeditionLoot;
     public ItemStack[] playerItems = new ItemStack[ItemInventory.PlayerSlotCount];
     public ItemStack[] chestItems = new ItemStack[ItemInventory.ChestSlotCount];
 
@@ -47,7 +53,6 @@ public sealed class GameState
             injured = PlayerPrefs.GetInt(ExpeditionPlayerHealth.InjuryKey, 0) == 1,
             completedRuns = Mathf.Max(0, PlayerPrefs.GetInt(ExpeditionRunProgression.CompletedRunsKey, 0)),
             pendingThreat = Mathf.Max(0, PlayerPrefs.GetInt(ExpeditionRunProgression.PendingThreatIncreaseKey, 0)),
-            meleeUpgrade = PlayerPrefs.GetInt(PlayerProgression.ReinforcedMeleeKey, 0),
             infirmaryLevel = Mathf.Max(1, PlayerPrefs.GetInt(TownUpgradeBuilding.ProgressKey("infirmary"), 1)),
             lastSeed = PlayerPrefs.GetInt(ExpeditionSeedManager.LastSeedKey, 0),
             expeditionRunIdentity = PlayerPrefs.GetString(ExpeditionRunIdentity.PlayerPrefsKey, ""),
@@ -55,7 +60,7 @@ public sealed class GameState
         };
         if (!PlayerPrefs.HasKey(ExpeditionPlayerHealth.HealthKey) && state.injured)
             state.health = 0;
-        state.gold = ItemInventory.GetTotal(InventoryItemId.Gold);
+        state.gold = ItemInventory.GetSecuredGoldTotal();
         state.pendingSecuredGold = Mathf.Max(0, PlayerPrefs.GetInt(TownHubController.PendingSecuredGoldKey, 0));
         state.playerItems = ItemInventory.ReadSlots(ItemInventory.Container.PlayerInventory);
         state.chestItems = ItemInventory.ReadSlots(ItemInventory.Container.HomeChest);
@@ -66,7 +71,10 @@ public sealed class GameState
             {
                 var legacyLoot = JsonUtility.FromJson<LegacyLoot>(oldLootJson);
                 if (legacyLoot?.slots != null)
+                {
+                    state.expeditionLoot = new int[ItemInventory.PlayerSlotCount];
                     Array.Copy(legacyLoot.slots, state.expeditionLoot, Mathf.Min(legacyLoot.slots.Length, state.expeditionLoot.Length));
+                }
             }
             catch (Exception exception) { Debug.LogWarning($"Could not migrate carried expedition loot: {exception.Message}"); }
             PlayerPrefs.DeleteKey("Expedition.CurrentLoot.v1");
@@ -88,7 +96,6 @@ public sealed class GameState
         PlayerPrefs.SetInt(ExpeditionPlayerHealth.InjuryKey, injured ? 1 : 0);
         PlayerPrefs.SetInt(ExpeditionRunProgression.CompletedRunsKey, completedRuns);
         PlayerPrefs.SetInt(ExpeditionRunProgression.PendingThreatIncreaseKey, pendingThreat);
-        PlayerPrefs.SetInt(PlayerProgression.ReinforcedMeleeKey, meleeUpgrade);
         PlayerPrefs.SetInt(TownUpgradeBuilding.ProgressKey("infirmary"), infirmaryLevel);
         PlayerPrefs.SetInt(ExpeditionSeedManager.LastSeedKey, lastSeed);
         PlayerPrefs.SetString(ExpeditionRunIdentity.PlayerPrefsKey, expeditionRunIdentity ?? "");

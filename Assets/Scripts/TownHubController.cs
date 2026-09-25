@@ -1,9 +1,7 @@
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class TownHubController : MonoBehaviour
 {
-    public const int DefaultStartingGold = 0;
     static readonly string[] RetiredBuildingNames =
     {
         "STORAGE",
@@ -16,8 +14,6 @@ public class TownHubController : MonoBehaviour
     public const string PendingSecuredGoldKey = "Town.PendingSecuredSupplies";
     public static TownHubController Instance { get; private set; }
 
-    [FormerlySerializedAs("startingSupplies")]
-    [SerializeField] private int startingGold = DefaultStartingGold;
     private string notice = "Welcome home, Gozer.";
     private float noticeUntil;
     private bool showingRunResult;
@@ -30,16 +26,11 @@ public class TownHubController : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        GameState.InstallFromRuntime();
         // Town is the safe return point; unsecured loot can only exist during a run.
         if (CurrentExpeditionLoot.HasAny) CurrentExpeditionLoot.Lose();
-        ItemInventory.EnsureStarterAxe();
         RemoveRetiredBuildings();
-        // Ignore the old serialized 18-gold prototype value for new games.
-        startingGold = DefaultStartingGold;
-        GameState.InstallFromRuntime();
-        if (ItemInventory.GetTotal(InventoryItemId.Gold) == 0 && GameState.Active.gold == 0)
-            ItemInventory.AddItem(ItemInventory.Container.PlayerInventory, InventoryItemId.Gold, startingGold);
-        Gold = ItemInventory.GetTotal(InventoryItemId.Gold);
+        Gold = ItemInventory.GetSecuredGoldTotal();
         GameState.Active.gold = Gold;
         IsInjured = GameState.Active.injured;
         HealthUnits = Mathf.Clamp(GameState.Active.health, 0, ExpeditionPlayerHealth.DefaultMaxHealthUnits);
@@ -86,16 +77,15 @@ public class TownHubController : MonoBehaviour
     }
 
     public static int GetGoldBalance()
-        => ItemInventory.GetTotal(InventoryItemId.Gold);
+        => ItemInventory.GetSecuredGoldTotal();
 
     public static void AddSecuredGold(int amount)
     {
         if (amount <= 0) return;
         GameState.InstallFromRuntime();
-        ItemInventory.AddItem(ItemInventory.Container.PlayerInventory, InventoryItemId.Gold, amount,
-            preferNewSlot: true);
+        ItemInventory.AddItem(ItemInventory.Container.PlayerInventory, InventoryItemId.Gold, amount);
         GameState.Active.pendingSecuredGold += amount;
-        GameState.Active.gold = ItemInventory.GetTotal(InventoryItemId.Gold);
+        GameState.Active.gold = ItemInventory.GetSecuredGoldTotal();
         if (Instance) Instance.Gold = GetGoldBalance();
     }
 

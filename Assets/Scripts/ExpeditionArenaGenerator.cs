@@ -246,18 +246,43 @@ public static class ExpeditionArenaGenerator
         var enemies = Object.FindObjectsByType<WildernessEnemy>();
         foreach (var enemy in enemies)
         {
-            Vector2 position = FindOpenPosition(null, null);
-            for (int attempt = 0; attempt < 50; attempt++)
+            bool found = false;
+            Vector2 position = enemy.transform.position;
+            for (int attempt = 0; attempt < 100; attempt++)
             {
-                position = RandomPoint(2f);
-                if (Vector2.Distance(position, playerPosition) < 9f && attempt < 49) continue;
-                if (Vector2.Distance(position, extractionPosition) < 6f && attempt < 49) continue;
-                if (!IsOpen(position, .65f) && attempt < 49) continue;
+                Vector2 candidate = RandomPoint(2f);
+                if (!IsSafeEnemyPosition(candidate, playerPosition, extractionPosition)) continue;
+                position = candidate;
+                found = true;
                 break;
             }
+            if (!found)
+            {
+                for (float y = MinY; y <= MaxY && !found; y += 1f)
+                for (float x = MinX; x <= MaxX; x += 1f)
+                {
+                    Vector2 candidate = new Vector2(x, y);
+                    if (!IsSafeEnemyPosition(candidate, playerPosition, extractionPosition)) continue;
+                    position = candidate;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                Debug.LogWarning($"No safe position for {enemy.name}; disabling this enemy for the run.");
+                enemy.gameObject.SetActive(false);
+                continue;
+            }
             enemy.Relocate(position);
+            Physics2D.SyncTransforms();
         }
     }
+
+    static bool IsSafeEnemyPosition(Vector2 position, Vector2 playerPosition, Vector2 extractionPosition)
+        => Vector2.Distance(position, playerPosition) >= 9f
+            && Vector2.Distance(position, extractionPosition) >= 6f
+            && IsOpen(position, .65f);
 
     static bool IsOpen(Vector2 position, float radius)
     {

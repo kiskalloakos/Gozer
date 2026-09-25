@@ -18,6 +18,9 @@ public class ExpeditionLootPickup : MonoBehaviour
     Vector3 collectionStart;
     Vector3 visualStartScale;
     float collectionStartedAt;
+    Transform blockedPlayer;
+
+    const float RetryDistancePadding = 1f;
 
     public static void Spawn(Vector2 position, int amount)
     {
@@ -53,6 +56,17 @@ public class ExpeditionLootPickup : MonoBehaviour
     void Update()
     {
         AnimateFloatingGold();
+        if (blockedPlayer)
+        {
+            float retryDistance = AttractionRadius + RetryDistancePadding;
+            if (((Vector2)(blockedPlayer.position - transform.position)).sqrMagnitude
+                > retryDistance * retryDistance)
+            {
+                blockedPlayer = null;
+                var blockedTrigger = GetComponent<CircleCollider2D>();
+                if (blockedTrigger) blockedTrigger.enabled = true;
+            }
+        }
         if (collectionTarget) AnimateCollection();
     }
 
@@ -75,13 +89,25 @@ public class ExpeditionLootPickup : MonoBehaviour
             visual.transform.localScale = Vector3.Lerp(visualStartScale, visualStartScale * .2f, eased);
 
         if (progress < 1f) return;
-        if (collectingInventory) collectingInventory.AddLoot(amount);
+        if (!collectingInventory || !collectingInventory.AddLoot(amount))
+        {
+            if (collectingInventory) collectingInventory.ShowStatus("GOLD INVENTORY FULL");
+            transform.position = collectionStart;
+            if (visual) visual.transform.localScale = visualStartScale;
+            blockedPlayer = collectionTarget;
+            collectingInventory = null;
+            collectionTarget = null;
+            return;
+        }
         Destroy(gameObject);
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    void OnTriggerEnter2D(Collider2D other) => TryCollect(other);
+    void OnTriggerStay2D(Collider2D other) => TryCollect(other);
+
+    void TryCollect(Collider2D other)
     {
-        if (collectionTarget) return;
+        if (collectionTarget || blockedPlayer) return;
 
         var player = other.GetComponentInParent<ExpeditionPlayerHealth>();
         if (!player) return;

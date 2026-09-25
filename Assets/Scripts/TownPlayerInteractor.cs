@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TownPlayerInteractor : MonoBehaviour
@@ -5,6 +6,19 @@ public class TownPlayerInteractor : MonoBehaviour
     private TownInteractable hovered;
     private ScenePortal hoveredPortal;
     private bool interactionPending;
+    TownInteractable[] interactables;
+    ScenePortal[] portals;
+    readonly Dictionary<TownInteractable, SpriteRenderer[]> artwork =
+        new Dictionary<TownInteractable, SpriteRenderer[]>();
+
+    void Start()
+    {
+        interactables = FindObjectsByType<TownInteractable>();
+        portals = FindObjectsByType<ScenePortal>();
+        artwork.Clear();
+        foreach (var interactable in interactables)
+            if (interactable) artwork[interactable] = interactable.GetComponentsInChildren<SpriteRenderer>();
+    }
 
     void OnGUI()
     {
@@ -65,11 +79,13 @@ public class TownPlayerInteractor : MonoBehaviour
 
     private TownInteractable FindHovered(Vector2 pointer)
     {
-        foreach (var candidate in FindObjectsByType<TownInteractable>(FindObjectsSortMode.None))
+        if (interactables == null) return null;
+        foreach (var candidate in interactables)
         {
-            foreach (var renderer in candidate.GetComponentsInChildren<SpriteRenderer>())
+            if (!candidate || !candidate.isActiveAndEnabled) continue;
+            foreach (var renderer in artwork[candidate])
             {
-                if (!renderer.enabled || !renderer.sprite) continue;
+                if (!renderer || !renderer.enabled || !renderer.sprite) continue;
                 var bounds = renderer.bounds;
                 if (pointer.x >= bounds.min.x && pointer.x <= bounds.max.x &&
                     pointer.y >= bounds.min.y && pointer.y <= bounds.max.y)
@@ -81,8 +97,9 @@ public class TownPlayerInteractor : MonoBehaviour
 
     private ScenePortal FindHoveredPortal(Vector2 pointer)
     {
-        foreach (var portal in FindObjectsByType<ScenePortal>(FindObjectsSortMode.None))
-            if (portal.IsPointerOverArt(pointer)) return portal;
+        if (portals == null) return null;
+        foreach (var portal in portals)
+            if (portal && portal.isActiveAndEnabled && portal.IsPointerOverArt(pointer)) return portal;
         return null;
     }
 }

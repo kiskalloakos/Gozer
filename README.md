@@ -27,6 +27,8 @@ The feeling is deliberately built on contrast:
 - **Day / town:** warm, personal, calm, social, and full of visible progress.
 - **Night / wilderness:** dark, loud, unpredictable, and increasingly hostile.
 
+You bring valuable resources IN the town, so that "one day we can escape" but that day never comes (?)...
+
 ## Creative pillars
 
 1. **Nostalgia with a modern hook** — readable pixel art, tactile inventory and crafting, memorable sound effects, and compact places that invite exploration.
@@ -62,14 +64,12 @@ The current local build now contains the first playable version of the town-to-e
 - Move behind tall town scenery and have foreground objects fade instead of hiding the player completely.
 - See the persistent five-heart health display and four-slot inventory bar in every scene.
 - See secured Gold as numbered, persistent stacks in player-inventory or home-chest slots instead of as a separate upper-left counter.
-- Begin a new save with 18 Gold, enough to test the current workbench and treatment economy.
+- Begin a new save with 0 Gold and four wooden tools in quickbar slots 1–4: shovel, axe, pickaxe, and sword.
 - Click the player home to enter its separate interior scene.
 - Click the front door inside the player home to return to TownHub.
-- Click the workbench inside the player home to purchase the one-time Reinforced Melee Weapon upgrade for 8 Gold.
-- Open the animated storage chest beside the Player Home workbench to view its pixel-art inventory panel over a dimmed, paused room; left-click to pick up or place a full Gold stack, right-click to take half or place one, and right-drag to distribute one Gold into each visited slot.
-- Permanently increase melee damage from 1 to 2 after purchasing the workbench upgrade, reducing the current enemy from three required hits to two.
-- Begin the fixed tutorial expedition with 16 enemies; after a successful extraction, seeded expeditions begin at a higher population and continue scaling with threat.
-- Receive clear workbench feedback when the upgrade is purchased, unaffordable, or already owned.
+- Click the workbench inside the player home to craft a wooden axe, pickaxe, sword, or shovel from 5 Wood.
+- Open the animated storage chest beside the Player Home workbench to view its pixel-art inventory panel over a dimmed room; left-click to pick up or place a full stack, right-click to take half or place one, and right-drag to distribute items across slots. The village clock continues while storage is open.
+- Begin the fixed tutorial expedition with eight enemies; after a successful extraction, seeded expeditions begin at a higher population and continue scaling with threat.
 - Click the infirmary for treatment when health is missing or the player is injured.
 - Spend 3 Gold at the infirmary to clear the injury and restore all five hearts.
 - Receive clear text feedback when already healthy, successfully treated, unable to afford treatment, or too injured to leave town.
@@ -93,7 +93,7 @@ The current local build now contains the first playable version of the town-to-e
 - Keep the playable arena collider-enclosed while extending seeded ground beyond it to cover the complete loading and gameplay camera footprint; an unreachable perimeter forest hides the boundary and prevents the camera from revealing the empty background.
 - Explore fields built from three night-grass variants and the same visual language as TownHub, with dense nighttime trees and natural sight-line obstructions.
 - Move and aim freely while the camera follows the player.
-- Attack toward the mouse cursor with a short-range melee strike by pressing the left mouse button.
+- Attack toward the mouse cursor with a short-range melee strike by pressing the left mouse button. A hit or chop requires enough energy before it can affect the target; empty swings remain free.
 - Knock enemies backward with successful hits.
 - Interrupt an enemy's attack windup by landing a melee hit.
 - See a brief hit flash and placeholder swing effect when combat connects.
@@ -101,10 +101,10 @@ The current local build now contains the first playable version of the town-to-e
 - Read an enemy's alert, pursuit, attack windup, and recovery states through color, movement, and warning indicators.
 - Take half a heart of damage from a successful enemy attack.
 - Receive brief invulnerability and knockback after taking damage, preventing instant repeated hits.
-- Kill a baseline enemy with three normal melee hits or two reinforced-melee hits; enemy health gains one point after every four successful runs.
+- Kill a baseline enemy with three wooden-sword hits or six hits from another starter tool; enemy maximum health gains one point after every successful run.
 - Make a defeated enemy drop one glowing expedition-supply pickup.
-- Walk over dropped loot to add it to an unsecured Gold stack in the first available player-inventory slot.
-- Keep newly carried expedition Gold distinct from secured stacks; successful extraction secures it in the player inventory without moving or merging chest Gold, while defeat removes only the unsecured portion.
+- Walk over dropped Gold or Wood to place each pickup in the first free player-inventory slot, scanning all 16 slots from the quickbar onward. A pickup stays on the ground when the bag is full.
+- Store expedition Gold as ordinary Gold inventory stacks with an unsecured quantity. Successful extraction clears that risk marker; defeat removes all player-inventory items and Gold, while items already in the home chest remain safe.
 - Find the physical extraction point hidden among the trees.
 - Begin a ten-second extraction countdown by entering the extraction zone.
 - Alert all surviving enemies when extraction begins, causing the activation to create danger.
@@ -113,7 +113,7 @@ The current local build now contains the first playable version of the town-to-e
 - Cancel extraction by leaving the zone.
 - Cancel extraction by attacking; after attacking, the player must leave and re-enter the zone to try again.
 - Successfully extract to secure all carried loot, convert it into Gold, and return to TownHub.
-- Increase the persistent threat level after every successful expedition, including the tutorial. The first 24 successes each add a regular enemy, every second success adds an extraction reinforcement up to six additional reinforcements, enemies continuously become faster and more perceptive with diminishing growth, enemy health increases every four successes, and visibility continuously tightens toward its minimum radius.
+- Increase the persistent threat level after every successful expedition, including the tutorial. The first 24 successes each add two regular enemies, every second success adds an extraction reinforcement up to six additional reinforcements, enemies continuously become faster and more perceptive with diminishing growth, enemy health increases by one point per success, and visibility continuously tightens toward its minimum radius.
 - Keep the current threat unchanged after defeat, so only successful runs advance the difficulty.
 - Show the procedural seed and current threat level during loading, then report the newly unlocked threat level after returning successfully to town.
 - Return to town with the exact amount of health remaining after a successful expedition.
@@ -122,7 +122,7 @@ The current local build now contains the first playable version of the town-to-e
 #### Defeat and recovery
 
 - Lose health in half-heart increments until reaching zero.
-- Lose every carried expedition pickup on defeat; unsecured loot never becomes Gold.
+- Lose all items and Gold in the player inventory on defeat. Items stored in the home chest remain safe.
 - Automatically retreat to TownHub after being defeated.
 - Return marked as injured with zero health.
 - Remain unable to begin another expedition at zero health.
@@ -144,9 +144,9 @@ The entries below supersede earlier descriptions of the inventory bar in this RE
 - [x] Rename the former Town Supplies resource to **Gold** everywhere the player sees it, while preserving the existing saved-balance key so established saves keep their currency.
 - [x] Replace the old six-slot inventory bar with the supplied four-slot `bottom_inventory.png` quickbar.
 - [x] Render the quickbar with point filtering, no compression, no mipmaps, and the source artwork's measured per-column centers so Gold and its count stay aligned in every one of its four cells.
-- [x] Open the full player inventory with **E** from any game scene; it is a 4 × 4 grid using `inventory.png` over a dimmed, paused world.
-- [x] Open the animated Player Home chest beside the workbench into paired, labeled 4 × 4 **INVENTORY** and **CHEST** grids over a dimmed, paused room.
-- [x] Split Gold into persistent stacks across player-inventory and chest cells using left-click, right-click, and right-drag distribution, while continuing to spend the combined balance for upgrades and treatment regardless of where stacks are stored.
+- [x] Open the full player inventory with **E** from any game scene; it is a 4 × 4 grid using `inventory.png` over a dimmed world. Expeditions continue while inventory is open.
+- [x] Open the animated Player Home chest beside the workbench into paired, labeled 4 × 4 **INVENTORY** and **CHEST** grids over a dimmed room. Village time continues while the chest is open.
+- [x] Split Gold into persistent stacks across player-inventory and chest cells using left-click, right-click, and right-drag distribution. Infirmary treatment can spend Gold from either container.
 - [x] Draw Gold as a centered yellow token with a small in-cell top-right count; the open player and chest grids show a **GOLD** tooltip on hover, while the bottom quickbar does not.
 - [x] Restore the hover cursor for interactable world objects and draggable Gold, while retaining the pressed-cursor click feedback.
 
@@ -176,9 +176,9 @@ The procedural level-2 expedition is now larger, deterministic, reproducible, co
 
 The playable progression loop remains:
 
-`Leave town → fight → collect supplies → extract → return → spend rewards → become permanently stronger → attempt a changed expedition`
+`Prepare tools in town → fight and collect Gold → extract → return with rewards → craft or recover → attempt a harder expedition`
 
-The Reinforced Melee Weapon remains the first permanent reward: it costs 8 Gold, raises melee damage from 1 to 2, and persists between sessions. Completing the fixed tutorial unlocks the larger procedural field and raises the threat for the next expedition. The infirmary remains a recovery cost rather than permanent progression.
+New saves start with no Gold and the wooden shovel, axe, pickaxe, and sword in quickbar slots 1–4. Completing the fixed tutorial unlocks the larger procedural field and raises the threat for the next expedition. The infirmary costs 3 Gold when treatment is needed; additional ways to earn Gold in town are planned.
 
 ## Persistent threat progression
 
@@ -192,10 +192,10 @@ Let `r` be the number of successfully completed expeditions stored in the save. 
 | Enemy movement-speed multiplier | `1 + 0.5 × (1 - e^(-0.08r))` |
 | Enemy detection-radius bonus | `4 × (1 - e^(-0.08r))` world units |
 | Enemy attack-windup multiplier | `0.6 + 0.4 × e^(-0.06r)` |
-| Enemy maximum health | Baseline health plus `floor(r / 4)` |
+| Enemy maximum health | Baseline health plus `r` |
 | Clear visibility radius | `4.75 + 1.75 × e^(-0.12r)` world units |
 
-The continuous speed, detection, attack-timing, and visibility curves use diminishing growth. This makes every successful run harder while preventing those values from becoming immediately unplayable. Enemy-count caps protect runtime performance; health can continue increasing as future weapon upgrades are introduced.
+The continuous speed, detection, attack-timing, and visibility curves use diminishing growth. Enemy-count caps protect runtime performance. Enemy health currently grows by one point per successful run without a cap. This health rule is provisional until tool damage and the wider combat progression are decided.
 
 The completed-run count and pending town notification persist in the active save. A successful extraction records the increase immediately before returning to TownHub. TownHub consumes the pending notification once and reports the next threat level alongside secured supplies. **RPG → Reset Town Progress Now** clears both threat keys along with the rest of the save progression.
 
@@ -474,10 +474,13 @@ Before accepting new art or a new gameplay scene, verify:
 
 # FUNCTIONAL TO-DO AND FIXES
 
+
+
 ## DONE
 
+
 - [x] **Create the initial town hub.** The current active town contains the player home, home workbench, infirmary, and expedition gate. Earlier storage, watchtower, and greenhouse prototypes were retired rather than kept as active upgradeable buildings.
-- [x] **Create one compact, replayable expedition zone.** Melee level 1 uses the fixed test field; melee level 2 rebuilds it as a larger randomized field on every entry.
+- [x] **Create one compact, replayable expedition zone.** The first run uses the fixed test field; later runs rebuild a larger randomized field on every entry.
 - [x] **Generate a deterministic layout from a saved seed.** The last seed is saved and every run logs its seed; requested and command-line seeds reproduce the same layout.
 - [x] **Carve a guaranteed route from spawn to extraction.** A deterministic multi-segment corridor is reserved before trees and extraction-grove scenery are placed.
 - [x] **Validate connectivity before constructing the final scene.** A grid flood-fill rejects invalid candidates and retries deterministically before scene objects are built.
@@ -494,7 +497,6 @@ Before accepting new art or a new gameplay scene, verify:
 - [x] **Communicate and reset threat.** Loading displays the current threat, TownHub reports the next threat after success, and the town-progress reset clears the escalation state.
 - [x] **Validate persistent progression safely.** The editor progression test verifies the first two threat increases and restores the existing save values afterward.
 - [x] **Implement one physical extraction point.** Entering it begins a dangerous ten-second countdown, alerts enemies, and spawns reinforcements.
-- [x] **Implement one permanent reward.** The Reinforced Melee Weapon permanently increases damage and changes the next expedition.
 - [x] **Define the first extraction method and why it is dangerous.** It is a physical zone with a ten-second activation, cancelled by leaving or attacking, that alerts enemies and calls reinforcements.
 - [x] I shouldnt be able to strike backwards when walking in the other direction
 - [x] Striking should happen only close to me, a meelee attack is a meelee attack.
@@ -507,12 +509,13 @@ Before accepting new art or a new gameplay scene, verify:
 - [x] **Preparation and loadouts.** Let the player choose weapons, consumables, tools, destination, and risk level before leaving town.
 - [x] **trees should also regrow with time**
 
-# TO-DO
-
 
 ## TOWN
 
 
+- [ ] trees should take more than 1 day to grow
+- [ ] hitbox of entering houses should only be the DOOR
+- [ ] gold could be the main resource (for simplicity) - it already works globally; meaning, even if gold is in chest, you can heal in infirmary.
 - [ ] **FARMING SYSTEM, CROPS**
 - [ ] Gradual Unlocks: You start with access to your farm and the immediate town, but many regions remain blocked initially. Progression-Based: You open these locked areas by completing side quests, repairing infrastructure, or upgrading your tools. Open-Ended Freedom: While the map expands linearly through gameplay milestones, you have total freedom in how you spend your daily time, choose your skills, and interact with villagers.
 - [ ] **Infirmary full setup with NPC, clear upgrades, prices, etc**
@@ -525,10 +528,14 @@ Before accepting new art or a new gameplay scene, verify:
 ## EXPEDITION
 
 
+- [ ] meelee (hand) attacks are gone. I should be able to attack with hands too.
+- [ ] if you walk out of enemy view, they should stop following
+- [ ] there are way too many enemies in threat 2 - either make upgrades available before going in threat 2, or make threat 2 easier (and rewrite the whole hardening part of the game)
+- [ ] Decide the enemy-health curve alongside tool damage, future weapons, and the rest of threat progression. The current game adds one maximum-health point per successful run; keep this behavior until a clearer overall combat rule is chosen.
 - [ ] **Meaningfully different loot.** Add common, valuable, and contaminated resources plus items that create inventory and extraction decisions.
 - [ ] **Implement three resource tiers.** Common expedition supplies work; valuable and contaminated resource tiers do not.
 - [ ] **Implement two regular enemies and one escalation enemy.** One wandering/pursuing melee enemy exists; distinct additional archetypes do not. **Demons could pretend that they are npcs**
-- [ ] **Write the first five town upgrades and define their visible effects.** Reinforced melee is the first permanent upgrade; four more upgrades and the broader town-upgrade plan remain undefined.
+- [ ] **Write the first five town upgrades and define their visible effects.** The broader town-upgrade plan remains undefined.
 - [ ] **Expedition objectives.** Add missions such as hunting a target, rescuing someone, activating machinery, delivering an item, or discovering a location so a run has purpose beyond collecting supplies.
 - [ ] **More enemy archetypes.** Add at least one fundamentally different regular enemy and one escalation enemy instead of only increasing the number of the current stalker.
 - [ ] **A real noise system.** Model sound radius, investigate positions, persistent alarms, and different noise levels for melee attacks, firearms, broken objects, and extraction machinery.
@@ -542,11 +549,14 @@ Before accepting new art or a new gameplay scene, verify:
 
 ## GENERAL
 
+
 - [ ] Co-op implementation.
 
 
 
 # VISUAL AND AUDITORY TO-DO AND FIXES
+
+
 
 ## VISUAL
 
@@ -560,16 +570,16 @@ Before accepting new art or a new gameplay scene, verify:
 - [x] we need numbers 1-4 on the bot navbar, and also display those numbers in inventory, and be able to switch between those numbers with scroll-wheel and also numbers on keyboard
 - [x] attacking MEELEE animation for Player
 - [x] swords
-- [ ] simplify walking animations for main character
-- [ ] redo attack animations (both meelee and with tool in hand)
-- [ ] meelee hand attack will be used for the sword attacks, cause it's "forward"
-- [ ] wooden tools: movement in all 4 directions
-- [ ] guns
+- [x] simplify walking animations for main character
+- [ ] redo attack animations (both meelee and with tool in hand) - OR MAKE IT INTO **ONE**
+- [ ] draw wooden tool movement in all 4 directions
+- [ ] next-level weapons and guns
 
 
 ## TOWN
 
 
+- [ ] clock should be analog
 - [ ] we could give it, gradually, a modern-civilization vibe with SOLAR PANELS UPGRADES, WINDMILLS, etc - it's like "I bring valuable resources IN the town, so that "one day we can escape" but that day never comes (?)
 - [ ] Add more town props and functional dressing after the active town layout is settled.
 - [ ] Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.
@@ -577,6 +587,8 @@ Before accepting new art or a new gameplay scene, verify:
 
 
 ## AUDITORY
+
+
 - [ ] walking
 - [ ] opening chest
 - [ ] upgrading infintrary

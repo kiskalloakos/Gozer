@@ -11,6 +11,12 @@ public class ScenePortal : MonoBehaviour
     private bool hovered;
     private bool interactionPending;
     private Transform player;
+    SpriteRenderer[] artwork;
+
+    void Awake() => CacheArtwork();
+    void OnTransformChildrenChanged() => CacheArtwork();
+
+    void CacheArtwork() => artwork = GetComponentsInChildren<SpriteRenderer>();
 
     public void Interact()
     {
@@ -23,9 +29,10 @@ public class ScenePortal : MonoBehaviour
 
     public bool IsPointerOverArt(Vector2 pointer)
     {
-        foreach (var renderer in GetComponentsInChildren<SpriteRenderer>())
+        if (artwork == null) CacheArtwork();
+        foreach (var renderer in artwork)
         {
-            if (!renderer.enabled || !renderer.sprite) continue;
+            if (!renderer || !renderer.enabled || !renderer.sprite) continue;
             var bounds = renderer.bounds;
             if (pointer.x >= bounds.min.x && pointer.x <= bounds.max.x &&
                 pointer.y >= bounds.min.y && pointer.y <= bounds.max.y)

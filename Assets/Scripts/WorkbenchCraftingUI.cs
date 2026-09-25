@@ -101,12 +101,7 @@ public sealed class WorkbenchCraftingUI : MonoBehaviour
         {
             Rect dragRect = new Rect(Event.current.mousePosition.x - 25f,
                 Event.current.mousePosition.y - 25f, 50f, 50f);
-            if (ItemInventory.IsTool(itemCursor.HeldItem))
-                ExpeditionHUD.DrawItemIcon(dragRect, itemCursor.HeldItem);
-            else if (itemCursor.HeldItem == InventoryItemId.Wood)
-                ExpeditionHUD.DrawWoodStack(dragRect, itemCursor.Amount);
-            else if (itemCursor.HeldItem == InventoryItemId.Gold)
-                ExpeditionHUD.DrawGoldStack(dragRect, itemCursor.Amount);
+            ExpeditionHUD.DrawItemStack(dragRect, itemCursor.HeldItem, itemCursor.Amount);
         }
 
         GUI.color = previousColor;
@@ -115,15 +110,16 @@ public sealed class WorkbenchCraftingUI : MonoBehaviour
     void DrawPlayerPanel(Rect panel)
     {
         PlayerInventoryUI.DrawPanel(panel, "INVENTORY");
-        PlayerInventoryUI.DrawQuickbarSlotSelection(panel, GetHUD());
+        var hud = GetHUD();
+        PlayerInventoryUI.DrawQuickbarSlotSelection(panel, hud);
 
         string tooltipName = null;
         for (int slot = 0; slot < ItemInventory.PlayerSlotCount; slot++)
         {
             ItemStack stack = ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, slot);
-            if (ItemInventory.IsTool(stack.item)) PlayerInventoryUI.DrawTool(panel, slot, stack.item);
-            else if (stack.item == InventoryItemId.Wood) PlayerInventoryUI.DrawWood(panel, slot, stack.amount);
-            else if (stack.item == InventoryItemId.Gold) PlayerInventoryUI.DrawGold(panel, slot, stack.amount);
+            if (stack.item != InventoryItemId.Empty && stack.amount > 0)
+                PlayerInventoryUI.DrawItemStack(panel, slot, stack.item, stack.amount,
+                    hud ? hud.GetStackCountBounce(slot) : 0f);
 
             if (stack.item != InventoryItemId.Empty && Event.current != null
                 && PlayerInventoryUI.GetSlotRect(panel, slot).Contains(Event.current.mousePosition))

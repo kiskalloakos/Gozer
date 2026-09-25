@@ -1,10 +1,15 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(SpriteRenderer), typeof(Rigidbody2D))]
 public class DemonSpriteAnimator : MonoBehaviour
 {
     const int FrameSize = 100;
+    static readonly Dictionary<Texture2D, Sprite[]> sharedFrames = new Dictionary<Texture2D, Sprite[]>();
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetSharedFrames() => sharedFrames.Clear();
 
     public Texture2D idleSheet;
     public Texture2D walkSheet;
@@ -49,12 +54,12 @@ public class DemonSpriteAnimator : MonoBehaviour
         if (attack02Sheet) attack02Sheet.filterMode = FilterMode.Point;
         if (hurtSheet) hurtSheet.filterMode = FilterMode.Point;
         if (deathSheet) deathSheet.filterMode = FilterMode.Point;
-        idleFrames = CreateFrames(idleSheet);
-        walkFrames = CreateFrames(walkSheet);
-        attack01Frames = CreateFrames(attack01Sheet);
-        attack02Frames = CreateFrames(attack02Sheet);
-        hurtFrames = CreateFrames(hurtSheet);
-        deathFrames = CreateFrames(deathSheet);
+        idleFrames = GetSharedFrames(idleSheet);
+        walkFrames = GetSharedFrames(walkSheet);
+        attack01Frames = GetSharedFrames(attack01Sheet);
+        attack02Frames = GetSharedFrames(attack02Sheet);
+        hurtFrames = GetSharedFrames(hurtSheet);
+        deathFrames = GetSharedFrames(deathSheet);
         previousPosition = body.position;
         ShowFrame(idleFrames, 0);
     }
@@ -139,14 +144,16 @@ public class DemonSpriteAnimator : MonoBehaviour
 
     public Vector2 FacingDirection => visual && visual.flipX ? Vector2.left : Vector2.right;
 
-    Sprite[] CreateFrames(Texture2D sheet)
+    static Sprite[] GetSharedFrames(Texture2D sheet)
     {
         if (!sheet || sheet.height != FrameSize || sheet.width < FrameSize) return System.Array.Empty<Sprite>();
+        if (sharedFrames.TryGetValue(sheet, out Sprite[] cached)) return cached;
         int frameCount = sheet.width / FrameSize;
         var frames = new Sprite[frameCount];
         for (int i = 0; i < frameCount; i++)
             frames[i] = Sprite.Create(sheet, new Rect(i * FrameSize, 0, FrameSize, FrameSize),
                 new Vector2(.5f, .5f), PixelArtStandard.PixelsPerUnit);
+        sharedFrames.Add(sheet, frames);
         return frames;
     }
 
@@ -155,20 +162,4 @@ public class DemonSpriteAnimator : MonoBehaviour
         if (frames.Length > 0) visual.sprite = frames[index];
     }
 
-    void OnDestroy()
-    {
-        DestroyFrames(idleFrames);
-        DestroyFrames(walkFrames);
-        DestroyFrames(attack01Frames);
-        DestroyFrames(attack02Frames);
-        DestroyFrames(hurtFrames);
-        DestroyFrames(deathFrames);
-    }
-
-    static void DestroyFrames(Sprite[] frames)
-    {
-        if (frames == null) return;
-        foreach (var frame in frames)
-            if (frame) Destroy(frame);
-    }
 }

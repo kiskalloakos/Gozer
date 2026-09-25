@@ -21,7 +21,7 @@ public static class TownProgressReset
         PlayerPrefs.DeleteKey(ExpeditionPlayerHealth.InjuryKey);
         PlayerPrefs.DeleteKey(ExpeditionPlayerHealth.HealthKey);
         PlayerPrefs.DeleteKey(ExpeditionPlayerEnergy.EnergyKey);
-        PlayerPrefs.DeleteKey(PlayerProgression.ReinforcedMeleeKey);
+        PlayerPrefs.DeleteKey("Player.Upgrade.ReinforcedMelee");
         PlayerPrefs.DeleteKey(ExpeditionRunProgression.CompletedRunsKey);
         PlayerPrefs.DeleteKey(ExpeditionRunProgression.PendingThreatIncreaseKey);
         foreach (var buildingId in UpgradeBuildingIds)

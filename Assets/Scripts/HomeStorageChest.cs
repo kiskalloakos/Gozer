@@ -24,7 +24,6 @@ public class HomeStorageChest : TownInteractable
 
     void Awake()
     {
-        ItemInventory.EnsureStarterAxe();
         if (!chestRenderer) chestRenderer = GetComponent<SpriteRenderer>();
         if (chestRenderer && openFrames != null && openFrames.Length > 0)
             chestRenderer.sprite = openFrames[0];
@@ -102,15 +101,16 @@ public class HomeStorageChest : TownInteractable
         Rect chestPanel = PlayerInventoryUI.GetPanelRectAt(new Vector2(center.x + (panelWidth + gap) * .5f, center.y));
         PlayerInventoryUI.DrawPanel(playerPanel, "INVENTORY");
         PlayerInventoryUI.DrawPanel(chestPanel, "CHEST");
-        PlayerInventoryUI.DrawQuickbarSlotSelection(playerPanel, FindAnyObjectByType<ExpeditionHUD>());
+        var hud = FindAnyObjectByType<ExpeditionHUD>();
+        PlayerInventoryUI.DrawQuickbarSlotSelection(playerPanel, hud);
 
         string tooltipName = null;
         for (int slot = 0; slot < ItemInventory.PlayerSlotCount; slot++)
         {
             ItemStack stack = ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, slot);
-            if (ItemInventory.IsTool(stack.item)) PlayerInventoryUI.DrawTool(playerPanel, slot, stack.item);
-            else if (stack.item == InventoryItemId.Wood) PlayerInventoryUI.DrawWood(playerPanel, slot, stack.amount);
-            else if (stack.item == InventoryItemId.Gold) PlayerInventoryUI.DrawGold(playerPanel, slot, stack.amount);
+            if (stack.item != InventoryItemId.Empty && stack.amount > 0)
+                PlayerInventoryUI.DrawItemStack(playerPanel, slot, stack.item, stack.amount,
+                    hud ? hud.GetStackCountBounce(slot) : 0f);
             if (stack.item != InventoryItemId.Empty && Event.current != null
                 && PlayerInventoryUI.GetSlotRect(playerPanel, slot).Contains(Event.current.mousePosition))
                 tooltipName = ItemName(stack.item);
@@ -118,9 +118,8 @@ public class HomeStorageChest : TownInteractable
         for (int slot = 0; slot < ItemInventory.ChestSlotCount; slot++)
         {
             ItemStack stack = ItemInventory.GetStack(ItemInventory.Container.HomeChest, slot);
-            if (ItemInventory.IsTool(stack.item)) PlayerInventoryUI.DrawTool(chestPanel, slot, stack.item);
-            else if (stack.item == InventoryItemId.Wood) PlayerInventoryUI.DrawWood(chestPanel, slot, stack.amount);
-            else if (stack.item == InventoryItemId.Gold) PlayerInventoryUI.DrawGold(chestPanel, slot, stack.amount);
+            if (stack.item != InventoryItemId.Empty && stack.amount > 0)
+                PlayerInventoryUI.DrawItemStack(chestPanel, slot, stack.item, stack.amount);
             if (stack.item != InventoryItemId.Empty && Event.current != null
                 && PlayerInventoryUI.GetSlotRect(chestPanel, slot).Contains(Event.current.mousePosition))
                 tooltipName = ItemName(stack.item);
@@ -132,11 +131,7 @@ public class HomeStorageChest : TownInteractable
         if (itemCursor.IsHolding && Event.current != null)
         {
             var dragRect = new Rect(Event.current.mousePosition.x - 25f, Event.current.mousePosition.y - 25f, 50f, 50f);
-            if (ItemInventory.IsTool(itemCursor.HeldItem)) ExpeditionHUD.DrawItemIcon(dragRect, itemCursor.HeldItem);
-            else if (itemCursor.HeldItem == InventoryItemId.Wood)
-                ExpeditionHUD.DrawWoodStack(dragRect, itemCursor.Amount);
-            else if (itemCursor.HeldItem == InventoryItemId.Gold)
-                ExpeditionHUD.DrawGoldStack(dragRect, itemCursor.Amount);
+            ExpeditionHUD.DrawItemStack(dragRect, itemCursor.HeldItem, itemCursor.Amount);
         }
 
         GUI.color = previousColor;
