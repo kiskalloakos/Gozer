@@ -13,7 +13,7 @@ public static class ExpeditionFieldSetup
     const string HomePath = "Assets/Scenes/HomeInterior.unity";
     const string TreePath = "Assets/Art/Environment/TownDressing/TREE_NIGHT.png";
     const string CharacterPath = "Assets/Art/Characters/TownCharacterSheet.png";
-    const string PlayerMeleeAttackPath = "Assets/Art/UI/base character meelee attacks.png";
+    const string PlayerMeleeAttackPath = "Assets/Art/Characters/TownCharacterSheetCombat.png";
     const string SquarePath = "Assets/Art/Environment/Square.png";
     const string MeleeSwooshPath = "Assets/Resources/Effects/melee_swoosh.png";
     const string DemonIdlePath = "Assets/Resources/Enemies/DemonA/idle.png";

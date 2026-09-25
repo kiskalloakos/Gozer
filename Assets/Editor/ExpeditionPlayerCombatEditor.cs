@@ -13,6 +13,7 @@ public sealed class ExpeditionPlayerCombatEditor : Editor
     };
     static readonly InventoryItemId[] Tools = ItemInventory.ToolItemIds.ToArray();
     static readonly string[] Labels = Tools.Select(GetToolLabel).ToArray();
+    static int selectedToolIndex;
 
     static string GetToolLabel(InventoryItemId item)
     {
@@ -37,16 +38,12 @@ public sealed class ExpeditionPlayerCombatEditor : Editor
             return;
         }
 
-        SerializedProperty selectedToolProperty = serializedObject.FindProperty("combatToolToConfigure");
-        int selectedTool = System.Array.IndexOf(Tools,
-            (InventoryItemId)selectedToolProperty.enumValueIndex);
-        if (selectedTool < 0) selectedTool = 0;
-        selectedTool = EditorGUILayout.Popup("Combat Tool to Configure", selectedTool, Labels);
-        selectedToolProperty.enumValueIndex = (int)Tools[selectedTool];
+        selectedToolIndex = Mathf.Clamp(selectedToolIndex, 0, Tools.Length - 1);
+        selectedToolIndex = EditorGUILayout.Popup("Combat Tool to Configure", selectedToolIndex, Labels);
         SerializedProperty profiles = serializedObject.FindProperty("toolProfiles");
-        SerializedProperty profile = FindProfile(profiles, Tools[selectedTool]);
+        SerializedProperty profile = FindProfile(profiles, Tools[selectedToolIndex]);
         EditorGUILayout.Space(4f);
-        EditorGUILayout.LabelField(Labels[selectedTool] + " Combat", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField(Labels[selectedToolIndex] + " Combat", EditorStyles.boldLabel);
         if (profile == null)
             EditorGUILayout.HelpBox("Profile is missing. Reopen the Inspector to rebuild it.", MessageType.Warning);
         else

@@ -83,8 +83,6 @@ public class TownPlayerController : MonoBehaviour
         // The player is present in every gameplay scene, so it is the stable
         // place to guarantee the HUD.
         EnsureGameplayHUD();
-        if (!meleeAttackSheet)
-            meleeAttackSheet = Resources.Load<Texture2D>("Player/melee_attacks");
         if (meleeAttackSheet) meleeAttackSheet.filterMode = FilterMode.Point;
         meleeAttackFrames = CreateMeleeAttackFrames(meleeAttackSheet);
         ownsMeleeAttackFrames = true;

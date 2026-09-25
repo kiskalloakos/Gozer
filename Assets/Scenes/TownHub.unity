@@ -6578,7 +6578,7 @@ MonoBehaviour:
   - {fileID: -6156547012846534872, guid: 257e859df4ba446eb92602ec66e5acc3, type: 3}
   - {fileID: 1293237221197512289, guid: 257e859df4ba446eb92602ec66e5acc3, type: 3}
   - {fileID: -2003719403111609829, guid: 257e859df4ba446eb92602ec66e5acc3, type: 3}
-  meleeAttackSheet: {fileID: 0}
+  meleeAttackSheet: {fileID: 2800000, guid: 3ad4e3c6e2dad47848ef5b3a6bdbe8f9, type: 3}
   meleeAttackFramesPerSecond: 12
 --- !u!70 &687858120
 CapsuleCollider2D:
@@ -6668,7 +6668,6 @@ MonoBehaviour:
   swooshScale: 0.25
   swooshHeightAboveFeet: 1
   swooshFrameHeight: 32
-  combatToolToConfigure: 6
   toolProfiles:
   - item: 3
     attackRange: 0.9

@@ -63,8 +63,9 @@ public class ExpeditionPlayerCombat : MonoBehaviour
     [Min(0f)] public float swooshHeightAboveFeet = 1f;
     [Min(1)] public int swooshFrameHeight = 32;
     [Header("Per-tool combat setup")]
-    [SerializeField] InventoryItemId combatToolToConfigure = InventoryItemId.Axe;
     public ToolCombatProfile[] toolProfiles;
+    [Header("Unarmed combat")]
+    [SerializeField] ToolCombatProfile unarmedProfile;
     [Header("Edit-mode attack preview")]
     [SerializeField] bool showAttackPreview = true;
     [SerializeField] TownPlayerController.FacingDirection previewAttackFacing;
@@ -303,6 +304,7 @@ public class ExpeditionPlayerCombat : MonoBehaviour
 
     void EnsureToolProfiles()
     {
+        if (!movementController) movementController = GetComponent<TownPlayerController>();
         var tools = ItemInventory.ToolItemIds;
         if (toolProfiles == null) toolProfiles = Array.Empty<ToolCombatProfile>();
         foreach (var existing in toolProfiles)
@@ -317,7 +319,7 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         {
             if (FindProfile(item) != null) continue;
             var profile = new ToolCombatProfile { item = item };
-            profile.characterAttackSheet = Resources.Load<Texture2D>("Player/melee_attacks");
+            profile.characterAttackSheet = movementController ? movementController.meleeAttackSheet : null;
             profile.attackRange = attackRange;
             profile.attackRadius = attackRadius;
             profile.attackCooldown = attackCooldown;
@@ -338,6 +340,46 @@ public class ExpeditionPlayerCombat : MonoBehaviour
             }
             var list = new List<ToolCombatProfile>(toolProfiles) { profile };
             toolProfiles = list.ToArray();
+        }
+
+        if (unarmedProfile == null)
+        {
+            unarmedProfile = new ToolCombatProfile
+            {
+                item = InventoryItemId.Empty,
+                attackRange = .9f,
+                attackRadius = .7f,
+                attackCooldown = .38f,
+                damageBonus = 0,
+                knockbackDistance = 1.15f,
+                energyCost = .25f,
+                showSwoosh = false
+            };
+        }
+
+        ToolCombatProfile animationTemplate = toolProfiles != null && toolProfiles.Length > 0
+            ? toolProfiles[0]
+            : null;
+        Texture2D combatSheet = movementController && movementController.meleeAttackSheet
+            ? movementController.meleeAttackSheet
+            : animationTemplate != null ? animationTemplate.characterAttackSheet : null;
+        unarmedProfile.item = InventoryItemId.Empty;
+        unarmedProfile.showSwoosh = false;
+        if (combatSheet) unarmedProfile.characterAttackSheet = combatSheet;
+        if (animationTemplate != null)
+        {
+            unarmedProfile.downCharacterAttackSprites = animationTemplate.downCharacterAttackSprites;
+            unarmedProfile.rightCharacterAttackSprites = animationTemplate.rightCharacterAttackSprites;
+            unarmedProfile.upCharacterAttackSprites = animationTemplate.upCharacterAttackSprites;
+            unarmedProfile.leftCharacterAttackSprites = animationTemplate.leftCharacterAttackSprites;
+            unarmedProfile.characterFrameWidth = animationTemplate.characterFrameWidth;
+            unarmedProfile.characterFrameHeight = animationTemplate.characterFrameHeight;
+            unarmedProfile.characterFrameCount = animationTemplate.characterFrameCount;
+            unarmedProfile.characterFramesPerSecond = animationTemplate.characterFramesPerSecond;
+            unarmedProfile.downAttackFrameOrder = animationTemplate.downAttackFrameOrder;
+            unarmedProfile.rightAttackFrameOrder = animationTemplate.rightAttackFrameOrder;
+            unarmedProfile.upAttackFrameOrder = animationTemplate.upAttackFrameOrder;
+            unarmedProfile.leftAttackFrameOrder = animationTemplate.leftAttackFrameOrder;
         }
     }
 
@@ -406,7 +448,9 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         if (!Input.GetMouseButtonDown(0)) return;
         var hud = FindAnyObjectByType<ExpeditionHUD>();
         InventoryItemId equippedItem = hud ? hud.ActiveQuickbarItem : InventoryItemId.Empty;
-        ToolCombatProfile combatProfile = FindProfile(equippedItem);
+        ToolCombatProfile combatProfile = IsWoodenTool(equippedItem)
+            ? FindProfile(equippedItem)
+            : unarmedProfile;
         if (combatProfile == null || Time.time < nextAttackTime) return;
 
         var camera = Camera.main;
@@ -454,9 +498,16 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         }
         else if (pendingAttack)
             ResolvePendingAttackHit();
-        Vector2 visualOrigin = (Vector2)transform.position + Vector2.up * combatProfile.swooshHeightAboveFeet;
-        ShowSwoosh(visualOrigin + direction * .1f, direction, combatProfile);
+        if (combatProfile.showSwoosh)
+        {
+            Vector2 visualOrigin = (Vector2)transform.position + Vector2.up * combatProfile.swooshHeightAboveFeet;
+            ShowSwoosh(visualOrigin + direction * .1f, direction, combatProfile);
+        }
     }
+
+    static bool IsWoodenTool(InventoryItemId item)
+        => item == InventoryItemId.Axe || item == InventoryItemId.Pickaxe
+            || item == InventoryItemId.Shovel || item == InventoryItemId.Sword;
 
     void OnMeleeAttackFrameStarted(int frameIndex)
     {

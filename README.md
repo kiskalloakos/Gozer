@@ -528,7 +528,7 @@ Before accepting new art or a new gameplay scene, verify:
 ## EXPEDITION
 
 
-- [ ] meelee (hand) attacks are gone. I should be able to attack with hands too.
+- [x] Restore weak, low-energy hand attacks whenever a wooden axe, pickaxe, shovel, or sword is not equipped.
 - [ ] if you walk out of enemy view, they should stop following
 - [ ] there are way too many enemies in threat 2 - either make upgrades available before going in threat 2, or make threat 2 easier (and rewrite the whole hardening part of the game)
 - [ ] Decide the enemy-health curve alongside tool damage, future weapons, and the rest of threat progression. The current game adds one maximum-health point per successful run; keep this behavior until a clearer overall combat rule is chosen.
