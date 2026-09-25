@@ -4,6 +4,12 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class TownPlayerController : MonoBehaviour
 {
+    const string GrassFootstepResourcePath = "Audio/Footstep_Grass";
+    const float WalkFramesPerStep = 2f;
+    const float MinimumFootstepInterval = .12f;
+    const float FootstepVolume = .12f;
+    static AudioClip grassFootstep;
+
     public enum FacingDirection { Down, Right, Up, Left }
 
     public float speed = 4f;
@@ -73,6 +79,7 @@ public class TownPlayerController : MonoBehaviour
     private float nextMeleeAttackFrameTime;
     private bool playingMeleeAttack;
     private Action<int> meleeAttackFrameStarted;
+    private float nextFootstepTime;
 
     void Awake()
     {
@@ -100,6 +107,7 @@ public class TownPlayerController : MonoBehaviour
         }
         movement = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
         IsWalking = movement.sqrMagnitude > 0f && !playingMeleeAttack;
+        UpdateFootsteps();
         if (visual)
         {
             if (playingMeleeAttack)
@@ -151,6 +159,24 @@ public class TownPlayerController : MonoBehaviour
             visual.flipX = false;
             visual.sortingOrder = Mathf.RoundToInt(-transform.position.y * 100);
         }
+    }
+
+    void UpdateFootsteps()
+    {
+        if (!IsWalking)
+        {
+            nextFootstepTime = 0f;
+            return;
+        }
+        if (Time.time < nextFootstepTime) return;
+
+        if (!grassFootstep)
+            grassFootstep = Resources.Load<AudioClip>(GrassFootstepResourcePath);
+        if (grassFootstep)
+            AudioSource.PlayClipAtPoint(grassFootstep, transform.position, FootstepVolume);
+        float footstepInterval = Mathf.Max(MinimumFootstepInterval,
+            WalkFramesPerStep / Mathf.Max(1f, walkFramesPerSecond));
+        nextFootstepTime = Time.time + footstepInterval;
     }
 
     void EnsureGameplayHUD()

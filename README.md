@@ -470,13 +470,7 @@ Before accepting new art or a new gameplay scene, verify:
 <!-- END PIXEL ART STANDARD -->
 
 
-
-
-# FUNCTIONAL TO-DO AND FIXES
-
-
-
-## DONE
+# ALL DONE TO-DO ITEMS
 
 
 - [x] **Create the initial town hub.** The current active town contains the player home, home workbench, infirmary, and expedition gate. Earlier storage, watchtower, and greenhouse prototypes were retired rather than kept as active upgradeable buildings.
@@ -508,6 +502,21 @@ Before accepting new art or a new gameplay scene, verify:
 - [x] ENEMIES: Damage + HP
 - [x] **Preparation and loadouts.** Let the player choose weapons, consumables, tools, destination, and risk level before leaving town.
 - [x] **trees should also regrow with time**
+- [x] Restore weak, low-energy hand attacks whenever a wooden axe, pickaxe, shovel, or sword is not equipped.
+- [x] swoosh effect for melee attacks '/Users/kiskalloakos/Documents/Pixel Art Assets/Thrust'
+- [x] first enemy looks '/Users/kiskalloakos/Documents/Pixel Art Assets/Tiny RPG Character Asset Pack 02 -Free Demon_A&Blood Monster_A/Characters(100x100 split)/Demon_A/Demon_A'
+- [x] inventory (either one) is not centered
+- [x] we need numbers 1-4 on the bot navbar, and also display those numbers in inventory, and be able to switch between those numbers with scroll-wheel and also numbers on keyboard
+- [x] attacking MEELEE animation for Player
+- [x] swords
+- [x] simplify walking animations for main character
+- [x] redo attack animations (both meelee and with tool in hand) - OR MAKE IT INTO **ONE**
+- [x] draw wooden tool movement in all 4 directions
+
+
+
+# FUNCTIONAL TO-DO AND FIXES
+
 
 
 ## TOWN
@@ -528,7 +537,6 @@ Before accepting new art or a new gameplay scene, verify:
 ## EXPEDITION
 
 
-- [x] Restore weak, low-energy hand attacks whenever a wooden axe, pickaxe, shovel, or sword is not equipped.
 - [ ] if you walk out of enemy view, they should stop following
 - [ ] there are way too many enemies in threat 2 - either make upgrades available before going in threat 2, or make threat 2 easier (and rewrite the whole hardening part of the game)
 - [ ] Decide the enemy-health curve alongside tool damage, future weapons, and the rest of threat progression. The current game adds one maximum-health point per successful run; keep this behavior until a clearer overall combat rule is chosen.
@@ -545,11 +553,6 @@ Before accepting new art or a new gameplay scene, verify:
 - [ ] When clicking expedition gate, there’s a moon animation with a wolf sound effect and it zooms in from top down to the character and for a slight mini second you can see where the extraction zone is. This is a Easter egg. Also, dnb-like music starts to get you in the mood.
 - [ ] Mircovolts-like elements?
 - [ ] Dash ? Sprint with fatigue?
-
-
-## GENERAL
-
-
 - [ ] Co-op implementation.
 
 
@@ -564,21 +567,14 @@ Before accepting new art or a new gameplay scene, verify:
 ## EXPEDITION
 
 
-- [x] swoosh effect for melee attacks '/Users/kiskalloakos/Documents/Pixel Art Assets/Thrust'
-- [x] first enemy looks '/Users/kiskalloakos/Documents/Pixel Art Assets/Tiny RPG Character Asset Pack 02 -Free Demon_A&Blood Monster_A/Characters(100x100 split)/Demon_A/Demon_A'
-- [x] inventory (either one) is not centered
-- [x] we need numbers 1-4 on the bot navbar, and also display those numbers in inventory, and be able to switch between those numbers with scroll-wheel and also numbers on keyboard
-- [x] attacking MEELEE animation for Player
-- [x] swords
-- [x] simplify walking animations for main character
-- [x] redo attack animations (both meelee and with tool in hand) - OR MAKE IT INTO **ONE**
-- [x] draw wooden tool movement in all 4 directions
 - [ ] next-level weapons and guns
 
 
 ## TOWN
 
 
+- [ ] tree should visually rustle when hit
+- [ ] cut out tree needs new, smaller, color-appropriate version
 - [ ] clock should be analog
 - [ ] we could give it, gradually, a modern-civilization vibe with SOLAR PANELS UPGRADES, WINDMILLS, etc - it's like "I bring valuable resources IN the town, so that "one day we can escape" but that day never comes (?)
 - [ ] Add more town props and functional dressing after the active town layout is settled.
@@ -589,10 +585,12 @@ Before accepting new art or a new gameplay scene, verify:
 ## AUDITORY
 
 
-- [ ] walking
+- [x] walking
+- [x] hitting swoosh
+- [x] hitting enemy DSGNMisc_HIT-Hit Noise_HY_PC-005
+- [x] hitting tree
+- [x] pick up sound effect
 - [ ] opening chest
 - [ ] upgrading infintrary
 - [ ] upgrading workbench
-- [ ] hitting swoosh DSGNImpt_MELEE-Magic Kick_HY_PC-006
-- [ ] hitting enemy DSGNMisc_HIT-Hit Noise_HY_PC-005
 - [ ] taking damage

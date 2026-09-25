@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 public class ExpeditionHUD : MonoBehaviour
 {
     public const int QuickbarSlotCount = 4;
+    const string PickupSoundResourcePath = "Audio/UIClick_INTERFACE-Positive Click_HY_PC-003";
     // IMGUI coordinates are already screen pixels, so keep a small, consistent safe margin.
     const float QuickbarBottomMargin = 10f;
     const float HeartsToQuickbarGap = 10f;
@@ -44,6 +45,7 @@ public class ExpeditionHUD : MonoBehaviour
     static Texture2D woodArt;
     static ExpeditionHUD cachedHud;
     static Scene cachedScene;
+    static AudioClip pickupSound;
     readonly float[] stackCountBounceStartedAt = CreateStackCountBounceTimers();
 
     public ExpeditionPlayerHealth health;
@@ -203,6 +205,10 @@ public class ExpeditionHUD : MonoBehaviour
     {
         if (slot < 0 || slot >= ItemInventory.PlayerSlotCount) return;
         stackCountBounceStartedAt[slot] = Time.unscaledTime;
+        if (!pickupSound)
+            pickupSound = Resources.Load<AudioClip>(PickupSoundResourcePath);
+        if (pickupSound)
+            AudioSource.PlayClipAtPoint(pickupSound, transform.position);
     }
 
     public float GetStackCountBounce(int slot)

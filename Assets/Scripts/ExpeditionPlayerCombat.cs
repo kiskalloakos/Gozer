@@ -9,6 +9,12 @@ public class ExpeditionPlayerCombat : MonoBehaviour
     // Zero-based animation index: 2 means the third displayed attack frame.
     // Change this one value to move all melee impacts to another frame.
     const int DamageFrameIndex = 2;
+    const string AttackSoundResourcePath = "Audio/SWSH_MOVEMENT-Bamboo Whip_HY_PC-003";
+    const string TreeHitSoundResourcePathA = "Audio/FGHTImpt_MELEE-Kick Critical_HY_PC-003";
+    const string TreeHitSoundResourcePathB = "Audio/FGHTImpt_MELEE-Kick Critical_HY_PC-005";
+    static AudioClip attackSound;
+    static AudioClip treeHitSoundA;
+    static AudioClip treeHitSoundB;
 
     [Serializable]
     public sealed class ToolCombatProfile
@@ -470,6 +476,7 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         // Misses therefore do not consume energy.
         nextAttackTime = Time.time + combatProfile.attackCooldown;
         Attacked?.Invoke();
+        PlayAttackSound();
 
         pendingAttackProfile = combatProfile;
         pendingAttackDirection = direction;
@@ -509,6 +516,26 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         => item == InventoryItemId.Axe || item == InventoryItemId.Pickaxe
             || item == InventoryItemId.Shovel || item == InventoryItemId.Sword;
 
+    void PlayAttackSound()
+    {
+        if (!attackSound)
+            attackSound = Resources.Load<AudioClip>(AttackSoundResourcePath);
+        if (attackSound)
+            AudioSource.PlayClipAtPoint(attackSound, transform.position);
+    }
+
+    static void PlayTreeHitSound(Vector3 position)
+    {
+        if (!treeHitSoundA)
+            treeHitSoundA = Resources.Load<AudioClip>(TreeHitSoundResourcePathA);
+        if (!treeHitSoundB)
+            treeHitSoundB = Resources.Load<AudioClip>(TreeHitSoundResourcePathB);
+
+        AudioClip clip = UnityEngine.Random.value < .5f ? treeHitSoundA : treeHitSoundB;
+        if (clip)
+            AudioSource.PlayClipAtPoint(clip, position);
+    }
+
     void OnMeleeAttackFrameStarted(int frameIndex)
     {
         if (pendingAttack && frameIndex >= DamageFrameIndex)
@@ -544,6 +571,7 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         if (tree)
         {
             hitLanded = tree.TryChop(equippedItem);
+            if (hitLanded) PlayTreeHitSound(tree.transform.position);
         }
         else
         {

@@ -5,6 +5,9 @@ public class WildernessEnemy : MonoBehaviour
 {
     enum EnemyState { Wandering, Alerting, Pursuing, AttackWindup, Recovering }
 
+    const string HitSoundResourcePath = "Audio/DSGNMisc_HIT-Hit Noise_HY_PC-005";
+    static AudioClip hitSound;
+
     [Min(.1f)] public float wanderSpeed = .75f;
     [Min(.1f)] public float pursuitSpeed = 2.35f;
     [Min(.1f)] public float detectionRadius = 7f;
@@ -153,6 +156,7 @@ public class WildernessEnemy : MonoBehaviour
     public bool TakeDamage(int amount, Vector2 attackerPosition, float knockbackDistance)
     {
         if (amount <= 0 || dying) return false;
+        PlayHitSound();
         currentHealth -= amount;
         healthBarUntil = Time.time + 3f;
         hitFlashUntil = Time.time + .1f;
@@ -184,6 +188,14 @@ public class WildernessEnemy : MonoBehaviour
         state = EnemyState.Alerting;
         stateUntil = Time.time + .2f;
         return true;
+    }
+
+    void PlayHitSound()
+    {
+        if (!hitSound)
+            hitSound = Resources.Load<AudioClip>(HitSoundResourcePath);
+        if (hitSound)
+            AudioSource.PlayClipAtPoint(hitSound, transform.position);
     }
 
     void FinalizeDeath()
