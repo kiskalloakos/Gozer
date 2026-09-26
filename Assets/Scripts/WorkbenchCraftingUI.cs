@@ -258,8 +258,7 @@ public sealed class WorkbenchCraftingUI : MonoBehaviour
         if (crafting || ItemInventory.GetTotal(ItemInventory.Container.PlayerInventory,
             InventoryItemId.Wood) < WoodPerTool) return;
 
-        bool hasResultStack = ItemInventory.FindItemSlot(ItemInventory.Container.PlayerInventory, item) >= 0;
-        if (!hasResultStack && ItemInventory.FindEmptySlot(ItemInventory.Container.PlayerInventory) < 0)
+        if (ItemInventory.FindEmptySlot(ItemInventory.Container.PlayerInventory) < 0)
         {
             ShowNotice("Your inventory is full.");
             return;

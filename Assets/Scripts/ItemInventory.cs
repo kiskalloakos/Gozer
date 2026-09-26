@@ -142,7 +142,7 @@ public static class ItemInventory
         if (amount <= 0 || item == InventoryItemId.Empty)
             Slots(container)[safeSlot] = new ItemStack();
         else
-            Slots(container)[safeSlot] = new ItemStack(item, amount, unsecuredAmount);
+            Slots(container)[safeSlot] = new ItemStack(item, IsTool(item) ? 1 : amount, unsecuredAmount);
         SaveAll();
     }
 
@@ -153,6 +153,7 @@ public static class ItemInventory
         EnsureLoaded();
         int safeSlot = ClampSlot(container, slot);
         ItemStack current = Slots(container)[safeSlot];
+        if (IsTool(item) && (amount != 1 || current.item != InventoryItemId.Empty)) return false;
         if (current.item != InventoryItemId.Empty && current.item != item) return false;
         if (container != Container.PlayerInventory || item != InventoryItemId.Gold) unsecuredAmount = 0;
         Slots(container)[safeSlot] = new ItemStack(item, current.amount + amount,
@@ -179,8 +180,28 @@ public static class ItemInventory
         if (amount <= 0 || item == InventoryItemId.Empty) return false;
         EnsureLoaded();
 
-        int slot = -1;
-        slot = FindItemSlot(container, item);
+        if (IsTool(item))
+        {
+            int emptySlots = 0;
+            for (int slotIndex = 0; slotIndex < SlotCount(container); slotIndex++)
+                if (IsEmpty(container, slotIndex)
+                    && !InventoryStackCursor.IsReserved(container, slotIndex)) emptySlots++;
+            if (emptySlots < amount) return false;
+
+            int firstAddedSlot = -1;
+            for (int i = 0; i < amount; i++)
+            {
+                int emptySlot = FindEmptySlot(container);
+                if (firstAddedSlot < 0) firstAddedSlot = emptySlot;
+                Slots(container)[emptySlot] = new ItemStack(item, 1);
+            }
+            SaveAll();
+            if (wasPickedUp && container == Container.PlayerInventory)
+                PlayerItemPickedUp?.Invoke(firstAddedSlot);
+            return true;
+        }
+
+        int slot = FindItemSlot(container, item);
         if (slot < 0 && IsEmpty(container, preferredSlot)
             && !InventoryStackCursor.IsReserved(container, preferredSlot)) slot = preferredSlot;
         if (slot < 0) slot = FindEmptySlot(container);
@@ -222,7 +243,7 @@ public static class ItemInventory
     {
         if (slot < 0 || slot >= SlotCount(container)) return false;
         ItemStack current = GetStack(container, slot);
-        return current.item == InventoryItemId.Empty || current.item == item;
+        return current.item == InventoryItemId.Empty || (!IsTool(item) && current.item == item);
     }
 
     public static bool RemoveAmount(Container container, InventoryItemId item, int amount)
@@ -445,7 +466,7 @@ public static class ItemInventory
 
     static ItemStack Normalize(ItemStack stack, Container container)
         => stack.amount > 0 && stack.item != InventoryItemId.Empty
-            ? new ItemStack(stack.item, stack.amount,
+            ? new ItemStack(stack.item, IsTool(stack.item) ? 1 : stack.amount,
                 container == Container.PlayerInventory ? stack.unsecuredAmount : 0)
             : new ItemStack();
 

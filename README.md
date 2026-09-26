@@ -512,16 +512,22 @@ Before accepting new art or a new gameplay scene, verify:
 - [x] simplify walking animations for main character
 - [x] redo attack animations (both meelee and with tool in hand) - OR MAKE IT INTO **ONE**
 - [x] draw wooden tool movement in all 4 directions
+- [x] walking sound effect
+- [x] hitting swoosh sound effect
+- [x] hitting enemy DSGNMisc_HIT-Hit Noise_HY_PC-005 sound effect
+- [x] hitting tree sound effect
+- [x] pick up sound effect
 
 
 
-# FUNCTIONAL TO-DO AND FIXES
+# TO-DO
 
 
 
 ## TOWN
 
 
+- [ ] tools should deteriorate
 - [ ] trees should take more than 1 day to grow
 - [ ] hitbox of entering houses should only be the DOOR
 - [ ] gold could be the main resource (for simplicity) - it already works globally; meaning, even if gold is in chest, you can heal in infirmary.
@@ -531,12 +537,22 @@ Before accepting new art or a new gameplay scene, verify:
 - [ ] **Other town supplies like market for trading specifically so you can trade Gold, etc**
 - [ ] **Farmerama-like elements? Zoomumba-like elements?**
 - [ ] **ANIMALS as mobs** (How about this as a meme? https://www.tiktok.com/@hyraxhub/video/7687660914950130975?_r=1&_t=ZN-99wClKYnuI2 and then also crocodiles, afking around ponds), also cats (https://toffeecraft.itch.io/cat-pack)
+- [ ] tree should visually rustle when hit
+- [ ] cut out tree needs new, smaller, color-appropriate version
+- [ ] clock should be analog
+- [ ] we could give it, gradually, a modern-civilization vibe with SOLAR PANELS UPGRADES, WINDMILLS, etc - it's like "I bring valuable resources IN the town, so that "one day we can escape" but that day never comes (?)
+- [ ] Add more town props and functional dressing after the active town layout is settled.
+- [ ] Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.
+- [ ] opening chest sound effect
+- [ ] upgrading infintrary sound effect
+- [ ] upgrading workbench sound effect
 
 
 
 ## EXPEDITION
 
 
+- [ ] next-level weapons and guns
 - [ ] if you walk out of enemy view, they should stop following
 - [ ] there are way too many enemies in threat 2 - either make upgrades available before going in threat 2, or make threat 2 easier (and rewrite the whole hardening part of the game)
 - [ ] Decide the enemy-health curve alongside tool damage, future weapons, and the rest of threat progression. The current game adds one maximum-health point per successful run; keep this behavior until a clearer overall combat rule is chosen.
@@ -553,44 +569,5 @@ Before accepting new art or a new gameplay scene, verify:
 - [ ] When clicking expedition gate, there’s a moon animation with a wolf sound effect and it zooms in from top down to the character and for a slight mini second you can see where the extraction zone is. This is a Easter egg. Also, dnb-like music starts to get you in the mood.
 - [ ] Mircovolts-like elements?
 - [ ] Dash ? Sprint with fatigue?
+- [ ] taking damage sound effect
 - [ ] Co-op implementation.
-
-
-
-# VISUAL AND AUDITORY TO-DO AND FIXES
-
-
-
-## VISUAL
-
-
-## EXPEDITION
-
-
-- [ ] next-level weapons and guns
-
-
-## TOWN
-
-
-- [ ] tree should visually rustle when hit
-- [ ] cut out tree needs new, smaller, color-appropriate version
-- [ ] clock should be analog
-- [ ] we could give it, gradually, a modern-civilization vibe with SOLAR PANELS UPGRADES, WINDMILLS, etc - it's like "I bring valuable resources IN the town, so that "one day we can escape" but that day never comes (?)
-- [ ] Add more town props and functional dressing after the active town layout is settled.
-- [ ] Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.
-
-
-
-## AUDITORY
-
-
-- [x] walking
-- [x] hitting swoosh
-- [x] hitting enemy DSGNMisc_HIT-Hit Noise_HY_PC-005
-- [x] hitting tree
-- [x] pick up sound effect
-- [ ] opening chest
-- [ ] upgrading infintrary
-- [ ] upgrading workbench
-- [ ] taking damage
