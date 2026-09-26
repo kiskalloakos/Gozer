@@ -7,6 +7,7 @@ public static class ScenePortalSetup
 {
     const string TownPath = "Assets/Scenes/TownHub.unity";
     const string HomeInteriorPath = "Assets/Scenes/HomeInterior.unity";
+    const string InfirmaryInteriorPath = "Assets/Scenes/InfirmaryInterior.unity";
     const string ExpeditionPath = "Assets/Scenes/ExpeditionField.unity";
 
     [MenuItem("RPG/Connect Town And Expedition")]
@@ -20,6 +21,7 @@ public static class ScenePortalSetup
         {
             new EditorBuildSettingsScene(TownPath, true),
             new EditorBuildSettingsScene(HomeInteriorPath, true),
+            new EditorBuildSettingsScene(InfirmaryInteriorPath, true),
             new EditorBuildSettingsScene(ExpeditionPath, true)
         };
 

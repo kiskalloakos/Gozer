@@ -91,23 +91,24 @@ public class TownHubController : MonoBehaviour
 
     public void TreatPlayer(int cost)
     {
-        if (!NeedsTreatment)
-        {
-            ShowNotice("The infirmary checks you over — you are already at full health.");
-            return;
-        }
+        ShowNotice(ApplyTreatment(cost), 4.5f);
+        HealthUnits = GameState.Active.health;
+        IsInjured = GameState.Active.injured;
+    }
 
-        if (!SpendGold(cost))
-        {
-            ShowNotice($"Not enough Gold. Treatment costs {cost} Gold.");
-            return;
-        }
-
-        HealthUnits = ExpeditionPlayerHealth.DefaultMaxHealthUnits;
-        IsInjured = false;
-        GameState.Active.health = HealthUnits;
+    public static string ApplyTreatment(int cost)
+    {
+        GameState.InstallFromRuntime();
+        if (!GameState.Active.injured && GameState.Active.health >= ExpeditionPlayerHealth.DefaultMaxHealthUnits)
+            return "The infirmary checks you over — you are already at full health.";
+        if (!TrySpendGold(cost, out _))
+            return $"Not enough Gold. Treatment costs {cost} Gold.";
+        GameState.Active.health = ExpeditionPlayerHealth.DefaultMaxHealthUnits;
         GameState.Active.injured = false;
-        ShowNotice($"Treatment complete — health restored to {ExpeditionPlayerHealth.DefaultMaxHearts} hearts.", 4.5f);
+        PlayerPrefs.SetInt(ExpeditionPlayerHealth.HealthKey, GameState.Active.health);
+        PlayerPrefs.SetInt(ExpeditionPlayerHealth.InjuryKey, 0);
+        GameSessionFlow.SaveActiveGameNow();
+        return $"Treatment complete — health restored to {ExpeditionPlayerHealth.DefaultMaxHearts} hearts.";
     }
 
     public bool CanBeginExpedition()

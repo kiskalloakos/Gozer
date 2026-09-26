@@ -5,10 +5,11 @@ public enum SceneSpawnPoint
 {
     None,
     PlayerHomeFrontDoor,
+    InfirmaryFrontDoor,
     TownExpeditionGate
 }
 
-public enum GameScene { TownHub, HomeInterior, ExpeditionField }
+public enum GameScene { TownHub, HomeInterior, ExpeditionField, InfirmaryInterior }
 
 public static class GameSceneCatalog
 {
@@ -23,6 +24,7 @@ public sealed class SceneReferences : MonoBehaviour
 {
     [SerializeField] Transform player;
     [SerializeField] Transform playerHome;
+    [SerializeField] Transform infirmary;
     [SerializeField] Transform townExpeditionGate;
 
     public Transform Player => player;
@@ -42,9 +44,17 @@ public sealed class SceneReferences : MonoBehaviour
                 return true;
             case SceneSpawnPoint.PlayerHomeFrontDoor:
                 if (!playerHome) return false;
-                var footprint = playerHome.GetComponent<Collider2D>();
-                float frontEdge = footprint ? footprint.bounds.min.y : playerHome.position.y;
-                position = new Vector2(playerHome.position.x, frontEdge - .55f);
+                var homeDoor = playerHome.GetComponent<TownInteractable>();
+                var homeBounds = homeDoor && homeDoor.interactionCollider
+                    ? homeDoor.interactionCollider.bounds : new Bounds(playerHome.position, Vector3.zero);
+                position = new Vector2(homeBounds.center.x, homeBounds.min.y - .55f);
+                return true;
+            case SceneSpawnPoint.InfirmaryFrontDoor:
+                if (!infirmary) return false;
+                var infirmaryDoor = infirmary.GetComponent<TownInteractable>();
+                var doorBounds = infirmaryDoor && infirmaryDoor.interactionCollider
+                    ? infirmaryDoor.interactionCollider.bounds : new Bounds(infirmary.position, Vector3.zero);
+                position = new Vector2(doorBounds.center.x, doorBounds.min.y - .55f);
                 return true;
             case SceneSpawnPoint.TownExpeditionGate:
                 if (!townExpeditionGate) return false;
@@ -58,9 +68,9 @@ public sealed class SceneReferences : MonoBehaviour
     public bool Validate(out string problem)
     {
         if (!player) { problem = "Player is not assigned."; return false; }
-        if (SceneManager.GetActiveScene().name == "TownHub" && (!playerHome || !townExpeditionGate))
+        if (SceneManager.GetActiveScene().name == "TownHub" && (!playerHome || !infirmary || !townExpeditionGate))
         {
-            problem = "TownHub requires Player Home and Expedition Gate references.";
+            problem = "TownHub requires Player Home, Infirmary, and Expedition Gate references.";
             return false;
         }
         problem = "";

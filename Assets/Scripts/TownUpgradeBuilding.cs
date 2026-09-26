@@ -9,9 +9,7 @@ public class TownUpgradeBuilding : TownInteractable
     // Keep the key for compatibility with existing saves.
     public static string ProgressKey(string id) => $"Town.Building.{id}.Level";
 
-    public override string Prompt => TownHubController.Instance && TownHubController.Instance.NeedsTreatment
-            ? $"Click for treatment — restore 5 hearts ({treatmentCost} Gold)"
-            : "Click to visit the infirmary — you are healthy";
+    public override string Prompt => "Click to enter the infirmary";
 
     void Awake()
     {
@@ -23,6 +21,6 @@ public class TownUpgradeBuilding : TownInteractable
 
     public override void Interact()
     {
-        if (TownHubController.Instance) TownHubController.Instance.TreatPlayer(treatmentCost);
+        SceneTravel.Load(GameScene.InfirmaryInterior);
     }
 }

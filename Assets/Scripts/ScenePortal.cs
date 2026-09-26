@@ -7,6 +7,7 @@ public class ScenePortal : MonoBehaviour
     [Tooltip("Marks this portal as the expedition entry and enforces the village clock gate.")]
     public bool requiresExpeditionTime;
     public string prompt = "Click to travel";
+    public Collider2D interactionCollider;
 
     private bool hovered;
     private bool interactionPending;
@@ -29,6 +30,8 @@ public class ScenePortal : MonoBehaviour
 
     public bool IsPointerOverArt(Vector2 pointer)
     {
+        if (interactionCollider)
+            return interactionCollider.enabled && interactionCollider.OverlapPoint(pointer);
         if (artwork == null) CacheArtwork();
         foreach (var renderer in artwork)
         {
@@ -99,7 +102,9 @@ public static class InteractionProximity
         if (!player || !target) return false;
 
         var playerColliders = player.GetComponentsInChildren<Collider2D>();
-        var targetColliders = target.GetComponentsInChildren<Collider2D>();
+        Collider2D designated = target is TownInteractable interactable ? interactable.interactionCollider
+            : target is ScenePortal portal ? portal.interactionCollider : null;
+        var targetColliders = designated ? new[] { designated } : target.GetComponentsInChildren<Collider2D>();
         bool comparedColliders = false;
 
         foreach (var playerCollider in playerColliders)

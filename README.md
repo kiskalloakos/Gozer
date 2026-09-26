@@ -527,22 +527,26 @@ Before accepting new art or a new gameplay scene, verify:
 ## TOWN
 
 
+- [x] hitbox of entering houses should only be the DOOR
+- [ ] **Infirmary full setup with NPC, clear upgrades, prices, etc**
+- [ ] Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.
+
 - [ ] tools should deteriorate
 - [ ] trees should take more than 1 day to grow
-- [ ] hitbox of entering houses should only be the DOOR
-- [ ] gold could be the main resource (for simplicity) - it already works globally; meaning, even if gold is in chest, you can heal in infirmary.
-- [ ] **FARMING SYSTEM, CROPS**
-- [ ] Gradual Unlocks: You start with access to your farm and the immediate town, but many regions remain blocked initially. Progression-Based: You open these locked areas by completing side quests, repairing infrastructure, or upgrading your tools. Open-Ended Freedom: While the map expands linearly through gameplay milestones, you have total freedom in how you spend your daily time, choose your skills, and interact with villagers.
-- [ ] **Infirmary full setup with NPC, clear upgrades, prices, etc**
-- [ ] **Other town supplies like market for trading specifically so you can trade Gold, etc**
-- [ ] **Farmerama-like elements? Zoomumba-like elements?**
-- [ ] **ANIMALS as mobs** (How about this as a meme? https://www.tiktok.com/@hyraxhub/video/7687660914950130975?_r=1&_t=ZN-99wClKYnuI2 and then also crocodiles, afking around ponds), also cats (https://toffeecraft.itch.io/cat-pack)
 - [ ] tree should visually rustle when hit
 - [ ] cut out tree needs new, smaller, color-appropriate version
+
+- [ ] **Other town supplies like market for trading specifically so you can trade Gold, etc**
+- [ ] gold could be the main resource (for simplicity) - it already works globally; meaning, even if gold is in chest, you can heal in infirmary.
 - [ ] clock should be analog
-- [ ] we could give it, gradually, a modern-civilization vibe with SOLAR PANELS UPGRADES, WINDMILLS, etc - it's like "I bring valuable resources IN the town, so that "one day we can escape" but that day never comes (?)
 - [ ] Add more town props and functional dressing after the active town layout is settled.
-- [ ] Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.
+- [ ] **FARMING SYSTEM, CROPS**
+- [ ] Gradual Unlocks: You start with access to your farm and the immediate town, but many regions remain blocked initially. Progression-Based: You open these locked areas by completing side quests, repairing infrastructure, or upgrading your tools. Open-Ended Freedom: While the map expands linearly through gameplay milestones, you have total freedom in how you spend your daily time, choose your skills, and interact with villagers.
+- [ ] **ANIMALS as mobs** (How about this as a meme? https://www.tiktok.com/@hyraxhub/video/7687660914950130975?_r=1&_t=ZN-99wClKYnuI2 and then also crocodiles, afking around ponds), also cats (https://toffeecraft.itch.io/cat-pack)
+- [ ] we could give it, gradually, a modern-civilization vibe with SOLAR PANELS UPGRADES, WINDMILLS, etc - it's like "I bring valuable resources IN the town, so that "one day we can escape" but that day never comes (?)
+
+- [ ] **Farmerama-like elements? Zoomumba-like elements?**
+- [ ] **Mircovolts-like elements?**
 - [ ] opening chest sound effect
 - [ ] upgrading infintrary sound effect
 - [ ] upgrading workbench sound effect
@@ -567,7 +571,6 @@ Before accepting new art or a new gameplay scene, verify:
 - [ ] **Contamination and town consequences.** Allow powerful finds to unlock benefits while also causing visible town problems, events, or story branches.
 - [ ] **“Hidden” field of view** Already in, but it should be upgradable from the town supplies.
 - [ ] When clicking expedition gate, there’s a moon animation with a wolf sound effect and it zooms in from top down to the character and for a slight mini second you can see where the extraction zone is. This is a Easter egg. Also, dnb-like music starts to get you in the mood.
-- [ ] Mircovolts-like elements?
 - [ ] Dash ? Sprint with fatigue?
 - [ ] taking damage sound effect
 - [ ] Co-op implementation.

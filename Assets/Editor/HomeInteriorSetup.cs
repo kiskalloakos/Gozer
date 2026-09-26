@@ -406,6 +406,7 @@ public static class HomeInteriorSetup
         {
             "Assets/Scenes/TownHub.unity",
             ScenePath,
+            "Assets/Scenes/InfirmaryInterior.unity",
             "Assets/Scenes/ExpeditionField.unity"
         };
         EditorBuildSettings.scenes = desired

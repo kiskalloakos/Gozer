@@ -2,12 +2,13 @@ using UnityEngine;
 
 public class TownInteractable : MonoBehaviour
 {
-    public enum FacilityType { Home, Workbench, Storage }
+    public enum FacilityType { Home, Workbench, Storage, Infirmary }
 
     public FacilityType facility;
     public string displayName;
+    public Collider2D interactionCollider;
 
-    public virtual string Prompt => facility == FacilityType.Home
+    public virtual string Prompt => facility == FacilityType.Home || facility == FacilityType.Infirmary
         ? $"Click to enter {displayName}"
         : $"Click to use {displayName}";
 
@@ -17,6 +18,9 @@ public class TownInteractable : MonoBehaviour
         {
             case FacilityType.Home:
                 SceneTravel.Load(GameScene.HomeInterior);
+                break;
+            case FacilityType.Infirmary:
+                SceneTravel.Load(GameScene.InfirmaryInterior);
                 break;
             case FacilityType.Workbench:
                 WorkbenchCraftingUI.OpenFor(this);

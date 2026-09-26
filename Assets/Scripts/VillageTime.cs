@@ -54,7 +54,7 @@ public sealed class VillageTime : MonoBehaviour
         Save();
     }
 
-    static bool IsVillage(string scene) => scene == "TownHub" || scene == "HomeInterior";
+    static bool IsVillage(string scene) => scene == "TownHub" || scene == "HomeInterior" || scene == "InfirmaryInterior";
 
     void Update()
     {

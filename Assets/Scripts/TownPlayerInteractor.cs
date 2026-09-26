@@ -83,6 +83,12 @@ public class TownPlayerInteractor : MonoBehaviour
         foreach (var candidate in interactables)
         {
             if (!candidate || !candidate.isActiveAndEnabled) continue;
+            if (candidate.interactionCollider)
+            {
+                if (candidate.interactionCollider.enabled &&
+                    candidate.interactionCollider.OverlapPoint(pointer)) return candidate;
+                continue;
+            }
             foreach (var renderer in artwork[candidate])
             {
                 if (!renderer || !renderer.enabled || !renderer.sprite) continue;
