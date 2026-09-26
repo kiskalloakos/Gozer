@@ -21,6 +21,7 @@ public class ScenePortal : MonoBehaviour
 
     public void Interact()
     {
+        if (SceneTravel.IsTransitioning) return;
         if ((requiresExpeditionTime || destinationScene == GameScene.ExpeditionField) && VillageTime.Instance &&
             !VillageTime.Instance.CanEnterExpedition()) return;
         if ((requiresExpeditionTime || destinationScene == GameScene.ExpeditionField) && TownHubController.Instance &&
@@ -48,7 +49,7 @@ public class ScenePortal : MonoBehaviour
     {
         // Town scenes route all hover/click handling through the town cursor
         // controller so buildings and portals cannot overwrite each other's prompt.
-        if (TownHubController.Instance || HomeInteriorController.Instance) return;
+        if (TownHubController.Instance || HomeInteriorController.Instance || SceneTravel.IsTransitioning) return;
 
         var currentEvent = Event.current;
         var camera = Camera.main;

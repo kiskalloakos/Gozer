@@ -22,7 +22,7 @@ public class TownPlayerInteractor : MonoBehaviour
 
     void OnGUI()
     {
-        if (GameSessionFlow.IsBlockingGameplay) return;
+        if (GameSessionFlow.IsBlockingGameplay || SceneTravel.IsTransitioning) return;
         if (VillageTime.Instance && VillageTime.Instance.IsSleeping) return;
         if (HomeStorageChest.IsModalOpen || WorkbenchCraftingUI.IsModalOpen || PlayerInventoryUI.IsOpen)
         {
@@ -63,7 +63,8 @@ public class TownPlayerInteractor : MonoBehaviour
         interactionPending = true;
         yield return new WaitForSecondsRealtime(CursorClickFeedback.InteractionDelaySeconds);
 
-        if (GameSessionFlow.IsBlockingGameplay || (VillageTime.Instance && VillageTime.Instance.IsSleeping))
+        if (GameSessionFlow.IsBlockingGameplay || SceneTravel.IsTransitioning ||
+            (VillageTime.Instance && VillageTime.Instance.IsSleeping))
         {
             interactionPending = false;
             yield break;

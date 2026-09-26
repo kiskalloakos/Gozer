@@ -18,7 +18,7 @@ public class TownHubController : MonoBehaviour
     private float noticeUntil;
     private bool showingRunResult;
 
-    public int Gold { get; private set; }
+    public int Gold => GetGoldBalance();
     public bool IsInjured { get; private set; }
     public int HealthUnits { get; private set; }
     public bool NeedsTreatment => IsInjured || HealthUnits < ExpeditionPlayerHealth.DefaultMaxHealthUnits;
@@ -30,8 +30,6 @@ public class TownHubController : MonoBehaviour
         // Town is the safe return point; unsecured loot can only exist during a run.
         if (CurrentExpeditionLoot.HasAny) CurrentExpeditionLoot.Lose();
         RemoveRetiredBuildings();
-        Gold = ItemInventory.GetSecuredGoldTotal();
-        GameState.Active.gold = Gold;
         IsInjured = GameState.Active.injured;
         HealthUnits = Mathf.Clamp(GameState.Active.health, 0, ExpeditionPlayerHealth.DefaultMaxHealthUnits);
         int securedGold = GameState.Active.pendingSecuredGold;
@@ -64,29 +62,36 @@ public class TownHubController : MonoBehaviour
 
     public bool SpendGold(int amount)
     {
-        if (!TrySpendGold(amount, out int remainingGold)) return false;
-        Gold = remainingGold;
-        return true;
+        return TrySpendGold(amount, out _);
     }
 
     public static bool TrySpendGold(int amount, out int remainingGold)
     {
-        if (!ItemInventory.TrySpendGold(amount, out remainingGold)) return false;
-        if (Instance) Instance.Gold = remainingGold;
+        GameState.InstallFromRuntime();
+        remainingGold = GameState.Active.gold;
+        if (amount < 0 || remainingGold < amount) return false;
+        remainingGold -= amount;
+        GameState.Active.gold = remainingGold;
+        PlayerPrefs.SetInt(GoldKey, remainingGold);
+        PlayerPrefs.Save();
         return true;
     }
 
     public static int GetGoldBalance()
-        => ItemInventory.GetSecuredGoldTotal();
+    {
+        GameState.InstallFromRuntime();
+        return GameState.Active.gold;
+    }
 
     public static void AddSecuredGold(int amount)
     {
         if (amount <= 0) return;
         GameState.InstallFromRuntime();
-        ItemInventory.AddItem(ItemInventory.Container.PlayerInventory, InventoryItemId.Gold, amount);
+        if (GameState.Active.gold > int.MaxValue - amount) return;
+        GameState.Active.gold += amount;
         GameState.Active.pendingSecuredGold += amount;
-        GameState.Active.gold = ItemInventory.GetSecuredGoldTotal();
-        if (Instance) Instance.Gold = GetGoldBalance();
+        PlayerPrefs.SetInt(GoldKey, GameState.Active.gold);
+        PlayerPrefs.Save();
     }
 
     public void TreatPlayer(int cost)

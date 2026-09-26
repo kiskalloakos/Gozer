@@ -25,16 +25,12 @@ public sealed class InventoryStackCursor
     }
 
     public InventoryItemId HeldItem { get; private set; }
-    public int Amount => heldSecuredAmount + heldCarriedAmount;
+    public int Amount => heldAmount;
     public bool IsHolding => HeldItem != InventoryItemId.Empty && Amount > 0;
 
     ItemInventory.Container originContainer;
     int originSlot;
-    int heldSecuredAmount;
-    int heldCarriedAmount;
-
-    public int GetGoldSlotAmount(ItemInventory.Container container, int slot)
-        => ItemInventory.GetAmount(container, slot, InventoryItemId.Gold);
+    int heldAmount;
 
     public void LeftClick(ItemInventory.Container container, int slot)
     {
@@ -83,25 +79,9 @@ public sealed class InventoryStackCursor
         originContainer = container;
         originSlot = slot;
         HeldItem = item;
-        heldSecuredAmount = 0;
-        heldCarriedAmount = 0;
-
         ItemStack source = ItemInventory.GetStack(container, slot);
-        int taken = Mathf.Min(source.amount, amount);
-        if (item == InventoryItemId.Gold)
-        {
-            heldCarriedAmount = Mathf.Min(source.unsecuredAmount, taken);
-            heldSecuredAmount = taken - heldCarriedAmount;
-            int remainingUnsecured = source.unsecuredAmount - heldCarriedAmount;
-            int remainingSecured = source.amount - source.unsecuredAmount - heldSecuredAmount;
-            ItemInventory.SetStack(container, slot, item, remainingSecured + remainingUnsecured,
-                remainingUnsecured);
-        }
-        else
-        {
-            heldSecuredAmount = taken;
-            ItemInventory.SetStack(container, slot, item, source.amount - taken);
-        }
+        heldAmount = Mathf.Min(source.amount, amount);
+        ItemInventory.SetStack(container, slot, item, source.amount - heldAmount);
 
         if (Amount <= 0) HeldItem = InventoryItemId.Empty;
         else heldCursors.Add(this);
@@ -110,9 +90,7 @@ public sealed class InventoryStackCursor
     bool PlaceAll(ItemInventory.Container container, int slot)
     {
         if (!IsHolding || !ItemInventory.CanPlace(container, slot, HeldItem)) return false;
-        int unsecuredAmount = container == ItemInventory.Container.PlayerInventory
-            ? heldCarriedAmount : 0;
-        ItemInventory.AddToSlot(container, slot, HeldItem, Amount, unsecuredAmount);
+        ItemInventory.AddToSlot(container, slot, HeldItem, Amount);
         ClearHeld();
         return true;
     }
@@ -120,17 +98,8 @@ public sealed class InventoryStackCursor
     bool PlaceOne(ItemInventory.Container container, int slot)
     {
         if (!IsHolding || !ItemInventory.CanPlace(container, slot, HeldItem)) return false;
-        if (heldCarriedAmount > 0)
-        {
-            int unsecuredAmount = container == ItemInventory.Container.PlayerInventory ? 1 : 0;
-            ItemInventory.AddToSlot(container, slot, HeldItem, 1, unsecuredAmount);
-            heldCarriedAmount--;
-        }
-        else if (heldSecuredAmount > 0)
-        {
-            ItemInventory.AddToSlot(container, slot, HeldItem, 1);
-            heldSecuredAmount--;
-        }
+        ItemInventory.AddToSlot(container, slot, HeldItem, 1);
+        heldAmount--;
         if (Amount <= 0) ClearHeld();
         return true;
     }
@@ -139,7 +108,6 @@ public sealed class InventoryStackCursor
     {
         heldCursors.Remove(this);
         HeldItem = InventoryItemId.Empty;
-        heldSecuredAmount = 0;
-        heldCarriedAmount = 0;
+        heldAmount = 0;
     }
 }

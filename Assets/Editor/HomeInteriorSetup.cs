@@ -11,6 +11,7 @@ public static class HomeInteriorSetup
     const string ArtFolder = "Assets/Art/Environment/PixelInterior";
     const string GeneratedFolder = ArtFolder + "/Generated";
     const string ChestArtPath = "Assets/Art/Environment/chest.png";
+    const string BedArtPath = "Assets/Art/Environment/bed.png";
     const string InventoryArtPath = "Assets/Art/Environment/inventory.png";
     const string RuntimeInventoryArtPath = "Assets/Resources/UI/inventory.png";
     const string RuntimeBottomInventoryArtPath = "Assets/Resources/UI/bottom_inventory.png";
@@ -27,6 +28,7 @@ public static class HomeInteriorSetup
         ConfigureGeneratedSprites();
         ConfigureChestFeatureAssets();
         ConfigureRuntimeInventoryArt();
+        ConfigurePixelTexture(BedArtPath, false);
 
         RemoveTownWorkbench();
         if (File.Exists(ScenePath))
@@ -63,7 +65,7 @@ public static class HomeInteriorSetup
 
         Art("Window", "window.png", new Vector2(-5.6f, 3.1f), -310);
         Art("Fireplace", "fireplace.png", new Vector2(6.8f, 2.7f), -270);
-        Art("Sofa", "sofa.png", new Vector2(-4.4f, .9f), -90, true);
+        EnsureBed(scene);
         Art("Armchairs", "armchairs.png", new Vector2(3.7f, .8f), -80, true);
         Art("Rug", "rug.png", new Vector2(-1.5f, -.45f), -9950);
         Art("Dining set", "dining_set.png", new Vector2(4.7f, -1.65f), 165, true);
@@ -144,6 +146,17 @@ public static class HomeInteriorSetup
         Debug.Log("RPG_HOME_STORAGE_CHEST_SUCCESS");
     }
 
+    [MenuItem("RPG/Apply Player Home Bed")]
+    public static void ApplyBedFeature()
+    {
+        ConfigurePixelTexture(BedArtPath, false);
+        var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+        EnsureBed(scene);
+        EditorSceneManager.SaveScene(scene);
+        AssetDatabase.SaveAssets();
+        Debug.Log("RPG_HOME_BED_SUCCESS");
+    }
+
     [MenuItem("RPG/Tests/Validate Home Storage Chest")]
     public static void ValidateStorageChestFeature()
     {
@@ -188,6 +201,8 @@ public static class HomeInteriorSetup
 
         ConfigureChestFeatureAssets();
         EnsureStorageChest(scene);
+        ConfigurePixelTexture(BedArtPath, false);
+        EnsureBed(scene);
 
         var exit = FindSceneObject(scene, "Front Door");
         if (exit)
@@ -367,6 +382,39 @@ public static class HomeInteriorSetup
         EditorUtility.SetDirty(renderer);
         EditorUtility.SetDirty(collider);
         EditorUtility.SetDirty(chest);
+    }
+
+    static void EnsureBed(UnityEngine.SceneManagement.Scene scene)
+    {
+        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(BedArtPath);
+        if (!sprite) throw new System.Exception("Missing player home bed art.");
+
+        var bedObject = FindSceneObject(scene, "Bed");
+        if (!bedObject)
+        {
+            bedObject = new GameObject("Bed");
+            bedObject.transform.position = new Vector3(-4.4f, .9f, 0f);
+        }
+
+        var renderer = bedObject.GetComponent<SpriteRenderer>();
+        if (!renderer) renderer = bedObject.AddComponent<SpriteRenderer>();
+        renderer.sprite = sprite;
+        renderer.sortingOrder = -90;
+
+        var collider = bedObject.GetComponent<BoxCollider2D>();
+        if (!collider) collider = bedObject.AddComponent<BoxCollider2D>();
+        collider.size = sprite.bounds.size;
+        collider.offset = sprite.bounds.center;
+        collider.isTrigger = false;
+
+        var bed = bedObject.GetComponent<HomeBed>();
+        if (!bed) bed = bedObject.AddComponent<HomeBed>();
+        bed.displayName = "BED";
+        bed.interactionCollider = collider;
+
+        EditorUtility.SetDirty(renderer);
+        EditorUtility.SetDirty(collider);
+        EditorUtility.SetDirty(bed);
     }
 
     static GameObject Art(string name, string file, Vector2 position, int order, bool collider = false, Transform parent = null)

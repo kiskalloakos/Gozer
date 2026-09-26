@@ -20,6 +20,7 @@ public sealed class GameState
 
     public int health = ExpeditionPlayerHealth.DefaultMaxHealthUnits;
     public int gold;
+    public int unsecuredGold;
     public int pendingSecuredGold;
     public float energy = ExpeditionPlayerEnergy.DefaultStartingEnergy;
     public bool injured;
@@ -36,8 +37,7 @@ public sealed class GameState
     public int resultLostItemCount;
     public int resultHealthUnits;
     public int resultNextThreat;
-    // Retained only to read older save files. Runtime expedition Gold now lives
-    // in ItemStack.unsecuredAmount and this field is cleared after migration.
+    // Retained only to read older save files.
     public int[] expeditionLoot;
     public ItemStack[] playerItems = new ItemStack[ItemInventory.PlayerSlotCount];
     public ItemStack[] chestItems = new ItemStack[ItemInventory.ChestSlotCount];
@@ -60,7 +60,9 @@ public sealed class GameState
         };
         if (!PlayerPrefs.HasKey(ExpeditionPlayerHealth.HealthKey) && state.injured)
             state.health = 0;
-        state.gold = ItemInventory.GetSecuredGoldTotal();
+        ItemInventory.EnsureLoaded();
+        state.gold = Mathf.Max(0, PlayerPrefs.GetInt(TownHubController.GoldKey, 0));
+        state.unsecuredGold = Mathf.Max(0, PlayerPrefs.GetInt("Expedition.UnsecuredGold", 0));
         state.pendingSecuredGold = Mathf.Max(0, PlayerPrefs.GetInt(TownHubController.PendingSecuredGoldKey, 0));
         state.playerItems = ItemInventory.ReadSlots(ItemInventory.Container.PlayerInventory);
         state.chestItems = ItemInventory.ReadSlots(ItemInventory.Container.HomeChest);
@@ -101,6 +103,7 @@ public sealed class GameState
         PlayerPrefs.SetString(ExpeditionRunIdentity.PlayerPrefsKey, expeditionRunIdentity ?? "");
         PlayerPrefs.SetString("Village.TotalMinutes", villageMinutes.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
         PlayerPrefs.SetInt(TownHubController.GoldKey, gold);
+        PlayerPrefs.SetInt("Expedition.UnsecuredGold", unsecuredGold);
         PlayerPrefs.SetInt(TownHubController.PendingSecuredGoldKey, pendingSecuredGold);
         ItemInventory.WriteSlots(ItemInventory.Container.PlayerInventory, playerItems);
         ItemInventory.WriteSlots(ItemInventory.Container.HomeChest, chestItems);

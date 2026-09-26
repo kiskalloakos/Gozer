@@ -528,16 +528,16 @@ Before accepting new art or a new gameplay scene, verify:
 
 
 - [x] hitbox of entering houses should only be the DOOR
+- [x] gold could be the main resource (for simplicity) - it already works globally; meaning, even if gold is in chest, you can heal in infirmary.
+- [ ] **Other town supplies like market for trading specifically so you can trade Gold, etc**
 - [ ] **Infirmary full setup with NPC, clear upgrades, prices, etc**
-- [ ] Create NPC character art for the player home, infirmary, workbench, and future active services as their gameplay roles are defined.
+
 
 - [ ] tools should deteriorate
 - [ ] trees should take more than 1 day to grow
 - [ ] tree should visually rustle when hit
 - [ ] cut out tree needs new, smaller, color-appropriate version
 
-- [ ] **Other town supplies like market for trading specifically so you can trade Gold, etc**
-- [ ] gold could be the main resource (for simplicity) - it already works globally; meaning, even if gold is in chest, you can heal in infirmary.
 - [ ] clock should be analog
 - [ ] Add more town props and functional dressing after the active town layout is settled.
 - [ ] **FARMING SYSTEM, CROPS**
@@ -547,9 +547,9 @@ Before accepting new art or a new gameplay scene, verify:
 
 - [ ] **Farmerama-like elements? Zoomumba-like elements?**
 - [ ] **Mircovolts-like elements?**
-- [ ] opening chest sound effect
-- [ ] upgrading infintrary sound effect
-- [ ] upgrading workbench sound effect
+- [ ] opening chest **sound effect**
+- [ ] healing in infirmary **sound effect**
+- [ ] crafting inside workbench **sound effect**
 
 
 
@@ -572,5 +572,11 @@ Before accepting new art or a new gameplay scene, verify:
 - [ ] **“Hidden” field of view** Already in, but it should be upgradable from the town supplies.
 - [ ] When clicking expedition gate, there’s a moon animation with a wolf sound effect and it zooms in from top down to the character and for a slight mini second you can see where the extraction zone is. This is a Easter egg. Also, dnb-like music starts to get you in the mood.
 - [ ] Dash ? Sprint with fatigue?
-- [ ] taking damage sound effect
-- [ ] Co-op implementation.
+- [ ] taking damage **sound effect**
+
+
+
+## AFTER LAUNCH -- FIRST PATCHES
+
+
+- [ ] Co-op implementation

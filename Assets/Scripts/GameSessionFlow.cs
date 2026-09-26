@@ -87,7 +87,7 @@ public sealed class GameSessionFlow : MonoBehaviour
         // one migrated save from the old unscoped PlayerPrefs data.
         if (string.IsNullOrEmpty(activeSaveId) && HasLegacyGameState())
         {
-            ItemInventory.GetSecuredGoldTotal(); // complete legacy item migration before snapshotting
+            ItemInventory.EnsureLoaded(); // complete legacy gold migration before snapshotting
             activeSaveId = Guid.NewGuid().ToString("N");
             PlayerPrefs.SetString(ActiveSaveKey, activeSaveId);
             SaveActiveGame();
@@ -204,7 +204,7 @@ public sealed class GameSessionFlow : MonoBehaviour
         {
             SaveData data = saves[i];
             float y = i * 58f;
-            string details = $"{data.displayName}   {data.savedAt}   GOLD {data.gold}   RUNS {data.completedRuns}";
+            string details = $"{data.displayName}   {data.savedAt}   RUNS {data.completedRuns}";
             if (GUI.Button(new Rect(0, y, viewport.width - 140, 48), details))
             {
                 SaveActiveGame();
@@ -351,7 +351,6 @@ public sealed class GameSessionFlow : MonoBehaviour
             return;
         }
         GameState.InstallFromRuntime();
-        GameState.Active.gold = ItemInventory.GetSecuredGoldTotal();
         GameState.Active.playerItems = ItemInventory.ReadSlots(ItemInventory.Container.PlayerInventory);
         GameState.Active.chestItems = ItemInventory.ReadSlots(ItemInventory.Container.HomeChest);
         var data = new SaveData
@@ -360,7 +359,7 @@ public sealed class GameSessionFlow : MonoBehaviour
             saveId = activeSaveId,
             displayName = string.IsNullOrEmpty(activeSaveId) ? "SAVE" : $"SAVE {activeSaveId.Substring(0, 6).ToUpperInvariant()}",
             savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
-            gold = ItemInventory.GetSecuredGoldTotal(),
+            gold = TownHubController.GetGoldBalance(),
             health = GameState.Active.health,
             energy = GameState.Active.energy,
             energySaved = true,
@@ -400,12 +399,17 @@ public sealed class GameSessionFlow : MonoBehaviour
         ExpeditionRunProgression.RecoverCompletedTutorial(restoredState);
         ClearGameState();
         GameState.Replace(restoredState);
-        GameState.Active.gold = data.gold;
+        ItemStack[] savedPlayerItems = data.itemsSaved ? data.playerItems : GameState.Active.playerItems;
+        ItemStack[] savedChestItems = data.itemsSaved ? data.chestItems : GameState.Active.chestItems;
+        GameState.Active.gold = Mathf.Max(data.gold, GameState.Active.gold,
+            CountLegacyGold(savedPlayerItems, false) + CountLegacyGold(savedChestItems, false));
+        GameState.Active.unsecuredGold = Mathf.Max(GameState.Active.unsecuredGold,
+            CountLegacyGold(savedPlayerItems, true));
         GameState.Active.pendingSecuredGold = data.gameState != null ? data.gameState.pendingSecuredGold : 0;
-        GameState.Active.playerItems = data.itemsSaved ? data.playerItems : GameState.Active.playerItems;
-        GameState.Active.chestItems = data.itemsSaved ? data.chestItems : GameState.Active.chestItems;
+        GameState.Active.playerItems = savedPlayerItems;
+        GameState.Active.chestItems = savedChestItems;
         GameState.Active.ApplyRuntimeState();
-        PlayerPrefs.SetInt(TownHubController.GoldKey, data.gold);
+        PlayerPrefs.SetInt(TownHubController.GoldKey, GameState.Active.gold);
         PlayerPrefs.SetInt(ExpeditionPlayerHealth.HealthKey, GameState.Active.health);
         // Older save-slot JSON predates energy. Treat those saves as fully
         // rested rather than restoring JsonUtility's missing-field default of 0.
@@ -439,18 +443,33 @@ public sealed class GameSessionFlow : MonoBehaviour
         ExpeditionRunIdentity.RestoreSerialized(GameState.Active.expeditionRunIdentity);
         VillageTime.Instance?.RestoreSavedTime(GameState.Active.villageMinutes);
         if (!data.itemsSaved)
-        {
-            RestoreLegacyStacks(ItemInventory.Container.PlayerInventory, InventoryItemId.Gold, data.playerGold);
-            RestoreLegacyStacks(ItemInventory.Container.HomeChest, InventoryItemId.Gold, data.chestGold);
-            if (data.playerGold == null && data.chestGold == null && data.gold > 0)
-                ItemInventory.AddItem(ItemInventory.Container.PlayerInventory,
-                    InventoryItemId.Gold, data.gold);
-        }
+            GameState.Active.gold = Mathf.Max(GameState.Active.gold,
+                SumLegacyGold(data.playerGold) + SumLegacyGold(data.chestGold));
         CurrentExpeditionLoot.MigrateLegacyState(GameState.Active);
+        PlayerPrefs.SetInt(TownHubController.GoldKey, GameState.Active.gold);
+        PlayerPrefs.SetInt("Expedition.UnsecuredGold", GameState.Active.unsecuredGold);
         activeSaveId = saveId;
         PlayerPrefs.SetString(ActiveSaveKey, saveId);
         PlayerPrefs.Save();
         SceneManager.LoadScene(GameSceneCatalog.Name(GameScene.TownHub));
+    }
+
+    static int CountLegacyGold(ItemStack[] slots, bool unsecured)
+    {
+        if (slots == null) return 0;
+        int total = 0;
+        foreach (ItemStack stack in slots)
+            if (stack.item == InventoryItemId.Gold)
+                total += Mathf.Max(0, unsecured ? stack.unsecuredAmount : stack.amount - stack.unsecuredAmount);
+        return total;
+    }
+
+    static int SumLegacyGold(int[] slots)
+    {
+        if (slots == null) return 0;
+        int total = 0;
+        foreach (int amount in slots) total += Mathf.Max(0, amount);
+        return total;
     }
 
     SaveData LoadSave(string saveId)

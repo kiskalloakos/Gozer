@@ -70,12 +70,11 @@ public class ExpeditionPlayerHealth : MonoBehaviour
         // A stack being dragged is still carried gear and must be counted and lost.
         InventoryStackCursor.ReturnAllHeld();
         ItemStack[] carriedItems = ItemInventory.ReadSlots(ItemInventory.Container.PlayerInventory);
-        int lostGold = 0;
+        int lostGold = CurrentExpeditionLoot.Total;
         int lostItemCount = 0;
         foreach (ItemStack stack in carriedItems)
         {
-            if (stack.item == InventoryItemId.Gold) lostGold += stack.amount;
-            else if (stack.item != InventoryItemId.Empty) lostItemCount += stack.amount;
+            if (stack.item != InventoryItemId.Empty) lostItemCount += stack.amount;
         }
 
         // Everything in the player bag was carried into the expedition and is

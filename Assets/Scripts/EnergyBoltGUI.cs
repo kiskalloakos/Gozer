@@ -43,9 +43,9 @@ public static class EnergyBoltGUI
                 for (int column = 0; column < maskRow.Length; column++)
                 {
                     if (maskRow[column] != '#') continue;
-                    GUI.color = column + .5f <= maskRow.Length * fill
+                    GUI.color = HouseSceneFade.FadeColor(column + .5f <= maskRow.Length * fill
                         ? FilledColor
-                        : EmptyColor;
+                        : EmptyColor);
                     GUI.DrawTexture(new Rect(
                         Mathf.Round(x + boltIndex * spacing + column * pixel),
                         Mathf.Round(y + row * (BoltHeight / BoltMask.Length)),

@@ -98,7 +98,8 @@ public class TownPlayerController : MonoBehaviour
     void Update()
     {
         EnsureGameplayHUD();
-        if (GameSessionFlow.IsBlockingGameplay) { movement = Vector2.zero; IsWalking = false; return; }
+        if (GameSessionFlow.IsBlockingGameplay || SceneTravel.IsTransitioning)
+        { movement = Vector2.zero; IsWalking = false; return; }
         if (VillageTime.Instance && VillageTime.Instance.IsSleeping)
         {
             movement = Vector2.zero;

@@ -31,7 +31,7 @@ public static class InfirmaryInteriorSetup
 
         var scene = EditorSceneManager.OpenScene(InfirmaryPath, OpenSceneMode.Single);
         var objects = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<Transform>(true)).ToArray();
-        foreach (var name in new[] { "WORKBENCH", "STORAGE CHEST" })
+        foreach (var name in new[] { "WORKBENCH", "STORAGE CHEST", "Bed" })
         {
             var target = objects.FirstOrDefault(item => item && item.name == name);
             if (target) Object.DestroyImmediate(target.gameObject);
@@ -64,7 +64,6 @@ public static class InfirmaryInteriorSetup
         interactable.displayName = "HEALING STATION";
         interactable.interactionCollider = collider;
         interactable.treatmentCost = 3;
-        // The copied sofa remains furniture, but sleeping belongs only in HomeInterior.
 
         EditorSceneManager.SaveScene(scene);
 

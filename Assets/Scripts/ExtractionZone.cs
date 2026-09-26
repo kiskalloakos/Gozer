@@ -46,14 +46,13 @@ public class ExtractionZone : MonoBehaviour
         int securedGold = inventory ? inventory.SecureLoot() : 0;
         if (securedGold < carriedGold)
         {
-            // Do not transition away while any carried reward has nowhere to
-            // be stored. The player can make room and start extraction again.
+            // Guard against a balance overflow before leaving the run.
             travelStarted = false;
             playerInside = false;
             cancelledUntilExit = true;
             elapsed = 0f;
             cancellationMessageUntil = Time.time + 2.5f;
-            inventory.ShowStatus("MAKE ROOM FOR GOLD", 2.5f);
+            inventory.ShowStatus("GOLD BALANCE FULL", 2.5f);
             return;
         }
         ExpeditionRunProgression.RecordSuccessfulRun();

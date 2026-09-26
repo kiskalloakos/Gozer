@@ -27,7 +27,7 @@ public class TownInteractable : MonoBehaviour
                 break;
             case FacilityType.Storage:
                 if (TownHubController.Instance)
-                    TownHubController.Instance.ShowNotice($"Storage — {TownHubController.Instance.Gold} Gold is available.");
+                    TownHubController.Instance.ShowNotice("Storage is available at home.");
                 break;
         }
     }

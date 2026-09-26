@@ -37,7 +37,7 @@ public static class HealthHeartGUI
         float spacing = DefaultSpacing)
     {
         var oldColor = GUI.color;
-        GUI.color = Color.white;
+        GUI.color = HouseSceneFade.FadeColor(Color.white);
 
         for (int i = 0; i < maxHearts; i++)
         {

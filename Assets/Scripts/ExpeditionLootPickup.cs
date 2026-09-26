@@ -91,7 +91,7 @@ public class ExpeditionLootPickup : MonoBehaviour
         if (progress < 1f) return;
         if (!collectingInventory || !collectingInventory.AddLoot(amount))
         {
-            if (collectingInventory) collectingInventory.ShowStatus("GOLD INVENTORY FULL");
+            if (collectingInventory) collectingInventory.ShowStatus("GOLD BALANCE FULL");
             transform.position = collectionStart;
             if (visual) visual.transform.localScale = visualStartScale;
             blockedPlayer = collectionTarget;

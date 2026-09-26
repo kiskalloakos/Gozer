@@ -4,9 +4,11 @@ using UnityEngine.SceneManagement;
 public static class SceneTravel
 {
     private static SceneSpawnPoint pendingSpawn;
+    public static bool IsTransitioning { get; private set; }
 
     public static void Load(GameScene destinationScene, SceneSpawnPoint spawnPoint = SceneSpawnPoint.None)
     {
+        if (IsTransitioning) return;
         if (VillageTime.Instance)
         {
             if (VillageTime.Instance.IsSleeping) return;
@@ -14,10 +16,34 @@ public static class SceneTravel
             VillageTime.Instance.Save();
         }
         GameSessionFlow.SaveActiveGameNow();
+        string currentScene = SceneManager.GetActiveScene().name;
+        bool houseTravel = destinationScene == GameScene.HomeInterior || destinationScene == GameScene.InfirmaryInterior
+            || currentScene == nameof(GameScene.HomeInterior) || currentScene == nameof(GameScene.InfirmaryInterior);
+        if (houseTravel)
+        {
+            IsTransitioning = true;
+            var fade = new GameObject("House Scene Fade").AddComponent<HouseSceneFade>();
+            Object.DontDestroyOnLoad(fade.gameObject);
+            fade.Begin(destinationScene, spawnPoint);
+            return;
+        }
+        PrepareSpawn(spawnPoint);
+        SceneManager.LoadScene(GameSceneCatalog.Name(destinationScene));
+    }
+
+    internal static AsyncOperation LoadHouseScene(GameScene destinationScene, SceneSpawnPoint spawnPoint)
+    {
+        PrepareSpawn(spawnPoint);
+        return SceneManager.LoadSceneAsync(GameSceneCatalog.Name(destinationScene));
+    }
+
+    internal static void FinishTransition() => IsTransitioning = false;
+
+    static void PrepareSpawn(SceneSpawnPoint spawnPoint)
+    {
         pendingSpawn = spawnPoint;
         SceneManager.sceneLoaded -= ApplyPendingSpawn;
         SceneManager.sceneLoaded += ApplyPendingSpawn;
-        SceneManager.LoadScene(GameSceneCatalog.Name(destinationScene));
     }
 
     public static void LoadExpeditionWithSeed(int seed)

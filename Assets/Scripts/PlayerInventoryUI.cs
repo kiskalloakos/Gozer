@@ -65,11 +65,10 @@ public class PlayerInventoryUI : MonoBehaviour
         for (int slot = 0; slot < ItemInventory.PlayerSlotCount; slot++)
         {
             ItemStack stack = ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, slot);
-            int amount = itemCursor.GetGoldSlotAmount(ItemInventory.Container.PlayerInventory, slot);
             if (stack.item != InventoryItemId.Empty && stack.amount > 0)
-                DrawItemStack(panel, slot, stack.item, stack.item == InventoryItemId.Gold ? amount : stack.amount,
+                DrawItemStack(panel, slot, stack.item, stack.amount,
                     hud ? hud.GetStackCountBounce(slot) : 0f);
-            if ((stack.item != InventoryItemId.Empty || amount > 0) && Event.current != null
+            if (stack.item != InventoryItemId.Empty && Event.current != null
                 && GetSlotRect(panel, slot).Contains(Event.current.mousePosition))
                 hoveredSlot = slot;
         }
@@ -78,8 +77,7 @@ public class PlayerInventoryUI : MonoBehaviour
         if (hoveredSlot >= 0)
         {
             ItemStack stack = ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, hoveredSlot);
-            DrawItemTooltip(Event.current.mousePosition,
-                stack.item == InventoryItemId.Empty ? "GOLD" : ItemName(stack.item));
+            DrawItemTooltip(Event.current.mousePosition, ItemName(stack.item));
         }
 
         HandlePointer(panel, hud);
@@ -100,9 +98,7 @@ public class PlayerInventoryUI : MonoBehaviour
         bool overSlot = TryGetSlotAt(currentEvent.mousePosition, panel, out int slot);
         ItemStack stack = overSlot
             ? ItemInventory.GetStack(ItemInventory.Container.PlayerInventory, slot) : default;
-        int slotAmount = overSlot
-            ? itemCursor.GetGoldSlotAmount(ItemInventory.Container.PlayerInventory, slot) : 0;
-        bool occupied = overSlot && (stack.item != InventoryItemId.Empty || slotAmount > 0);
+        bool occupied = overSlot && stack.item != InventoryItemId.Empty;
         CursorClickFeedback.SetInteractiveHover(overSlot && (occupied || itemCursor.IsHolding));
 
         if (currentEvent.type == EventType.MouseDown)

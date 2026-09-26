@@ -44,21 +44,26 @@ public sealed class VillageTime : MonoBehaviour
             Save();
         }
         else if (IsVillage(scene.name) && PlayerPrefs.GetInt(ExpeditionKey, 0) == 1)
-            AdvanceToMorning();
+        {
+            // A run that lasts beyond sunrise has already reached morning.
+            if (IsNight) AdvanceToMorning();
+            else PlayerPrefs.DeleteKey(ExpeditionKey);
+        }
 
         if (scene.name == "HomeInterior")
         {
-            var sofa = GameObject.Find("Sofa");
-            if (sofa && !sofa.GetComponent<HomeBed>()) sofa.AddComponent<HomeBed>();
+            var bed = GameObject.Find("Bed");
+            if (bed && !bed.GetComponent<HomeBed>()) bed.AddComponent<HomeBed>();
         }
         Save();
     }
 
     static bool IsVillage(string scene) => scene == "TownHub" || scene == "HomeInterior" || scene == "InfirmaryInterior";
+    static bool ShowsGameHUD(string scene) => IsVillage(scene) || scene == "ExpeditionField";
 
     void Update()
     {
-        if (IsSleeping || !IsVillage(SceneManager.GetActiveScene().name)) return;
+        if (IsSleeping || !ShowsGameHUD(SceneManager.GetActiveScene().name)) return;
         TotalMinutes += Time.deltaTime * 1440d / RealSecondsPerDay;
         GameState.Active.villageMinutes = TotalMinutes;
         saveTimer += Time.unscaledDeltaTime;
@@ -88,7 +93,7 @@ public sealed class VillageTime : MonoBehaviour
         yield return FadeTo(1f);
         yield return new WaitForSecondsRealtime(1f);
         AdvanceToMorning();
-        // The player stays at their safe interaction position beside the sofa.
+        // The player stays at their safe interaction position beside the bed.
         yield return FadeTo(0f);
         Time.timeScale = previousTimeScale;
         IsSleeping = false;
@@ -168,10 +173,20 @@ public sealed class VillageTime : MonoBehaviour
 
     void OnGUI()
     {
-        if (!IsVillage(SceneManager.GetActiveScene().name)) return;
+        string scene = SceneManager.GetActiveScene().name;
+        if (!ShowsGameHUD(scene)) return;
+        if (SceneTravel.IsTransitioning || GameSessionFlow.IsBlockingGameplay) return;
+        float top = Screen.height - Screen.safeArea.yMax + 10f;
+        float right = Screen.safeArea.xMax - 12f;
+        bool onExpedition = scene == "ExpeditionField";
+        int runGold = onExpedition ? CurrentExpeditionLoot.Total : 0;
+        long displayedGold = (long)TownHubController.GetGoldBalance() + runGold;
+        DrawRightAligned($"GOLD {displayedGold}", right, top, 3f);
+        if (onExpedition)
+            DrawRightAligned($"THIS RUN {runGold} GOLD", right, top + 22f, 2f);
         int hour = MinuteOfDay / 60;
         string clock = $"DAY {Day}  {(hour % 12 == 0 ? 12 : hour % 12)}:{MinuteOfDay % 60:00} {(hour < 12 ? "AM" : "PM")}";
-        ExpeditionHUD.DrawPixelTextCentered(clock, 58f, 2f);
+        DrawRightAligned(clock, right, top + (onExpedition ? 38f : 22f), 2f);
         if (!IsSleeping) return;
         int oldDepth = GUI.depth;
         Color oldColor = GUI.color;
@@ -183,5 +198,11 @@ public sealed class VillageTime : MonoBehaviour
             "SLEEPING…", ExpeditionHUD.CreateLabelStyle(20));
         GUI.color = oldColor;
         GUI.depth = oldDepth;
+    }
+
+    static void DrawRightAligned(string text, float right, float y, float pixel)
+    {
+        float width = (text.Length * 4 - 1) * pixel;
+        ExpeditionHUD.DrawPixelTextAt(text, right - width * .5f, y, pixel);
     }
 }

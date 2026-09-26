@@ -194,8 +194,8 @@ public class ExpeditionHUD : MonoBehaviour
     public bool AddLoot(int amount)
     {
         if (amount <= 0) return false;
-        int slot = CurrentExpeditionLoot.FindSlotForAdd();
-        if (!CurrentExpeditionLoot.Add(amount, slot)) return false;
+        if (!CurrentExpeditionLoot.Add(amount)) return false;
+        PlayPickupSound();
         statusMessage = $"+{amount} Gold";
         statusUntil = Time.time + 1.4f;
         return true;
@@ -205,6 +205,11 @@ public class ExpeditionHUD : MonoBehaviour
     {
         if (slot < 0 || slot >= ItemInventory.PlayerSlotCount) return;
         stackCountBounceStartedAt[slot] = Time.unscaledTime;
+        PlayPickupSound();
+    }
+
+    void PlayPickupSound()
+    {
         if (!pickupSound)
             pickupSound = Resources.Load<AudioClip>(PickupSoundResourcePath);
         if (pickupSound)
@@ -231,14 +236,6 @@ public class ExpeditionHUD : MonoBehaviour
     }
 
     public void LoseLoot() => CurrentExpeditionLoot.Lose();
-
-    public int GetCarriedLootAtSlot(int slot)
-        => CurrentExpeditionLoot.GetAtSlot(slot);
-
-    public void SetCarriedLootAtSlot(int slot, int amount)
-    {
-        CurrentExpeditionLoot.SetAtSlot(slot, amount);
-    }
 
     void OnGUI()
     {
@@ -269,7 +266,7 @@ public class ExpeditionHUD : MonoBehaviour
         if (Time.time < statusUntil)
         {
             var oldColor = GUI.color;
-            GUI.color = Color.white;
+            GUI.color = HouseSceneFade.FadeColor(Color.white);
             DrawPixelTextCentered(statusMessage, 10f, 2f);
             GUI.color = oldColor;
         }
@@ -307,7 +304,7 @@ public class ExpeditionHUD : MonoBehaviour
         var oldColor = GUI.color;
         Rect panel = GetQuickbarRect();
         Texture2D art = GetQuickbarArt();
-        GUI.color = Color.white;
+        GUI.color = HouseSceneFade.FadeColor(Color.white);
         GUI.DrawTexture(panel, art ? art : Texture2D.whiteTexture, ScaleMode.StretchToFill, true);
         DrawQuickbarSlotSelection(panel, hud ? hud.ActiveQuickbarSlot : -1);
         for (int slotIndex = 0; slotIndex < QuickbarSlotCount; slotIndex++)
@@ -330,9 +327,9 @@ public class ExpeditionHUD : MonoBehaviour
         if (activeSlot < 0 || activeSlot >= QuickbarSlotCount) return;
         Rect slot = GetQuickbarSlotRect(activeSlot);
         float thickness = Mathf.Max(1f, panel.width / 110f);
-        GUI.color = new Color(1f, .8f, .22f, .22f);
+        GUI.color = HouseSceneFade.FadeColor(new Color(1f, .8f, .22f, .22f));
         GUI.DrawTexture(slot, Texture2D.whiteTexture);
-        GUI.color = new Color(1f, .87f, .42f, .95f);
+        GUI.color = HouseSceneFade.FadeColor(new Color(1f, .87f, .42f, .95f));
         GUI.DrawTexture(new Rect(slot.x, slot.y, slot.width, thickness), Texture2D.whiteTexture);
         GUI.DrawTexture(new Rect(slot.x, slot.yMax - thickness, slot.width, thickness), Texture2D.whiteTexture);
         GUI.DrawTexture(new Rect(slot.x, slot.y, thickness, slot.height), Texture2D.whiteTexture);
@@ -350,48 +347,10 @@ public class ExpeditionHUD : MonoBehaviour
         }
     }
 
-    public static void DrawGoldStack(Rect rect, int amount, float contentScale = 1f,
-        float countBounce = 0f)
-    {
-        var oldColor = GUI.color;
-        GUI.color = Color.white;
-        GoldVisualAssets assets = GoldVisualAssets.Load();
-        Sprite inventoryGold = assets ? assets.inventorySprite : null;
-        if (inventoryGold)
-        {
-            Rect spriteRect = inventoryGold.rect;
-            Texture2D texture = inventoryGold.texture;
-            float availableSize = Mathf.Min(rect.width, rect.height);
-            float sourceSize = Mathf.Max(spriteRect.width, spriteRect.height);
-            // At normal game resolutions, use an integer texture scale so the icon stays
-            // crisp. Leaving a little breathing room also makes its visual center clear.
-            float textureScale = availableSize >= sourceSize
-                ? Mathf.Max(1f, Mathf.Floor(availableSize / sourceSize))
-                : availableSize / sourceSize;
-            float tokenWidth = spriteRect.width * textureScale;
-            float tokenHeight = spriteRect.height * textureScale;
-            Rect tokenRect = new Rect(
-                Mathf.Round(rect.center.x - tokenWidth * .5f),
-                Mathf.Round(rect.center.y - tokenHeight * .5f),
-                tokenWidth, tokenHeight);
-            var textureCoords = new Rect(spriteRect.x / texture.width, spriteRect.y / texture.height,
-                spriteRect.width / texture.width, spriteRect.height / texture.height);
-            GUI.DrawTextureWithTexCoords(tokenRect, texture, textureCoords, true);
-        }
-
-        DrawStackCount(rect, amount, countBounce);
-        GUI.color = oldColor;
-    }
-
     public static void DrawItemStack(Rect rect, InventoryItemId item, int amount,
         float contentScale = 1f, float countBounce = 0f)
     {
-        if (amount <= 0 || item == InventoryItemId.Empty) return;
-        if (item == InventoryItemId.Gold)
-        {
-            DrawGoldStack(rect, amount, contentScale, countBounce);
-            return;
-        }
+        if (amount <= 0 || item == InventoryItemId.Empty || item == InventoryItemId.Gold) return;
         if (item == InventoryItemId.Wood)
         {
             DrawWoodStack(rect, amount, contentScale, countBounce);
@@ -414,7 +373,7 @@ public class ExpeditionHUD : MonoBehaviour
         art.filterMode = FilterMode.Point;
 
         var oldColor = GUI.color;
-        GUI.color = Color.white;
+        GUI.color = HouseSceneFade.FadeColor(Color.white);
         float scale = Mathf.Min(rect.width / art.width, rect.height / art.height);
         Rect icon = new Rect(rect.center.x - art.width * scale * .5f,
             rect.center.y - art.height * scale * .5f,
@@ -452,7 +411,7 @@ public class ExpeditionHUD : MonoBehaviour
         woodArt.filterMode = FilterMode.Point;
 
         var oldColor = GUI.color;
-        GUI.color = Color.white;
+        GUI.color = HouseSceneFade.FadeColor(Color.white);
         float scale = Mathf.Min(rect.width / woodArt.width, rect.height / woodArt.height);
         Rect icon = new Rect(rect.center.x - woodArt.width * scale * .5f,
             rect.center.y - woodArt.height * scale * .5f,
@@ -474,12 +433,12 @@ public class ExpeditionHUD : MonoBehaviour
             countWidth + pixel * 2f,
             pixel * 7f);
 
-        GUI.color = new Color(.12f, .055f, .025f, .94f);
+        GUI.color = HouseSceneFade.FadeColor(new Color(.12f, .055f, .025f, .94f));
         GUI.DrawTexture(badge, Texture2D.whiteTexture);
 
         float startX = badge.x + pixel;
         float startY = badge.y + pixel;
-        GUI.color = new Color(1f, .94f, .68f);
+        GUI.color = HouseSceneFade.FadeColor(new Color(1f, .94f, .68f));
         for (int digitIndex = 0; digitIndex < count.Length; digitIndex++)
         {
             string glyph = GoldCountGlyphs[count[digitIndex] - '0'];
@@ -503,7 +462,7 @@ public class ExpeditionHUD : MonoBehaviour
     public static void DrawPixelTextAt(string text, float centerX, float y, float pixel)
     {
         Color oldColor = GUI.color;
-        GUI.color = new Color(1f, .94f, .68f);
+        GUI.color = HouseSceneFade.FadeColor(new Color(1f, .94f, .68f));
         string[] words = text.ToUpperInvariant().Split(' ');
         string line = "";
         int lineNumber = 0;
