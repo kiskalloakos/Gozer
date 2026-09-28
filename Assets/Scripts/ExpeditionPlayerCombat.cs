@@ -555,11 +555,12 @@ public class ExpeditionPlayerCombat : MonoBehaviour
 
         if (profile == null) return;
         FindAttackTargets(direction, profile, out ChoppableTree tree,
-            out WildernessEnemy target, out WildernessEnemy secondTarget);
+            out WildernessEnemy target, out WildernessEnemy secondTarget,
+            out TreeSpitProjectile blob);
 
         // Trees are resource nodes; only the equipped axe can chop them.
         if (tree && equippedItem != InventoryItemId.Axe) return;
-        if (!tree && !target) return;
+        if (!tree && !target && !blob) return;
 
         if (energy && !energy.TryConsume(profile.energyCost))
         {
@@ -572,6 +573,10 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         {
             hitLanded = tree.TryChop(equippedItem);
             if (hitLanded) PlayTreeHitSound(tree.transform.position);
+        }
+        else if (blob)
+        {
+            hitLanded = blob.HitByAttack();
         }
         else
         {
@@ -587,12 +592,15 @@ public class ExpeditionPlayerCombat : MonoBehaviour
     }
 
     void FindAttackTargets(Vector2 direction, ToolCombatProfile profile,
-        out ChoppableTree treeTarget, out WildernessEnemy target, out WildernessEnemy secondTarget)
+        out ChoppableTree treeTarget, out WildernessEnemy target, out WildernessEnemy secondTarget,
+        out TreeSpitProjectile blobTarget)
     {
         treeTarget = null;
         target = null;
         secondTarget = null;
+        blobTarget = null;
         float nearestTree = float.PositiveInfinity;
+        float nearestBlob = float.PositiveInfinity;
         float nearestObstacle = float.PositiveInfinity;
         var enemyDistances = new Dictionary<WildernessEnemy, float>();
         foreach (var hit in Physics2D.CircleCastAll(transform.position, profile.attackRadius * .5f,
@@ -602,13 +610,15 @@ public class ExpeditionPlayerCombat : MonoBehaviour
                 || hit.collider.transform.IsChildOf(transform)) continue;
             var tree = hit.collider.transform.GetComponentInParent<ChoppableTree>();
             var enemy = hit.collider.transform.GetComponentInParent<WildernessEnemy>();
-            if (!tree && !enemy)
+            var blob = hit.collider.transform.GetComponentInParent<TreeSpitProjectile>();
+            if (!tree && !enemy && !blob)
             {
                 if (!hit.collider.isTrigger) nearestObstacle = Mathf.Min(nearestObstacle, hit.distance);
                 continue;
             }
 
-            Vector2 targetPosition = tree ? (Vector2)tree.transform.position : (Vector2)enemy.transform.position;
+            Vector2 targetPosition = tree ? (Vector2)tree.transform.position
+                : enemy ? (Vector2)enemy.transform.position : (Vector2)blob.transform.position;
             if (Vector2.Dot(targetPosition - (Vector2)transform.position, direction) <= 0f
                 || hit.distance >= nearestObstacle) continue;
             if (tree)
@@ -617,6 +627,14 @@ public class ExpeditionPlayerCombat : MonoBehaviour
                 {
                     treeTarget = tree;
                     nearestTree = hit.distance;
+                }
+            }
+            else if (blob)
+            {
+                if (hit.distance < nearestBlob)
+                {
+                    blobTarget = blob;
+                    nearestBlob = hit.distance;
                 }
             }
             else if (!enemyDistances.TryGetValue(enemy, out float previousDistance)
@@ -653,6 +671,20 @@ public class ExpeditionPlayerCombat : MonoBehaviour
         else
         {
             treeTarget = null;
+        }
+
+        // A blob is a one-hit projectile target for every weapon. It wins only
+        // when it is the closest valid target and no solid collider blocks it.
+        if (blobTarget && nearestBlob < nearestObstacle
+            && nearestBlob < nearestTree && nearestBlob < nearestEnemy)
+        {
+            treeTarget = null;
+            target = null;
+            secondTarget = null;
+        }
+        else
+        {
+            blobTarget = null;
         }
     }
 

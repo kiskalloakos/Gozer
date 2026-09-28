@@ -526,24 +526,30 @@ Before accepting new art or a new gameplay scene, verify:
 
 ## TOWN
 
+Completing the loop... Making the game playable in an ongoing manner...
 
 - [x] hitbox of entering houses should only be the DOOR
 - [x] gold could be the main resource (for simplicity) - it already works globally; meaning, even if gold is in chest, you can heal in infirmary.
+- [ ] Gradual Unlocks: You start with access to your farm and the immediate town, but many regions remain blocked initially. Progression-Based: You open these locked areas by completing side quests, repairing infrastructure, or upgrading your tools. Open-Ended Freedom: While the map expands linearly through gameplay milestones, you have total freedom in how you spend your daily time, choose your skills, and interact with villagers.
 - [ ] **Other town supplies like market for trading specifically so you can trade Gold, etc**
+- [ ] there are way too many enemies in threat 2 - either make upgrades available before going in threat 2, or make threat 2 easier (and rewrite the whole hardening part of the game)
+- [ ] Decide the enemy-health curve alongside tool damage, future weapons, and the rest of threat progression. The current game adds one maximum-health point per successful run; keep this behavior until a clearer overall combat rule is chosen.
 - [ ] **Infirmary full setup with NPC, clear upgrades, prices, etc**
+- [ ] we could give it, gradually, a modern-civilization vibe with SOLAR PANELS UPGRADES, WINDMILLS, etc - it's like "I bring valuable resources IN the town, so that "one day we can escape" but that day never comes (?)
 
 
+- [ ] meelee attacks should cost less energy
+- [ ] shift-clicking items when chest open should get them in chest, and vice versa
+- [ ] should be able to craft chest
 - [ ] tools should deteriorate
 - [ ] trees should take more than 1 day to grow
 - [ ] tree should visually rustle when hit
 - [ ] cut out tree needs new, smaller, color-appropriate version
-
 - [ ] clock should be analog
 - [ ] Add more town props and functional dressing after the active town layout is settled.
 - [ ] **FARMING SYSTEM, CROPS**
-- [ ] Gradual Unlocks: You start with access to your farm and the immediate town, but many regions remain blocked initially. Progression-Based: You open these locked areas by completing side quests, repairing infrastructure, or upgrading your tools. Open-Ended Freedom: While the map expands linearly through gameplay milestones, you have total freedom in how you spend your daily time, choose your skills, and interact with villagers.
 - [ ] **ANIMALS as mobs** (How about this as a meme? https://www.tiktok.com/@hyraxhub/video/7687660914950130975?_r=1&_t=ZN-99wClKYnuI2 and then also crocodiles, afking around ponds), also cats (https://toffeecraft.itch.io/cat-pack)
-- [ ] we could give it, gradually, a modern-civilization vibe with SOLAR PANELS UPGRADES, WINDMILLS, etc - it's like "I bring valuable resources IN the town, so that "one day we can escape" but that day never comes (?)
+
 
 - [ ] **Farmerama-like elements? Zoomumba-like elements?**
 - [ ] **Mircovolts-like elements?**
@@ -558,8 +564,6 @@ Before accepting new art or a new gameplay scene, verify:
 
 - [ ] next-level weapons and guns
 - [ ] if you walk out of enemy view, they should stop following
-- [ ] there are way too many enemies in threat 2 - either make upgrades available before going in threat 2, or make threat 2 easier (and rewrite the whole hardening part of the game)
-- [ ] Decide the enemy-health curve alongside tool damage, future weapons, and the rest of threat progression. The current game adds one maximum-health point per successful run; keep this behavior until a clearer overall combat rule is chosen.
 - [ ] **Meaningfully different loot.** Add common, valuable, and contaminated resources plus items that create inventory and extraction decisions.
 - [ ] **Implement three resource tiers.** Common expedition supplies work; valuable and contaminated resource tiers do not.
 - [ ] **Implement two regular enemies and one escalation enemy.** One wandering/pursuing melee enemy exists; distinct additional archetypes do not. **Demons could pretend that they are npcs**

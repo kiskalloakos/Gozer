@@ -38,12 +38,15 @@ public class WildernessEnemy : MonoBehaviour
     bool threatHealthApplied;
     bool dying;
     bool alternateAttack;
+    bool passiveRanged;
 
     void Awake()
     {
         body = GetComponent<Rigidbody2D>();
         visual = GetComponent<SpriteRenderer>();
+        passiveRanged = GetComponent<TreeSpitterEnemy>();
         spriteAnimator = GetComponent<DemonSpriteAnimator>();
+        if (passiveRanged && spriteAnimator) spriteAnimator.enabled = false;
         baseScale = transform.localScale;
         // Older scene instances serialized 3, when this value represented
         // three hits rather than three full hearts.
@@ -54,11 +57,15 @@ public class WildernessEnemy : MonoBehaviour
         FindPlayer();
         // Existing expedition scenes gain the Demon_A presentation without a
         // scene rebuild; newly generated enemies receive this in the setup too.
-        if (!spriteAnimator) spriteAnimator = gameObject.AddComponent<DemonSpriteAnimator>();
+        if (!spriteAnimator && !passiveRanged)
+            spriteAnimator = gameObject.AddComponent<DemonSpriteAnimator>();
     }
 
     void Update()
     {
+        // Ranged sentries share this component for the established melee hit,
+        // health and loot handling, while TreeSpitterEnemy owns their behavior.
+        if (passiveRanged) return;
         if (dying)
         {
             visual.sortingOrder = Mathf.RoundToInt(-transform.position.y * 100);
@@ -101,6 +108,7 @@ public class WildernessEnemy : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (passiveRanged) return;
         if (!player) return;
         Vector2 velocity = Vector2.zero;
         if (state == EnemyState.Wandering)
@@ -168,8 +176,14 @@ public class WildernessEnemy : MonoBehaviour
         // current facing instead of pushing every ambiguous hit to the right.
         if (away.sqrMagnitude < .01f)
             away = spriteAnimator ? spriteAnimator.FacingDirection : Vector2.left;
-        body.position += away.normalized * Mathf.Max(0f, knockbackDistance);
-        Physics2D.SyncTransforms();
+        Vector2 knockedPosition = body.position + away.normalized * Mathf.Max(0f, knockbackDistance);
+        if (passiveRanged)
+            GetComponent<TreeSpitterEnemy>()?.OnKnockedBack(knockedPosition);
+        else
+        {
+            body.position = knockedPosition;
+            Physics2D.SyncTransforms();
+        }
 
         if (currentHealth <= 0)
         {
@@ -206,6 +220,7 @@ public class WildernessEnemy : MonoBehaviour
 
     public void AlertFromExtraction()
     {
+        if (passiveRanged) return;
         if (state == EnemyState.AttackWindup) return;
         state = EnemyState.Alerting;
         stateUntil = Time.time + .35f;

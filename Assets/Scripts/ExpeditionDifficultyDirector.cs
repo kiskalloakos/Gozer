@@ -43,15 +43,18 @@ public static class ExpeditionDifficultyDirector
                 completedRuns,
                 true);
 
-        var enemies = Object.FindObjectsByType<WildernessEnemy>();
+        var player = Object.FindAnyObjectByType<ExpeditionPlayerHealth>();
+        var extraction = Object.FindAnyObjectByType<ExtractionZone>();
+        TreeSpitterPopulation.SpawnForExpedition(
+            player ? player.transform : null,
+            extraction ? extraction.transform : null);
+
+        var enemies = FindRegularEnemies();
         if (enemies.Length == 0) return;
         foreach (var enemy in enemies)
             if (enemy.name.StartsWith(ScaledPopulationPrefix)) return;
 
         var template = enemies[0];
-        var player = Object.FindAnyObjectByType<ExpeditionPlayerHealth>();
-        var extraction = Object.FindAnyObjectByType<ExtractionZone>();
-
         int levelTwoAdditionalEnemies = isProcedural
             ? LevelTwoExtraEnemies + ExpeditionRunProgression.RegularEnemyBonus
             : 0;
@@ -85,7 +88,7 @@ public static class ExpeditionDifficultyDirector
         if (GameObject.Find(ExtractionMarker)) return;
 
         new GameObject(ExtractionMarker);
-        var enemies = Object.FindObjectsByType<WildernessEnemy>();
+        var enemies = FindRegularEnemies();
         if (enemies.Length == 0) return;
 
         int count = ExpeditionArenaGenerator.IsProceduralField
@@ -108,5 +111,13 @@ public static class ExpeditionDifficultyDirector
             reinforcement.name = $"{ExtractionReinforcementPrefix} {i + 1}";
             reinforcement.GetComponent<WildernessEnemy>().AlertFromExtraction();
         }
+    }
+
+    static WildernessEnemy[] FindRegularEnemies()
+    {
+        var regular = new System.Collections.Generic.List<WildernessEnemy>();
+        foreach (var enemy in Object.FindObjectsByType<WildernessEnemy>())
+            if (!enemy.GetComponent<TreeSpitterEnemy>()) regular.Add(enemy);
+        return regular.ToArray();
     }
 }
